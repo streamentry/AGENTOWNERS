@@ -37,7 +37,7 @@ function writeJsonSuccess(): void {
   process.stdout.write(
     `${JSON.stringify({ schemaVersion: 1, status: 'complete', valid: true }, null, 2)}\n`,
   )
-  process.exit(0)
+  process.exitCode = 0
 }
 
 function writeJsonError(error: unknown): void {
@@ -58,7 +58,7 @@ function writeJsonError(error: unknown): void {
       2,
     )}\n`,
   )
-  process.exit(1)
+  process.exitCode = 1
 }
 
 function writeTextError(error: unknown): void {
@@ -84,7 +84,7 @@ export function registerValidate(program: Command): void {
     .action(async (policyPath: string | undefined, options: ValidateOptions) => {
       if (options.output !== 'text' && options.output !== 'json') {
         process.stderr.write(`Unsupported output format: ${options.output}\n`)
-        process.exit(64)
+        process.exitCode = 64
         return
       }
 
@@ -99,14 +99,14 @@ export function registerValidate(program: Command): void {
           writeJsonSuccess()
         } else {
           process.stdout.write('AGENTOWNERS policy valid.\n')
-          process.exit(0)
+          process.exitCode = 0
         }
       } catch (err: unknown) {
         if (options.output === 'json') {
           writeJsonError(err)
         } else {
           writeTextError(err)
-          process.exit(1)
+          process.exitCode = 1
         }
       }
     })

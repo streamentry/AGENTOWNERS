@@ -20,18 +20,18 @@ function makeProgram(): Command {
 }
 
 describe('validate command', () => {
-  let exitSpy: ReturnType<typeof vi.spyOn>
   let stdoutSpy: ReturnType<typeof vi.spyOn>
   let stderrSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     vi.mocked(loadPolicyFile).mockClear()
-    exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
+    process.exitCode = undefined
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
   })
 
   afterEach(() => {
+    process.exitCode = undefined
     vi.restoreAllMocks()
   })
 
@@ -45,7 +45,7 @@ describe('validate command', () => {
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'validate', 'policy.yml'])
 
-    expect(exitSpy).toHaveBeenCalledWith(0)
+    expect(process.exitCode).toBe(0)
     expect(stdoutSpy).toHaveBeenCalledWith('AGENTOWNERS policy valid.\n')
   })
 
@@ -66,7 +66,7 @@ describe('validate command', () => {
       'json',
     ])
 
-    expect(exitSpy).toHaveBeenCalledWith(0)
+    expect(process.exitCode).toBe(0)
     const output = JSON.parse(stdoutSpy.mock.calls.map(([value]) => value).join(''))
     expect(output).toEqual({
       schemaVersion: 1,
@@ -106,7 +106,7 @@ describe('validate command', () => {
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'validate', 'bad.yml'])
 
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exitCode).toBe(1)
     expect(stderrSpy).toHaveBeenCalledWith('Invalid AGENTOWNERS policy:\n')
     expect(stderrSpy).toHaveBeenCalledWith(
       expect.stringContaining('rules.0.effect'),
@@ -121,7 +121,7 @@ describe('validate command', () => {
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'validate', 'missing.yml'])
 
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exitCode).toBe(1)
     expect(stderrSpy).toHaveBeenCalledWith('Invalid AGENTOWNERS policy:\n')
   })
 
@@ -144,7 +144,7 @@ describe('validate command', () => {
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'validate', 'bad.yml'])
 
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exitCode).toBe(1)
     expect(stderrSpy).toHaveBeenCalledWith(
       expect.stringContaining('agents.copilot.match.actors'),
     )
@@ -176,7 +176,7 @@ describe('validate command', () => {
       'json',
     ])
 
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exitCode).toBe(1)
     const output = JSON.parse(stderrSpy.mock.calls.map(([value]) => value).join(''))
     expect(output).toEqual({
       schemaVersion: 1,
@@ -209,7 +209,7 @@ describe('validate command', () => {
       'yaml',
     ])
 
-    expect(exitSpy).toHaveBeenCalledWith(64)
+    expect(process.exitCode).toBe(64)
     expect(vi.mocked(loadPolicyFile)).not.toHaveBeenCalled()
     expect(stderrSpy).toHaveBeenCalledWith('Unsupported output format: yaml\n')
   })
