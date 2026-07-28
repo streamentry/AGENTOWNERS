@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'child_process';
-import { getChangedFiles, getCommitMessages, getCurrentActor } from '../src/git.js';
+import {
+  getChangedFiles,
+  getCommitMessage,
+  getCommitMessages,
+  getCurrentActor,
+} from '../src/git.js';
 
 vi.mock('child_process', () => ({
   execFileSync: vi.fn(),
@@ -31,6 +36,17 @@ describe('git helpers', () => {
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
       ['log', '--format=%s%n%b', '--end-of-options', 'main..HEAD'],
+      expect.any(Object),
+    );
+  });
+
+  it('reads one commit directly without requiring a parent', () => {
+    vi.mocked(execFileSync).mockReturnValue('initial commit\nbody\n');
+
+    expect(getCommitMessage('ROOT')).toEqual(['initial commit', 'body']);
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['show', '--no-patch', '--format=%s%n%b', '--end-of-options', 'ROOT'],
       expect.any(Object),
     );
   });

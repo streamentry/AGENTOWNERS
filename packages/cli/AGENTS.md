@@ -44,6 +44,11 @@ sequenceDiagram
   CLI-->>User: Markdown, JSON, or SARIF and exit code
 ```
 
+`fingerprint` reads exactly one commit through `git show` after
+`--end-of-options`. Root commits are valid. Missing refs and unavailable Git
+state fail before detection; never reinterpret absent evidence as an empty
+fingerprint.
+
 `test` reads explicit policy and fixture paths. It does not inspect Git state
 or infer missing inputs.
 
@@ -99,3 +104,5 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.
+Fingerprint commit read failures must exit nonzero without printing Git or
+commit contents.
