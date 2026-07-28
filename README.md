@@ -90,6 +90,26 @@ Add `.github/AGENTOWNERS.yml`:
 
 version: 1
 
+agents:
+  release-bot:
+    match:
+      actors:
+        - 'release-bot[bot]'
+      commitEmails:
+        - 'automation@example.com'
+      labels:
+        - 'ai-generated'
+      prTitlePatterns:
+        - '^chore\\(release\\):'
+    allowed:
+      - open_pr
+      - update_pr
+    requires_approval:
+      - merge_pr
+    blocked:
+      - edit_workflows
+      - touch_secrets
+
 defaults:
   known_agent: require_approval
   unknown_agent: require_approval
@@ -122,7 +142,9 @@ The first-line schema directive gives compatible YAML editors completion and
 validation against the same Zod contract used at runtime. The generated
 [JSON Schema](packages/core/agentowners.schema.json) rejects unknown fields,
 empty `match` and `when` objects, and actions assigned to conflicting policy
-lists.
+lists. Configured actor, commit-author, and label matches are exact and
+confirmed; `prTitlePatterns` and `bodyPatterns` provide regex-based policy
+signals.
 
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the
