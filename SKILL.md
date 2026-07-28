@@ -45,8 +45,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
 20. When a rule scopes on `actions`, allow only when the condition enumerates
    every detected action; preserve any-action matching for block and approval.
 21. When changing CLI audit rendering, validate saved decision shapes and strip
-   terminal control sequences before printing untrusted text; keep JSON/SARIF
-   machine output structured.
+   terminal control sequences before printing untrusted text, including agent
+   names and signals from `fingerprint`; keep JSON/SARIF machine output
+   structured.
 22. In the pull request, disclose agent use, overlap, exact evidence, risks,
    attribution, and rollback.
 

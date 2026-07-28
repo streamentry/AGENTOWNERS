@@ -186,7 +186,7 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Identity trust | Commit metadata, labels, titles, and bodies are unverified evidence; only authenticated actors may use `known_agent` privileges |
 | Complete allow coverage | An action-scoped `allow` rule must list every detected action; block and approval rules may match any listed action |
-| CLI audit safety | Human-readable `check` and `explain` output strips terminal controls; `explain` validates saved decisions before rendering |
+| CLI audit safety | Human-readable `check`, `explain`, and `fingerprint` output strips terminal controls; `explain` validates saved decisions before rendering |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
 

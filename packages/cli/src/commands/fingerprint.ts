@@ -1,6 +1,7 @@
 import { Command } from 'commander'
 import { detectAgent } from '@agent-owners/core'
 import { getCommitEmails, getCommitMessages, getCommitNames, getCurrentActor } from '../git.js'
+import { sanitizeTerminalInlineText } from '../terminal.js'
 
 export function registerFingerprint(program: Command): void {
   program
@@ -36,19 +37,19 @@ export function registerFingerprint(program: Command): void {
 
       const lines: string[] = []
       lines.push('Agent detection result:')
-      lines.push(`  Confidence: ${result.confidence}`)
+      lines.push(`  Confidence: ${sanitizeTerminalInlineText(result.confidence)}`)
       if (result.identityTrust) {
-        lines.push(`  Identity trust: ${result.identityTrust}`)
+        lines.push(`  Identity trust: ${sanitizeTerminalInlineText(result.identityTrust)}`)
       }
 
       if (result.agentName) {
-        lines.push(`  Agent: ${result.agentName}`)
+        lines.push(`  Agent: ${sanitizeTerminalInlineText(result.agentName)}`)
       }
 
       if (result.signals.length > 0) {
         lines.push('  Signals:')
         for (const signal of result.signals) {
-          lines.push(`    - ${signal}`)
+          lines.push(`    - ${sanitizeTerminalInlineText(signal)}`)
         }
       } else {
         lines.push('  Signals: none')

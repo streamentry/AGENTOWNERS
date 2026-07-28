@@ -108,6 +108,10 @@ Options:
 - `--commit <ref>` — analyze a specific commit (default: HEAD)
 - `--output <format>` — `text` | `json`
 
+Human-readable output strips terminal control sequences and embedded newlines
+from detected agent names and signals. JSON output remains structured machine
+output.
+
 Output:
 
 ```
@@ -152,4 +156,5 @@ Agent detection result:
 - `validate` exits 1 with error messages on invalid policy
 - `check` returns correct exit code by mode
 - `fingerprint` detects Co-Authored-By signals
+- `fingerprint` strips terminal controls from human-readable detection output
 - `self-check` covers every public exit code and hostile Git refs

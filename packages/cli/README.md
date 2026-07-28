@@ -63,6 +63,8 @@ agentowners fingerprint --commit HEAD
 `fingerprint` reports detection confidence and identity trust separately. A
 matching commit author or label is useful evidence, but it is not an
 authenticated actor and cannot grant privileged policy actions.
+Human-readable names and signals are sanitized before terminal output; JSON
+output remains structured for machine consumers.
 
 `check --mode` accepts only `advisory`, `enforcement`, or `dry-run`; unknown
 modes fail before Git is read so a typo cannot silently weaken enforcement.
