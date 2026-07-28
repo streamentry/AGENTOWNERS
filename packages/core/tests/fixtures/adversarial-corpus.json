@@ -94,8 +94,8 @@
     }
   },
   {
-    "id": "dotfile-secret",
-    "invariant": "A nested environment dotfile is classified as secret and blocked.",
+    "id": "nested-dotfile-secret",
+    "invariant": "An environment dotfile below the repository root is classified as secret and blocked.",
     "outcome": "decision",
     "policy": {
       "version": 1,
@@ -106,7 +106,7 @@
     "input": {
       "eventType": "pull_request.opened",
       "actor": "unknown-user",
-      "changedFiles": [".env.local"]
+      "changedFiles": ["config/.env.local"]
     },
     "expected": {
       "effect": "block",

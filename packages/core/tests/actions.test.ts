@@ -85,6 +85,17 @@ describe('inferActions', () => {
     expect(result).toContain('modify_tests');
   });
 
+  it('infers touch_secrets from canonical nested secret classification', () => {
+    const changedFiles = ['config/.env.production'];
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles,
+      filesClassification: classifyFiles(changedFiles),
+    });
+
+    expect(result).toContain('touch_secrets');
+  });
+
   it('PR opened with filesClassification override', () => {
     const result = inferActions({
       eventType: 'pull_request.opened',

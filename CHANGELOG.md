@@ -36,6 +36,8 @@ semantic versioning.
 
 ### Fixed
 
+- Secret filenames such as nested environment files, private keys, identity
+  keys, and `secrets.*` files are now protected at every repository depth.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

@@ -86,6 +86,15 @@ describe('classifyFiles', () => {
     expect(result.secretFilesDetected).toBe(true);
   });
 
+  it.each([
+    'config/.env.local',
+    'certificates/service.pem',
+    'keys/id_rsa',
+    'config/secrets.yml',
+  ])('detects protected secret filename %s at nested depth', (filePath) => {
+    expect(classifyFiles([filePath]).secretFilesDetected).toBe(true);
+  });
+
   it('secretFilesDetected is false when no secret files', () => {
     const result = classifyFiles(['src/main.ts', 'README.md']);
     expect(result.secretFilesDetected).toBe(false);

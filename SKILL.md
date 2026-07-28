@@ -20,13 +20,15 @@ description: Implement or review deterministic AI-agent governance changes in AG
 9. Regenerate distributions with `pnpm build`; never hand-edit them.
 10. If policy validation changed, run `pnpm generate:schema`.
 11. If decision behavior changed, update a portable fixture that proves the
-   repository-facing contract.
-12. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
-13. Run `pnpm verify`.
-14. Run the explicit `agentowners self-check` contract before opening a pull
-   request.
-15. For release-facing changes, run `pnpm verify:packages`.
-16. In the pull request, disclose agent use, overlap, exact evidence, risks,
+    repository-facing contract.
+12. If secret filename classification changed, test the same protected
+    basenames at root and nested depth and prove no matched value is exposed.
+13. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
+14. Run `pnpm verify`.
+15. Run the explicit `agentowners self-check` contract before opening a pull
+    request.
+16. For release-facing changes, run `pnpm verify:packages`.
+17. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

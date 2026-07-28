@@ -33277,13 +33277,13 @@ var AUTH_PATTERNS = [
   "**/rbac/**"
 ];
 var SECRET_FILE_PATTERNS = [
-  ".env",
-  ".env.*",
-  "*.pem",
-  "*.key",
-  "id_rsa",
-  "id_ed25519",
-  "secrets.*"
+  "**/.env",
+  "**/.env.*",
+  "**/*.pem",
+  "**/*.key",
+  "**/id_rsa",
+  "**/id_ed25519",
+  "**/secrets.*"
 ];
 var SECRET_DIFF_PATTERNS = [
   "AWS_SECRET_ACCESS_KEY",
