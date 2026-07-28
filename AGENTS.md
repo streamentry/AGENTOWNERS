@@ -49,6 +49,7 @@ packages/core/src/
 
 packages/core/tests/
   adversarial-corpus.test.ts — table-driven safety regression corpus
+  custom-agents.test.ts — custom-agent frontmatter and privilege contracts
   schema.test.ts     — Zod schema validation
   json-schema.test.ts — generated-schema parity and drift protection
   loader.test.ts     — YAML loading and file resolution

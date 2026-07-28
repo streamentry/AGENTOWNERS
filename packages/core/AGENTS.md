@@ -16,6 +16,7 @@ network calls, clocks, randomness, or persistent state.
 - `evaluator.ts`: precedence and decision construction
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
+- `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
 
 ## Diagrams
 
@@ -62,6 +63,7 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
