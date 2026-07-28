@@ -104,6 +104,11 @@ Options:
 - `--commit <ref>` — analyze a specific commit (default: HEAD)
 - `--output <format>` — `text` | `json`
 
+The command reads the requested commit directly so the repository's initial
+commit is supported. Missing refs and non-repository execution exit `2` with a
+bounded diagnostic; unavailable Git evidence must not become a successful
+`unknown` fingerprint.
+
 Output:
 
 ```
@@ -148,4 +153,5 @@ Agent detection result:
 - `validate` exits 1 with error messages on invalid policy
 - `check` returns correct exit code by mode
 - `fingerprint` detects Co-Authored-By signals
+- `fingerprint` supports root commits and rejects unavailable evidence
 - `self-check` covers every public exit code and hostile Git refs

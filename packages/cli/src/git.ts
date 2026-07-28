@@ -28,6 +28,16 @@ export function getCommitMessages(base: string, head: string, cwd?: string): str
   return output.split('\n').filter(Boolean);
 }
 
+export function getCommitMessage(commit: string, cwd?: string): string[] {
+  const output = exec(
+    'git',
+    ['show', '--no-patch', '--format=%s%n%b', '--end-of-options', commit],
+    cwd,
+  );
+  if (!output) return [];
+  return output.split('\n').filter(Boolean);
+}
+
 export function getCurrentActor(cwd?: string): string | null {
   try {
     const name = exec('git', ['config', 'user.name'], cwd);

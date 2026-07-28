@@ -1,6 +1,6 @@
 import { Command } from 'commander'
 import { detectAgent } from '@agent-owners/core'
-import { getCommitMessages, getCurrentActor } from '../git.js'
+import { getCommitMessage, getCurrentActor } from '../git.js'
 
 export function registerFingerprint(program: Command): void {
   program
@@ -10,15 +10,13 @@ export function registerFingerprint(program: Command): void {
     .option('--output <format>', 'Output format: text | json', 'text')
     .action((options: { commit: string; output: string }) => {
       const cwd = process.cwd()
-      const head = options.commit
-      // get messages for the single commit
-      const base = `${head}~1`
-
-      let commitMessages: string[] = []
+      let commitMessages: string[]
       try {
-        commitMessages = getCommitMessages(base, head, cwd)
+        commitMessages = getCommitMessage(options.commit, cwd)
       } catch {
-        // initial commit or not in git — leave empty
+        process.stderr.write('Error reading requested commit. Verify the ref and repository.\n')
+        process.exit(2)
+        return
       }
 
       const actor = getCurrentActor(cwd) ?? 'unknown'

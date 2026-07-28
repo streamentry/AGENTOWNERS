@@ -22,11 +22,13 @@ description: Implement or review deterministic AI-agent governance changes in AG
 11. If decision behavior changed, update a portable fixture that proves the
    repository-facing contract.
 12. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
-13. Run `pnpm verify`.
-14. Run the explicit `agentowners self-check` contract before opening a pull
+13. If CLI Git evidence acquisition changed, prove root commits, missing refs,
+    non-repository failure, and option-like refs without swallowing errors.
+14. Run `pnpm verify`.
+15. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-15. For release-facing changes, run `pnpm verify:packages`.
-16. In the pull request, disclose agent use, overlap, exact evidence, risks,
+16. For release-facing changes, run `pnpm verify:packages`.
+17. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

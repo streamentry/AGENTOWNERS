@@ -296,6 +296,8 @@ These are roadmap items for v2+ (see spec section 27).
 6. **Skipping barrel export** — always add new exports to `src/index.ts`
 7. **Writing Git config in tests** — pass fixture identity through the commit
    subprocess environment; never mutate contributor repository configuration
+8. **Swallowing fingerprint Git errors** — missing evidence is not evidence of
+   absence; root commits work directly and invalid refs fail loudly
 
 ## Roadmap hooks (design for these, don't build yet)
 

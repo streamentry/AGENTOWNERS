@@ -36,6 +36,9 @@ semantic versioning.
 
 ### Fixed
 
+- `fingerprint --commit` now reads root commits directly and fails loudly when
+  the requested Git evidence is unavailable instead of reporting an empty,
+  successful fingerprint.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

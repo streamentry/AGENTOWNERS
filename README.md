@@ -235,6 +235,10 @@ classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
 
+`fingerprint` reads the requested commit directly, including a repository's
+initial commit. Missing refs and unavailable Git state fail loudly rather than
+returning an empty identity result.
+
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial
 fingerprints, and repository-relative locations are stable across equivalent

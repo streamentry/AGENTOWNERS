@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
-import { getChangedFiles, getCommitMessages } from '../src/git.js';
+import { getChangedFiles, getCommitMessage, getCommitMessages } from '../src/git.js';
 
 const temporaryDirectories: string[] = [];
 
@@ -49,6 +49,12 @@ afterEach(async () => {
 });
 
 describe('git revision option boundaries', () => {
+  it('reads evidence from the repository root commit', async () => {
+    const repository = await makeRepository();
+
+    expect(getCommitMessage('HEAD', repository)).toEqual(['initial']);
+  });
+
   it('does not let a diff revision write an arbitrary file through --output', async () => {
     const repository = await makeRepository();
     const target = join(repository, 'diff-output');
@@ -63,5 +69,13 @@ describe('git revision option boundaries', () => {
 
     expect(() => getCommitMessages(`--output=${target}`, 'HEAD', repository)).toThrow();
     expect(existsSync(`${target}..HEAD`)).toBe(false);
+  });
+
+  it('does not let a single-commit revision write through --output', async () => {
+    const repository = await makeRepository();
+    const target = join(repository, 'show-output');
+
+    expect(() => getCommitMessage(`--output=${target}`, repository)).toThrow();
+    expect(existsSync(target)).toBe(false);
   });
 });

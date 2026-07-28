@@ -40,6 +40,10 @@ Git option even though the CLI uses an argv subprocess API.
 **Protection**: Git ranges are placed after `--end-of-options`, and pathspec
 arguments use the explicit `--` separator.
 
+The local `fingerprint` adapter reads the requested commit directly, including
+root commits. A missing ref, invalid repository, or other Git failure exits
+nonzero instead of becoming an empty successful fingerprint.
+
 ### 7. Privilege escalation via GitHub Action
 **Threat**: The AGENTOWNERS action itself is used to perform unauthorized operations.  
 **Protection**: Minimum required permissions (`contents: read`, `pull-requests: write`, `issues: write`). No `secrets:read`, no `administration:write`.
