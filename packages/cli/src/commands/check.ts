@@ -35,9 +35,18 @@ type GitInputs = {
   commitNames: string[];
 };
 
+const CHECK_MODES = ['advisory', 'enforcement', 'dry-run'] as const;
+
 function validateOutput(output: string): boolean {
   if (['text', 'json', 'sarif'].includes(output)) return true;
   process.stderr.write('Output format must be one of: text, json, sarif.\n');
+  process.exit(64);
+  return false;
+}
+
+function validateMode(mode: string): mode is CheckOptions['mode'] {
+  if (CHECK_MODES.includes(mode as CheckOptions['mode'])) return true;
+  process.stderr.write('Mode must be one of: advisory, enforcement, dry-run.\n');
   process.exit(64);
   return false;
 }
@@ -105,6 +114,7 @@ function writeDecision(decision: Decision, output: string, actor: string): void 
 
 async function executeCheck(options: CheckOptions): Promise<void> {
   if (!validateOutput(options.output)) return;
+  if (!validateMode(options.mode)) return;
   const policy = await loadPolicy(options);
   if (!policy) return;
   const inputs = readGit(options);

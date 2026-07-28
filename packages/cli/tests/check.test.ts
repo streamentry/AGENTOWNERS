@@ -92,4 +92,13 @@ describe('check command SARIF output', () => {
     expect(getChangedFiles).not.toHaveBeenCalled();
     expect(stdout).toBe('');
   });
+
+  it('fails loudly for an unsupported mode before reading Git', async () => {
+    await program().parseAsync(['node', 'agentowners', 'check', '--mode', 'silent']);
+
+    expect(process.exit).toHaveBeenCalledWith(64);
+    expect(stderr).toContain('Mode must be one of: advisory, enforcement, dry-run.');
+    expect(getChangedFiles).not.toHaveBeenCalled();
+    expect(stdout).toBe('');
+  });
 });

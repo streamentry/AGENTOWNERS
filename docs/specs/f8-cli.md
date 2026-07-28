@@ -76,8 +76,8 @@ Behavior:
 6. Evaluate policy
 7. Render verdict
 
-SARIF output follows `f12-sarif-output.md`. Unsupported formats exit `64`
-before reading Git.
+SARIF output follows `f12-sarif-output.md`. Unsupported output formats and
+modes exit `64` before reading Git.
 
 Exit codes:
 
