@@ -110,6 +110,7 @@ docs/assets/          — maintained documentation and social-preview media
   ideas.yml           — evidence-first feature proposal intake
 
 CONTRIBUTING.md       — contribution lanes, review contract, and required evidence matrix
+GOVERNANCE.md         — independent review quorum, decision rights, and release authority
 SKILL.md              — compact execution workflow for compatible coding agents
 
 scripts/

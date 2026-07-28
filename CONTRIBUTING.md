@@ -20,6 +20,10 @@ revising the change. Input and environment failures use exits `64` through
 
 ## For humans
 
+Read [GOVERNANCE.md](GOVERNANCE.md) before reviewing or merging. It defines
+independence, conflict handling, unavailable-reviewer fallback, and the
+separate release-authority boundary.
+
 ### Setup
 
 ```bash
