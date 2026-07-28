@@ -18,6 +18,8 @@ semantic versioning.
 
 ### Changed
 
+- Defined contribution lanes, overlap checks, attribution expectations, and
+  evidence-based maintainer review outcomes.
 - Replaced the vulnerable `minimatch` dependency chain with dependency-free
   `picomatch`.
 - Updated the GitHub Actions toolkit dependencies.

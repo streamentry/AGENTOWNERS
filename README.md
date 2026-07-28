@@ -410,6 +410,10 @@ Design principles:
 The repository is designed for both human and agent contributors:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) defines the evidence and PR contract.
+- [Good first issues](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22good+first+issue%22)
+  provide bounded entry work that does not change enforcement semantics.
+- [Help wanted](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22help+wanted%22)
+  identifies deeper work with explicit acceptance criteria.
 - [AGENTS.md](AGENTS.md) maps the codebase and immutable invariants.
 - [SKILL.md](SKILL.md) gives compatible agents a compact execution workflow.
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
@@ -417,6 +421,8 @@ The repository is designed for both human and agent contributors:
 
 High-value contributions are adversarial fixtures, policy ambiguity reports,
 cross-platform Git edge cases, and small integrations backed by a failing test.
+Overlapping work receives an evidence-based disposition; distinct tests are
+not discarded merely because another implementation landed first.
 
 ---
 

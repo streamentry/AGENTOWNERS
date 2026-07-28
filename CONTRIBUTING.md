@@ -39,6 +39,63 @@ Node.js 22+ and pnpm 9+ required.
 4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
 5. **Open a PR:** use a conventional-commit title and complete the evidence template
 
+### Choose a contribution lane
+
+Use the narrowest label that matches the work:
+
+- [`good first issue`](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22good+first+issue%22):
+  bounded examples, documentation, or tests that do not change enforcement
+  semantics.
+- [`help wanted`](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22help+wanted%22):
+  scoped work with an explicit contract and acceptance criteria.
+- `core-review`: changes that can alter policy decisions. A human maintainer
+  must review the decision boundary and mutation evidence.
+- `dependency-review`: dependency or release-supply-chain changes. Packed
+  consumer verification is mandatory.
+- `needs-rebase`: useful work based on stale `main`. Rebase before review
+  continues; do not discard distinct evidence merely because other coverage
+  landed first.
+
+If an issue lacks a bounded contract, use
+[Discussions](https://github.com/streamentry/AGENTOWNERS/discussions) before
+writing code. Comment on an issue before starting substantial work when
+parallel implementation is likely.
+
+### Maintainer review contract
+
+Every reviewed contribution should receive one explicit disposition:
+
+1. **Approve:** the change is bounded, correct, and adequately verified.
+2. **Request changes:** name the failing invariant, missing evidence, or
+   compatibility risk in falsifiable terms.
+3. **Rebase and retain:** identify upstream overlap and list the distinct tests,
+   fixes, or documentation that remain valuable.
+4. **Superseded:** link the exact commit or PR that replaced the work and state
+   whether any distinct contribution remains.
+5. **Out of scope:** cite the documented non-goal or roadmap boundary.
+
+Maintainers should not close an overlapping contribution with a generic
+"already fixed" response. Compare exact behavior first. Distinct tests and
+failure reproductions remain valuable even when another implementation landed.
+When contributor evidence materially informs a later change, preserve
+attribution in the PR, commit, or release notes.
+
+This contract governs disposition quality, not response time. Silence is not
+approval, and a green test run is not proof that a contribution belongs in the
+product.
+
+### Handling overlap
+
+Before opening a PR:
+
+1. Refresh `origin/main`.
+2. Search open and recently merged PRs for the same invariant.
+3. State which behavior is new and which existing behavior is deliberately
+   unchanged.
+4. If upstream work lands first, rebase and remove duplicated assertions.
+5. Keep distinct counterexamples, mutation-sensitive tests, and compatibility
+   findings.
+
 ### Commit format
 
 ```

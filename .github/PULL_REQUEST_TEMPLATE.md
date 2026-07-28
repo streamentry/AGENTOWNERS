@@ -2,6 +2,12 @@
 
 <!-- What concrete problem does this solve? Link the issue. -->
 
+Issue:
+
+Overlap checked:
+
+<!-- Link related open or recently merged PRs. State what remains distinct. -->
+
 ## What changed
 
 <!-- Keep this bounded. Name any deliberately untouched area. -->
@@ -15,6 +21,7 @@
 - [ ] Public API and policy changes are documented
 - [ ] No secret, generated junk, or unrelated refactor is included
 - [ ] Decision priority remains `block > require_approval > allow`
+- [ ] Open and recently merged work was checked for overlap
 
 ## Agent disclosure
 
