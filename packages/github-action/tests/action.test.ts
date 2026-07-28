@@ -192,6 +192,14 @@ describe('GitHub Action — integration via mocks', () => {
     await import('../src/index.js');
 
     await vi.waitFor(() => {
+      expect(core.detectAgent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prTitle: undefined,
+          prBody: undefined,
+          issueBody: 'The reproduction includes a leaked token.',
+          commentBody: undefined,
+        }),
+      );
       expect(core.evaluatePolicy).toHaveBeenCalledWith(
         expect.objectContaining({
           issueTitle: 'Security report: exposed credential',

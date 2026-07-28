@@ -33384,9 +33384,20 @@ function matchesConfiguredPattern(value, pattern) {
   }
 }
 function detectAgent(input) {
-  const { actor, commitMessages = [], prTitle, prBody, commentBody, labels = [], policy } = input;
+  const {
+    actor,
+    commitMessages = [],
+    prTitle,
+    prBody,
+    issueBody,
+    commentBody,
+    labels = [],
+    policy
+  } = input;
   const signals = [];
-  const bodyTexts = [prBody, commentBody].filter((value) => value !== void 0);
+  const bodyTexts = [prBody, issueBody, commentBody].filter(
+    (value) => value !== void 0
+  );
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
@@ -34417,8 +34428,9 @@ async function run() {
     });
     const agentDetection = detectAgent({
       actor,
-      prTitle: prTitle ?? issueTitle,
-      prBody: prBody ?? issueBody,
+      prTitle,
+      prBody,
+      issueBody,
       commentBody,
       labels,
       policy

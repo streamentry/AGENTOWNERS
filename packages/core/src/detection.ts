@@ -5,6 +5,7 @@ export type AgentDetectionInput = {
   commitMessages?: string[];
   prTitle?: string;
   prBody?: string;
+  issueBody?: string;
   commentBody?: string;
   labels?: string[];
   policy?: AgentOwnersPolicy;
@@ -64,9 +65,20 @@ function matchesConfiguredPattern(value: string | undefined, pattern: string): b
 }
 
 export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
-  const { actor, commitMessages = [], prTitle, prBody, commentBody, labels = [], policy } = input;
+  const {
+    actor,
+    commitMessages = [],
+    prTitle,
+    prBody,
+    issueBody,
+    commentBody,
+    labels = [],
+    policy,
+  } = input;
   const signals: string[] = [];
-  const bodyTexts = [prBody, commentBody].filter((value): value is string => value !== undefined);
+  const bodyTexts = [prBody, issueBody, commentBody].filter(
+    (value): value is string => value !== undefined,
+  );
 
   // 1. Policy match (confirmed)
   if (policy) {

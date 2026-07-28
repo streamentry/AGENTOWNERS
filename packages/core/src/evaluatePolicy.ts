@@ -37,6 +37,7 @@ export function evaluatePolicy(input: EvaluatePolicyInput): Decision {
     policy,
     prTitle: event.prTitle,
     prBody: event.prBody,
+    issueBody: event.issueBody,
     labels: event.labels,
   });
 

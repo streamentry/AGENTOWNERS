@@ -191,8 +191,9 @@ export async function run(): Promise<void> {
     // Extend policy actors with known-agent-actors input
     const agentDetection = detectAgent({
       actor,
-      prTitle: prTitle ?? issueTitle,
-      prBody: prBody ?? issueBody,
+      prTitle,
+      prBody,
+      issueBody,
       commentBody,
       labels,
       policy,

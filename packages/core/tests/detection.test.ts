@@ -185,6 +185,28 @@ describe('detectAgent', () => {
     expect(result.agentName).toBe('comment-agent');
   });
 
+  it('policy body pattern matches an issue body without treating it as a PR body', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'issue-agent': {
+          match: {
+            bodyPatterns: ['generated issue report'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      issueBody: 'This is a generated issue report.',
+      policy,
+    });
+
+    expect(result.confidence).toBe('confirmed');
+    expect(result.agentName).toBe('issue-agent');
+  });
+
   it('agent signature in an issue comment body is likely evidence', () => {
     const result = detectAgent({
       actor: 'human-user',
