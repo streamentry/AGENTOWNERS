@@ -78,8 +78,8 @@ node packages/cli/dist/index.js validate .github/AGENTOWNERS.yml
 node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 ```
 
-Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
-artifact smoke tests.
+Run `pnpm verify` to execute lint, type checking, the executable product proof,
+all tests, builds, and release artifact smoke tests.
 
 ### Prove the product in one command
 

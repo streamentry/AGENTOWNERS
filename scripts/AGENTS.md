@@ -9,6 +9,7 @@ clock, randomness, credentials, or policy execution side effects.
 ## Key components
 
 - `demo.mjs` runs the production CLI against the strict-OSS example fixtures.
+- `pnpm verify:demo` runs the same proof as a regression gate after building.
 - `verify-release.mjs` validates generated package and Action release artifacts.
 - `verify-packed-packages.mjs` tests isolated packed-package consumers.
 - `verify-doc-links.mjs` checks repository documentation links.

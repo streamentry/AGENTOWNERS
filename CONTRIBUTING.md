@@ -51,7 +51,7 @@ Node.js 22+ and pnpm 9+ required.
 1. **Find or create an issue:** all work starts with an issue
 2. **Fork and branch:** `feat/my-feature` or `fix/the-bug`
 3. **Write tests first:** capture the intended behavior with a failing test
-4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
+4. **Run `pnpm verify`:** lint, types, executable demo, build, tests, and release smoke tests
 5. **Open a PR:** use a conventional-commit title and complete the evidence template
 
 For a fast first proof that the repository is working, run `pnpm demo` after

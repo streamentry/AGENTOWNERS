@@ -30,6 +30,7 @@ semantic versioning.
   interoperability.
 - One-command executable product proof covering approval, block, and dependency
   review outcomes through the production CLI.
+- Continuous verification of the executable product proof through `pnpm verify`.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.
