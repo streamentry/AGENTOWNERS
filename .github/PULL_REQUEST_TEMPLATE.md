@@ -25,11 +25,25 @@ Overlap checked:
 <!-- Paste exact commands and concise results. Do not say "tests pass" if any were skipped. -->
 
 - [ ] `pnpm verify`
+- [ ] `agentowners self-check` was run against the immutable `origin/main` base
+      and the current head; include its decision and exit code below.
 - [ ] New or changed behavior has a test that fails without the implementation
 - [ ] Public API and policy changes are documented
 - [ ] No secret, generated junk, or unrelated refactor is included
 - [ ] Decision priority remains `block > require_approval > allow`
 - [ ] Open and recently merged work was checked for overlap
+- [ ] If documentation or links changed, `pnpm verify:docs` passes.
+- [ ] If packages or release artifacts changed, `pnpm verify:packages` passes.
+
+Self-check result:
+
+<!-- Paste the compact JSON decision and exit code. A require_approval result is
+not a failure; it is an explicit human-review requirement. -->
+
+Focused evidence:
+
+<!-- Name the focused test, fixture, mutation, or command that reaches the
+changed branch. Full-suite green is not a substitute for this proof. -->
 
 ## Agent disclosure
 

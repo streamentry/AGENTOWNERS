@@ -51,7 +51,8 @@ sequenceDiagram
 
 ## Verification
 
-Discussion form filenames must match category slugs. The pull-request template
-must route each change to the narrowest review lane before human review. Validate
-YAML structure, run `pnpm verify`, and never modify workflows when policy
-self-check blocks it.
+Discussion form filenames must match category slugs. The feature form must
+capture acceptance criteria and a cheapest disconfirming test. The pull-request
+template must route each change to the narrowest review lane and record the
+self-check result before human review. Validate YAML structure, run `pnpm
+verify`, and never modify workflows when policy self-check blocks it.

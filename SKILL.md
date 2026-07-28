@@ -31,7 +31,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
 16. Run the explicit `agentowners self-check` contract before opening a pull
    request.
 17. For release-facing changes, run `pnpm verify:packages`.
-18. In the pull request, disclose agent use, overlap, exact evidence, risks,
+18. For documentation-only changes, run `pnpm verify:docs` and use the pull
+   request template's focused-evidence fields.
+19. In the pull request, disclose agent use, overlap, exact evidence, risks,
    attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

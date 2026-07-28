@@ -249,6 +249,10 @@ merged work for the same invariant. If another contribution overlaps, preserve
 distinct counterexamples and mutation evidence. Do not replace an external
 contribution silently; record the exact overlap and attribution in the PR.
 
+Before opening a PR, complete `.github/PULL_REQUEST_TEMPLATE.md`: include the
+immutable-base self-check decision and exit code, focused evidence for the
+changed branch, and the conditional documentation or packed-package gates.
+
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 
 ## TypeScript rules
