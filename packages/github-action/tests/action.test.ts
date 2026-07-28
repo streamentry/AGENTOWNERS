@@ -140,7 +140,10 @@ function setupInputs(overrides: Record<string, string> = {}): void {
   mockCore.getInput.mockImplementation((name: string) => merged[name] ?? '');
 }
 
-function setupOctokitPR(files: string[] = ['src/index.ts']): void {
+function setupOctokitPR(
+  files: string[] = ['src/index.ts'],
+  changedFilesCount = files.length,
+): void {
   mockOctokit.rest.pulls.listFiles.mockResolvedValue({
     data: files.map((f) => ({ filename: f })),
   });
@@ -154,7 +157,7 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
       commits: 1,
       additions: 10,
       deletions: 5,
-      changed_files: 1,
+      changed_files: changedFilesCount,
       base: { ref: 'main', sha: 'base-sha' },
       head: { ref: 'feature-branch' },
     },
@@ -334,6 +337,19 @@ describe('GitHub Action — integration via mocks', () => {
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-score', '10');
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-level', 'low');
     expect(mockCore.setFailed).not.toHaveBeenCalled();
+  });
+
+  it('fails closed before evaluation when declared PR files exceed the API limit', async () => {
+    setupInputs({ mode: 'dry-run' });
+    setupOctokitPR([], 3001);
+
+    const core = await import('@agent-owners/core');
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.pulls.listFiles).not.toHaveBeenCalled();
+    expect(core.evaluatePolicy).not.toHaveBeenCalled();
+    expect(mockCore.setFailed).toHaveBeenCalledWith(expect.stringContaining('3,000-file'));
   });
 
   it('block with fail-on-block=true → setFailed called', async () => {

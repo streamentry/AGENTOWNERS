@@ -178,6 +178,7 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+| Complete PR file set | Bind API pagination to `changed_files`; incomplete enumeration fails closed |
 
 ## How to add a new feature
 
@@ -298,9 +299,11 @@ These are roadmap items for v2+ (see spec section 27).
 4. **Printing secret values** — always redact with `[REDACTED]`
 5. **Dropping rename source paths** — GitHub `previous_filename` remains
    security-relevant when a sensitive file moves to an innocuous destination
-6. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
-7. **Skipping barrel export** — always add new exports to `src/index.ts`
-8. **Writing Git config in tests** — pass fixture identity through the commit
+6. **Trusting a short file list** — GitHub caps pull request file enumeration at
+   3,000; bind the list to metadata and fail closed on ambiguity
+7. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
+8. **Skipping barrel export** — always add new exports to `src/index.ts`
+9. **Writing Git config in tests** — pass fixture identity through the commit
    subprocess environment; never mutate contributor repository configuration
 
 ## Roadmap hooks (design for these, don't build yet)

@@ -24,7 +24,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 12. If decision behavior changed, update a portable fixture that proves the
     repository-facing contract.
 13. If GitHub file ingestion changed, test pagination, missing patches, and
-    rename source and destination paths before evaluation.
+    rename source and destination paths before evaluation. Bind pagination to
+    the declared file count and reject API-limit ambiguity.
 14. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
 15. Run `pnpm verify`.
 16. Run the explicit `agentowners self-check` contract before opening a pull

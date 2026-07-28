@@ -34168,6 +34168,8 @@ function isRepositoryPath(value) {
 }
 
 // src/github.ts
+var MAX_PULL_REQUEST_FILES = 3e3;
+var FILES_PER_PAGE = 100;
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {
   const { data } = await octokit.rest.repos.getContent({
     owner,
@@ -34180,19 +34182,37 @@ async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {
   }
   return Buffer.from(data.content.replaceAll("\n", ""), "base64").toString("utf8");
 }
-async function getPRFiles(octokit, owner, repo, pullNumber) {
+async function getPRFiles(octokit, owner, repo, pullNumber, expectedFileCount) {
+  if (expectedFileCount !== void 0 && (!Number.isSafeInteger(expectedFileCount) || expectedFileCount < 0)) {
+    throw new Error("Pull request changed-file count must be a non-negative safe integer.");
+  }
+  if (expectedFileCount !== void 0 && expectedFileCount > MAX_PULL_REQUEST_FILES) {
+    throw new Error(
+      `Pull request reports ${expectedFileCount} changed files, exceeding GitHub's 3,000-file API limit.`
+    );
+  }
+  if (expectedFileCount === 0) {
+    return { files: [], diffContent: "", patchesComplete: true };
+  }
   const files = /* @__PURE__ */ new Set();
   const patches = [];
   let patchesComplete = true;
+  let listedFileCount = 0;
   let page = 1;
   while (true) {
     const response = await octokit.rest.pulls.listFiles({
       owner,
       repo,
       pull_number: pullNumber,
-      per_page: 100,
+      per_page: FILES_PER_PAGE,
       page
     });
+    listedFileCount += response.data.length;
+    if (expectedFileCount !== void 0 && listedFileCount > expectedFileCount) {
+      throw new Error(
+        `Pull request reported ${expectedFileCount} files but returned more than that count.`
+      );
+    }
     for (const file of response.data) {
       files.add(file.filename);
       if (file.status === "renamed" && typeof file.previous_filename === "string" && file.previous_filename.length > 0 && file.previous_filename !== file.filename) {
@@ -34204,10 +34224,21 @@ async function getPRFiles(octokit, owner, repo, pullNumber) {
         patchesComplete = false;
       }
     }
-    if (response.data.length < 100) {
+    if (expectedFileCount !== void 0 && listedFileCount === expectedFileCount) {
       break;
     }
+    if (response.data.length < FILES_PER_PAGE) break;
+    if (listedFileCount >= MAX_PULL_REQUEST_FILES) {
+      throw new Error(
+        "Pull request file enumeration reached GitHub's ambiguous 3,000-file API limit."
+      );
+    }
     page++;
+  }
+  if (expectedFileCount !== void 0 && listedFileCount !== expectedFileCount) {
+    throw new Error(
+      `Pull request reported ${expectedFileCount} files but returned ${listedFileCount}.`
+    );
   }
   return {
     files: [...files],
@@ -34360,7 +34391,13 @@ async function run() {
       const inferredEvent = `pull_request.${prAction}`;
       eventType = validPrActions.includes(inferredEvent) ? inferredEvent : "pull_request.opened";
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
-      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        metadata.changedFiles
+      );
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
@@ -34408,7 +34445,13 @@ async function run() {
       reviewState = review?.state;
       actor = review?.user?.login || actor;
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
-      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        metadata.changedFiles
+      );
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;

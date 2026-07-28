@@ -27,3 +27,8 @@ moving major-version tag.
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes `agentowners-decision.json` for downstream audit
 artifact upload.
+
+GitHub's pull-request files API returns at most 3,000 files. AGENTOWNERS accepts
+exactly 3,000 only when pull request metadata proves the list is complete. It
+fails closed for larger or inconsistent counts; split such changes into smaller
+pull requests before evaluation.
