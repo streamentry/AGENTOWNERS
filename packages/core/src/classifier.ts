@@ -60,6 +60,13 @@ const SECRET_DIFF_PATTERNS = [
   'TOKEN=',
 ];
 
+const SECRET_DIFF_REGEX_PATTERNS = [
+  {
+    name: 'PEM_PRIVATE_KEY',
+    pattern: /-----BEGIN(?: [A-Z0-9]+){0,3} PRIVATE KEY-----/,
+  },
+] as const;
+
 export function matchGlob(pattern: string, filePath: string): boolean {
   return picomatch.isMatch(filePath, pattern, { dot: true });
 }
@@ -107,6 +114,11 @@ export function detectSecretPatterns(diffContent: string): string[] {
     const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
     if (regex.test(diffContent)) {
       matched.push(pattern);
+    }
+  }
+  for (const { name, pattern } of SECRET_DIFF_REGEX_PATTERNS) {
+    if (pattern.test(diffContent)) {
+      matched.push(name);
     }
   }
   return matched;

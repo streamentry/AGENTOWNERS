@@ -58,7 +58,8 @@ const decision = evaluatePolicyFromEvent({
   commit metadata, labels, titles, and bodies are `unverified` evidence.
 - File-based actions use the same canonical classifier whether callers provide
   a classification or let the engine derive one from changed paths. Diff
-  content can add `touch_secrets`, but matched secret values are never exposed.
+  content, including standard PEM private-key headers, can add
+  `touch_secrets`, but matched secret values are never exposed.
 - Unverified labels, titles, and bodies cannot satisfy an `allow` rule for
   sensitive actions unless the same rule also names a trusted actor or verified
   agent.

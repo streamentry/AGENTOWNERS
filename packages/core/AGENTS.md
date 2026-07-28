@@ -107,8 +107,8 @@ list silently bypasses action-scoped rules.
 `inferActions` must derive omitted classifications through `classifier.ts`,
 not a second path-pattern implementation. The same changed paths must produce
 the same file actions whether classification is supplied or derived. If diff
-content is supplied, secret-pattern matches must add `touch_secrets` without
-returning the matched value.
+content is supplied, secret-pattern matches, including standard PEM private-key
+headers, must add `touch_secrets` without returning the matched value.
 Portable fixture suites may include `diff_content` only for pull-request
 events. The runner must combine its redacted secret scan with file
 classification before inference and evaluation, so fixture behavior matches

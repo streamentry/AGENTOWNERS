@@ -106,6 +106,17 @@ describe('detectSecretPatterns', () => {
     expect(matches.join('')).not.toContain('AKIASECRETVALUE');
   });
 
+  it('detects PEM private-key headers without returning key material', () => {
+    const diff = [
+      '+-----BEGIN OPENSSH PRIVATE KEY-----',
+      '+base64-private-key-material',
+      '+-----END OPENSSH PRIVATE KEY-----',
+    ].join('\n');
+    const matches = detectSecretPatterns(diff);
+    expect(matches).toContain('PEM_PRIVATE_KEY');
+    expect(matches.join('')).not.toContain('base64-private-key-material');
+  });
+
   it('returns empty array when no secrets found', () => {
     const diff = 'const x = 1; function foo() {}';
     const matches = detectSecretPatterns(diff);
