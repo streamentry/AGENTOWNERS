@@ -104,6 +104,11 @@ adversarial corpus.
 The simplified `evaluatePolicy.ts` wrapper must infer actions from its event
 and changed files before delegating to the canonical evaluator; an empty action
 list silently bypasses action-scoped rules.
+`inferActions` must derive omitted classifications through `classifier.ts`,
+not a second path-pattern implementation. The same changed paths must produce
+the same file actions whether classification is supplied or derived. If diff
+content is supplied, secret-pattern matches must add `touch_secrets` without
+returning the matched value.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 Threshold conditions `diff_lines_over` and `commits_over` must remain

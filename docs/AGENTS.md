@@ -24,6 +24,9 @@ The verdict-renderer specification must keep human-readable Markdown escaped
 while leaving audit JSON structured.
 The policy reference and schema specification must describe numeric threshold
 inputs as nonnegative; negative thresholds are rejected by the runtime schema.
+The action-inference specification must keep omitted classification and
+canonical preclassification behavior equivalent, including diff-content secret
+signals that never expose matched values.
 
 ## Diagrams
 

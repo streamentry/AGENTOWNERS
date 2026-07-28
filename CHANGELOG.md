@@ -80,6 +80,8 @@ semantic versioning.
   comment author, preventing contributor-owned marker spoofing.
 - Policy validation now rejects negative diff-line and commit-count thresholds
   that could accidentally match every normal event.
+- Action inference now derives omitted file classifications through the
+  canonical classifier and detects secret patterns supplied in diff content.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 

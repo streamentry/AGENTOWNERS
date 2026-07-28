@@ -64,6 +64,13 @@ export type ActionInferenceInput = {
 };
 ```
 
+When `filesClassification` is omitted but `changedFiles` is present, the
+implementation must derive the classification through the canonical F3
+classifier. Supplying a precomputed classification and letting the function
+derive one from the same paths must produce the same file-based actions. When
+`diffContent` is provided, secret-pattern matches must add `touch_secrets`;
+the matched values are never returned.
+
 ## Functions
 
 ### `inferActions(input: ActionInferenceInput): AgentAction[]`
@@ -87,4 +94,6 @@ mean that tests changed.
 - Review approved → `[review_comment, approve_pr]`
 - Review changes_requested → `[review_comment, request_changes]`
 - Issue labeled → `[label_issue]`
+- Omitted classification and canonical preclassification produce the same actions
+- Secret patterns in diff content infer `touch_secrets` without exposing values
 - No duplicates in output

@@ -1,5 +1,5 @@
 import type { AgentAction, GitHubEventType } from './types.js';
-import type { FilesClassification } from './classifier.js';
+import { classifyFiles, detectSecretPatterns, type FilesClassification } from './classifier.js';
 
 export type { GitHubEventType } from './types.js';
 
@@ -21,53 +21,6 @@ export type ActionInferenceInput = {
   filesClassification?: LocalFilesClassification | FilesClassification;
 };
 
-const DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
-const TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
-const DEPENDENCY_PATTERNS = [
-  /^package\.json$/,
-  /^package-lock\.json$/,
-  /^yarn\.lock$/,
-  /^pnpm-lock\.yaml$/,
-  /^Cargo\.toml$/,
-  /^Cargo\.lock$/,
-  /^go\.mod$/,
-  /^go\.sum$/,
-  /^requirements.*\.txt$/,
-  /^pyproject\.toml$/,
-  /^Pipfile/,
-  /^Gemfile/,
-];
-const WORKFLOW_PATTERNS = [/^\.github\/workflows\//];
-const AUTH_PATTERNS = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-const INFRA_PATTERNS = [
-  /^terraform\//i,
-  /\.tf$/,
-  /^infra\//i,
-  /^deploy\//i,
-  /dockerfile$/i,
-  /docker-compose/i,
-  /^k8s\//i,
-  /^kubernetes\//i,
-  /^helm\//i,
-];
-const SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
-
-function classifyFilesLocal(files: string[]): LocalFilesClassification {
-  if (files.length === 0) return {};
-
-  const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS.some((p) => p.test(f)));
-  const hasAuth = files.some((f) => AUTH_PATTERNS.some((p) => p.test(f)));
-  const hasInfra = files.some((f) => INFRA_PATTERNS.some((p) => p.test(f)));
-  const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
-  const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS.some((p) => p.test(f)));
-  const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
-
-  const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
-  const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
-}
-
 function hasClassifiedTests(classification: Record<string, unknown>): boolean {
   if (typeof classification['hasTests'] === 'boolean') {
     return classification['hasTests'];
@@ -87,6 +40,18 @@ function hasClassifiedTests(classification: Record<string, unknown>): boolean {
   return classification['testsOnly'] === true;
 }
 
+function toLocalClassification(classification: FilesClassification): LocalFilesClassification {
+  return {
+    docsOnly: classification.docsOnly,
+    hasTests: Object.values(classification.files).some((file) => file.isTests),
+    hasDependencies: classification.changesDependencies,
+    hasWorkflows: classification.changesWorkflows,
+    hasAuth: classification.changesAuth,
+    hasInfra: classification.changesInfra,
+    hasSecrets: classification.secretFilesDetected,
+  };
+}
+
 export function inferFileBasedActions(classification: LocalFilesClassification): AgentAction[] {
   const actions: AgentAction[] = [];
   if (classification.docsOnly) actions.push('modify_docs');
@@ -100,11 +65,11 @@ export function inferFileBasedActions(classification: LocalFilesClassification):
 }
 
 export function inferActions(input: ActionInferenceInput): AgentAction[] {
-  const { eventType, changedFiles, reviewState, filesClassification } = input;
+  const { eventType, changedFiles, diffContent, reviewState, filesClassification } = input;
   const actions = new Set<AgentAction>();
 
   const fc = filesClassification as Record<string, unknown> | undefined;
-  const classification: LocalFilesClassification = fc
+  const inferredClassification: LocalFilesClassification = fc
     ? {
         docsOnly:
           (fc['docsOnly'] as boolean | undefined) ??
@@ -125,8 +90,12 @@ export function inferActions(input: ActionInferenceInput): AgentAction[] {
           (fc['secretFilesDetected'] as boolean | undefined),
       }
     : changedFiles
-      ? classifyFilesLocal(changedFiles)
+      ? toLocalClassification(classifyFiles(changedFiles))
       : {};
+  const classification: LocalFilesClassification =
+    diffContent && detectSecretPatterns(diffContent).length > 0
+      ? { ...inferredClassification, hasSecrets: true }
+      : inferredClassification;
 
   switch (eventType) {
     case 'pull_request.opened':

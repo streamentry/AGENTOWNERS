@@ -33509,48 +33509,6 @@ function detectAgent(input) {
   }
   return { confidence: "unknown", signals, identityTrust: "unverified" };
 }
-var DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
-var TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
-var DEPENDENCY_PATTERNS2 = [
-  /^package\.json$/,
-  /^package-lock\.json$/,
-  /^yarn\.lock$/,
-  /^pnpm-lock\.yaml$/,
-  /^Cargo\.toml$/,
-  /^Cargo\.lock$/,
-  /^go\.mod$/,
-  /^go\.sum$/,
-  /^requirements.*\.txt$/,
-  /^pyproject\.toml$/,
-  /^Pipfile/,
-  /^Gemfile/
-];
-var WORKFLOW_PATTERNS2 = [/^\.github\/workflows\//];
-var AUTH_PATTERNS2 = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-var INFRA_PATTERNS2 = [
-  /^terraform\//i,
-  /\.tf$/,
-  /^infra\//i,
-  /^deploy\//i,
-  /dockerfile$/i,
-  /docker-compose/i,
-  /^k8s\//i,
-  /^kubernetes\//i,
-  /^helm\//i
-];
-var SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
-function classifyFilesLocal(files) {
-  if (files.length === 0) return {};
-  const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS2.some((p) => p.test(f)));
-  const hasAuth = files.some((f) => AUTH_PATTERNS2.some((p) => p.test(f)));
-  const hasInfra = files.some((f) => INFRA_PATTERNS2.some((p) => p.test(f)));
-  const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
-  const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS2.some((p) => p.test(f)));
-  const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
-  const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
-  const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
-}
 function hasClassifiedTests(classification) {
   if (typeof classification["hasTests"] === "boolean") {
     return classification["hasTests"];
@@ -33562,6 +33520,17 @@ function hasClassifiedTests(classification) {
     );
   }
   return classification["testsOnly"] === true;
+}
+function toLocalClassification(classification) {
+  return {
+    docsOnly: classification.docsOnly,
+    hasTests: Object.values(classification.files).some((file) => file.isTests),
+    hasDependencies: classification.changesDependencies,
+    hasWorkflows: classification.changesWorkflows,
+    hasAuth: classification.changesAuth,
+    hasInfra: classification.changesInfra,
+    hasSecrets: classification.secretFilesDetected
+  };
 }
 function inferFileBasedActions(classification) {
   const actions = [];
@@ -33575,10 +33544,10 @@ function inferFileBasedActions(classification) {
   return actions;
 }
 function inferActions(input) {
-  const { eventType, changedFiles, reviewState, filesClassification } = input;
+  const { eventType, changedFiles, diffContent, reviewState, filesClassification } = input;
   const actions = /* @__PURE__ */ new Set();
   const fc = filesClassification;
-  const classification = fc ? {
+  const inferredClassification = fc ? {
     docsOnly: fc["docsOnly"] ?? (fc["changesWorkflows"] === void 0 && false),
     hasTests: hasClassifiedTests(fc),
     hasDependencies: fc["hasDependencies"] ?? fc["changesDependencies"],
@@ -33586,7 +33555,8 @@ function inferActions(input) {
     hasAuth: fc["hasAuth"] ?? fc["changesAuth"],
     hasInfra: fc["hasInfra"] ?? fc["changesInfra"],
     hasSecrets: fc["hasSecrets"] ?? fc["secretFilesDetected"]
-  } : changedFiles ? classifyFilesLocal(changedFiles) : {};
+  } : changedFiles ? toLocalClassification(classifyFiles(changedFiles)) : {};
+  const classification = diffContent && detectSecretPatterns(diffContent).length > 0 ? { ...inferredClassification, hasSecrets: true } : inferredClassification;
   switch (eventType) {
     case "pull_request.opened":
     case "pull_request.reopened":

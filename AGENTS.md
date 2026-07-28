@@ -192,6 +192,7 @@ These are immutable safety rules. Never change them:
 | Trusted policy | Pull requests use `pull_request.base.sha` from the webhook event, never a later mutable metadata response |
 | Sticky comment ownership | Action updates only complete verdict markers authored by the configured `comment-author` |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+| Inference parity | `inferActions` derives omitted classifications through the canonical classifier; diff secret matches add `touch_secrets` without exposing values |
 
 ## How to add a new feature
 
