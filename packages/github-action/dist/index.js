@@ -34449,6 +34449,18 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
 }
 
 // src/index.ts
+var SUPPORTED_EVENT_ACTIONS = {
+  pull_request: ["opened", "synchronize", "reopened", "ready_for_review"],
+  issues: ["labeled", "closed", "reopened", "opened"],
+  issue_comment: ["created", "edited"]
+};
+function parseEventType(eventName, action) {
+  if (eventName === "pull_request_review") {
+    return action === "submitted" ? "pull_request_review.submitted" : void 0;
+  }
+  const supportedActions = SUPPORTED_EVENT_ACTIONS[eventName];
+  return supportedActions?.includes(action) ? `${eventName}.${action}` : void 0;
+}
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
@@ -34493,14 +34505,11 @@ async function run() {
       if (!pr) throw new Error("Missing pull_request payload");
       issueNumber = pr.number;
       const prAction = payload.action;
-      const validPrActions = [
-        "pull_request.opened",
-        "pull_request.synchronize",
-        "pull_request.reopened",
-        "pull_request.ready_for_review"
-      ];
-      const inferredEvent = `pull_request.${prAction}`;
-      eventType = validPrActions.includes(inferredEvent) ? inferredEvent : "pull_request.opened";
+      eventType = parseEventType(eventName, prAction);
+      if (!eventType) {
+        warning(`Unsupported pull_request action: ${prAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
       changedFiles = prFiles.files;
@@ -34518,7 +34527,11 @@ async function run() {
       if (!issue2) throw new Error("Missing issue payload");
       issueNumber = issue2.number;
       const issueAction = payload.action;
-      eventType = `issues.${issueAction}`;
+      eventType = parseEventType(eventName, issueAction);
+      if (!eventType) {
+        warning(`Unsupported issues action: ${issueAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
@@ -34529,7 +34542,11 @@ async function run() {
       if (!issue2) throw new Error("Missing issue payload for issue_comment");
       issueNumber = issue2.number;
       const commentAction = payload.action;
-      eventType = `issue_comment.${commentAction}`;
+      eventType = parseEventType(eventName, commentAction);
+      if (!eventType) {
+        warning(`Unsupported issue_comment action: ${commentAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
       const comment = payload.comment;
       actor = comment?.user?.login || actor;
       commentBody = comment?.body ?? void 0;
@@ -34547,7 +34564,13 @@ async function run() {
       const pr = payload.pull_request;
       if (!pr) throw new Error("Missing pull_request payload for review");
       issueNumber = pr.number;
-      eventType = "pull_request_review.submitted";
+      eventType = parseEventType(eventName, payload.action);
+      if (!eventType) {
+        warning(
+          `Unsupported pull_request_review action: ${String(payload.action)}. Skipping AGENTOWNERS check.`
+        );
+        return;
+      }
       const review = payload.review;
       reviewState = review?.state;
       actor = review?.user?.login || actor;

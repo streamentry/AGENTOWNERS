@@ -19,6 +19,22 @@ import { upsertVerdictComment } from './comment.js';
 import { parseActionMode, parseBooleanInput, requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
+const SUPPORTED_EVENT_ACTIONS: Readonly<Record<string, readonly string[]>> = {
+  pull_request: ['opened', 'synchronize', 'reopened', 'ready_for_review'],
+  issues: ['labeled', 'closed', 'reopened', 'opened'],
+  issue_comment: ['created', 'edited'],
+};
+
+function parseEventType(eventName: string, action: string): GitHubEventType | undefined {
+  if (eventName === 'pull_request_review') {
+    return action === 'submitted' ? 'pull_request_review.submitted' : undefined;
+  }
+  const supportedActions = SUPPORTED_EVENT_ACTIONS[eventName];
+  return supportedActions?.includes(action)
+    ? (`${eventName}.${action}` as GitHubEventType)
+    : undefined;
+}
+
 export async function run(): Promise<void> {
   try {
     // 1. Inputs
@@ -76,14 +92,11 @@ export async function run(): Promise<void> {
       issueNumber = pr.number as number;
 
       const prAction = payload.action as string;
-      const validPrActions: GitHubEventType[] = [
-        'pull_request.opened',
-        'pull_request.synchronize',
-        'pull_request.reopened',
-        'pull_request.ready_for_review',
-      ];
-      const inferredEvent = `pull_request.${prAction}` as GitHubEventType;
-      eventType = validPrActions.includes(inferredEvent) ? inferredEvent : 'pull_request.opened';
+      eventType = parseEventType(eventName, prAction);
+      if (!eventType) {
+        core.warning(`Unsupported pull_request action: ${prAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
 
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
@@ -103,7 +116,11 @@ export async function run(): Promise<void> {
       issueNumber = issue.number as number;
 
       const issueAction = payload.action as string;
-      eventType = `issues.${issueAction}` as GitHubEventType;
+      eventType = parseEventType(eventName, issueAction);
+      if (!eventType) {
+        core.warning(`Unsupported issues action: ${issueAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
 
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
@@ -116,7 +133,11 @@ export async function run(): Promise<void> {
       issueNumber = issue.number as number;
 
       const commentAction = payload.action as string;
-      eventType = `issue_comment.${commentAction}` as GitHubEventType;
+      eventType = parseEventType(eventName, commentAction);
+      if (!eventType) {
+        core.warning(`Unsupported issue_comment action: ${commentAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
 
       const comment = payload.comment;
       actor = (comment?.user?.login as string) || actor;
@@ -136,7 +157,13 @@ export async function run(): Promise<void> {
       const pr = payload.pull_request;
       if (!pr) throw new Error('Missing pull_request payload for review');
       issueNumber = pr.number as number;
-      eventType = 'pull_request_review.submitted';
+      eventType = parseEventType(eventName, payload.action as string);
+      if (!eventType) {
+        core.warning(
+          `Unsupported pull_request_review action: ${String(payload.action)}. Skipping AGENTOWNERS check.`,
+        );
+        return;
+      }
 
       const review = payload.review;
       reviewState = review?.state as 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;

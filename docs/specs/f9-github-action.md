@@ -81,6 +81,7 @@ runs:
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
      PR or issue fields
+   - unsupported actions → warn and stop before reading repository metadata
 5. Classify files
 6. Infer actions
 7. Detect agent
@@ -120,6 +121,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Sticky comment updated on re-run
 - Audit JSON written correctly
 - Labels applied to PR
+- Unsupported pull request, issue, comment, and review actions are skipped
 
 ## Security Requirements
 - Never print secret patterns from diff content

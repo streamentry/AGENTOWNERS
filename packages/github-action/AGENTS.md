@@ -64,3 +64,7 @@ Action inputs must fail closed: an unknown `mode` or boolean value is an error,
 never a silent no-op that bypasses comments or enforcement. Label lifecycle
 tests must prove stale managed risk labels are removed while unrelated labels
 remain untouched.
+
+Unsupported webhook actions must warn and stop before repository metadata is
+read; never coerce an unknown action into `opened` or another decision-bearing
+event.

@@ -64,6 +64,8 @@ semantic versioning.
   metadata instead of being silently ignored.
 - Issue comments now preserve whether their target is a pull request or issue,
   and their bodies participate in agent detection.
+- Unsupported GitHub webhook actions now stop before metadata reads instead of
+  being misclassified as new pull requests.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 

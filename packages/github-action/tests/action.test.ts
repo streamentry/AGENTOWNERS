@@ -436,6 +436,33 @@ describe('GitHub Action — integration via mocks', () => {
       expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
     },
   );
+
+  it.each([
+    ['pull_request', 'closed', { action: 'closed', pull_request: { number: 1 } }],
+    ['issues', 'edited', { action: 'edited', issue: { number: 1 } }],
+    [
+      'issue_comment',
+      'deleted',
+      { action: 'deleted', issue: { number: 1 }, comment: { body: 'comment' } },
+    ],
+    ['pull_request_review', 'dismissed', { action: 'dismissed', pull_request: { number: 1 } }],
+  ])(
+    'skips unsupported %s action before reading repository metadata',
+    async (eventName, _action, payload) => {
+      setupInputs();
+      mockContext.eventName = eventName;
+      mockContext.payload = payload;
+
+      const core = await import('@agent-owners/core');
+      const { run } = await import('../src/index.js');
+      await run();
+
+      expect(mockCore.warning).toHaveBeenCalledWith(expect.stringContaining('Unsupported'));
+      expect(core.evaluatePolicy).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.issues.get).not.toHaveBeenCalled();
+    },
+  );
 });
 
 // --- Unit tests for comment.ts ---
