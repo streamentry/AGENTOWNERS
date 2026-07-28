@@ -51,6 +51,8 @@ semantic versioning.
 
 - CLI human-readable output now strips terminal control sequences; the decision
   explainer also validates saved JSON before reading it.
+- Constrained bot co-author detection to a single line to prevent regex
+  backtracking on attacker-controlled body text.
 - The simplified core evaluation wrapper now preserves inferred event and file
   actions instead of silently evaluating an empty action set.
 - Exported the simplified adapter as `evaluatePolicyFromEvent` so consumers can

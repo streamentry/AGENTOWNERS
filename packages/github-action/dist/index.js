@@ -33360,7 +33360,7 @@ var AGENT_COMMIT_SIGNATURES = [
 ];
 var AGENT_LABELS = ["ai-generated", "agent", "copilot", "codex", "claude"];
 var PR_BODY_MARKERS = ["\u{1F916} Generated with", "<!-- agentowners"];
-var BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
+var BOT_CO_AUTHOR_PATTERN = /Co-authored-by:[^\r\n]*\[bot\]/i;
 function isKnownBotActor(actor) {
   return KNOWN_BOT_ACTORS.includes(actor);
 }

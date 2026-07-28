@@ -35,7 +35,7 @@ const AGENT_LABELS = ['ai-generated', 'agent', 'copilot', 'codex', 'claude'];
 
 const PR_BODY_MARKERS = ['🤖 Generated with', '<!-- agentowners'];
 
-const BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
+const BOT_CO_AUTHOR_PATTERN = /Co-authored-by:[^\r\n]*\[bot\]/i;
 
 export function isKnownBotActor(actor: string): boolean {
   return KNOWN_BOT_ACTORS.includes(actor);

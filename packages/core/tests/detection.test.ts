@@ -156,6 +156,26 @@ describe('detectAgent', () => {
     expect(result.signals.some((s) => s.includes('Co-Authored-By: Claude'))).toBe(true);
   });
 
+  it('detects a bot co-author marker without spanning lines', () => {
+    const result = detectAgent({
+      actor: 'human-user',
+      prBody: 'Co-authored-by: automation[bot] <bot@example.test>',
+    });
+
+    expect(result.confidence).toBe('likely');
+    expect(result.signals).toContain('body co-author [bot] pattern');
+  });
+
+  it('does not treat a bot marker on a later line as a co-author match', () => {
+    const result = detectAgent({
+      actor: 'human-user',
+      prBody: 'Co-authored-by:\nautomation[bot] <bot@example.test>',
+    });
+
+    expect(result.confidence).toBe('unknown');
+    expect(result.signals).not.toContain('body co-author [bot] pattern');
+  });
+
   it('PR body with 🤖 Generated with → likely', () => {
     const result = detectAgent({
       actor: 'human-user',
