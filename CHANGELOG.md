@@ -25,6 +25,8 @@ semantic versioning.
   caps.
 - Experimental `AGENT_CAPABILITIES.md` specification with a deterministic,
   fail-closed capability and hash-chained audit demonstration.
+- A tested Marketplace metadata gate covering YAML validity, listing identity,
+  bundle paths, and root/package metadata parity.
 
 ### Changed
 

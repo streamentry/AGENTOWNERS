@@ -12,6 +12,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `ecosystem.md`: source-backed control-surface comparison
 - `philosophy.md`: durable design principles
 - `roadmap.md`: explicit future scope
+- `releasing.md`: npm, GitHub Action, and Marketplace release contract
 - `assets/`: maintained documentation and social-preview media
 
 ## Diagrams
@@ -46,4 +47,6 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm verify`, check every external link against its primary source, and
-separate current product facts from roadmap claims.
+separate current product facts from roadmap claims. Distinguish offline
+Marketplace metadata checks from owner agreement, category, 2FA, and
+publication proof.

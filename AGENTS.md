@@ -115,6 +115,7 @@ SKILL.md              — compact execution workflow for compatible coding agent
 scripts/
   capability-demo.mjs   — fail-closed capability manifest simulator and audit
   capability-demo.test.mjs — deterministic denial, budget, and redaction tests
+  marketplace-metadata.mjs — Marketplace metadata and distribution parity gate
   generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
@@ -283,6 +284,9 @@ bundle whenever Action source changes.
 `packages/core/agentowners.schema.json` is also generated. Never edit it by
 hand. After changing `schema.ts` or `json-schema.ts`, run
 `pnpm generate:schema`; `pnpm verify:schema` fails on drift.
+
+Marketplace verification parses both Action metadata files and requires parity
+except for their distribution-specific `author` and `runs.main` values.
 
 ## What NOT to build (v1 non-goals)
 
