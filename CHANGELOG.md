@@ -19,6 +19,11 @@ semantic versioning.
   `picomatch`.
 - Updated the GitHub Actions toolkit dependencies.
 
+### Fixed
+
+- Malformed configured detection regex patterns no longer abort policy
+  evaluation.
+
 ## [0.1.0] - 2026-07-28
 
 ### Added

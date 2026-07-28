@@ -162,4 +162,52 @@ describe('detectAgent', () => {
     expect(result.confidence).toBe('confirmed');
     expect(result.agentName).toBe('code-agent');
   });
+
+  it('malformed configured patterns fail closed without aborting detection', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        malformed: {
+          match: {
+            bodyPatterns: ['['],
+            prTitlePatterns: ['(?'],
+          },
+        },
+      },
+    };
+
+    expect(
+      detectAgent({
+        actor: 'unrecognized-user',
+        prTitle: 'Any title',
+        prBody: 'Any body',
+        policy,
+      }),
+    ).toEqual({
+      confidence: 'unknown',
+      signals: [],
+    });
+  });
+
+  it('continues to valid configured patterns after a malformed sibling', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'code-agent': {
+          match: {
+            bodyPatterns: ['[', 'generated safely'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'unrecognized-user',
+      prBody: 'Generated safely by the build agent.',
+      policy,
+    });
+
+    expect(result.confidence).toBe('confirmed');
+    expect(result.agentName).toBe('code-agent');
+  });
 });
