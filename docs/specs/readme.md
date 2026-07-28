@@ -388,6 +388,8 @@ Detection levels:
 
 ```ts
 export type AgentDetectionConfidence = 'confirmed' | 'likely' | 'possible' | 'unknown';
+
+export type AgentIdentityTrust = 'verified' | 'unverified';
 ```
 
 Detection signals:
@@ -427,11 +429,19 @@ Detection signals:
    - `claude`
    - configured labels
 
-5. Explicit config match:
+5. Commit author metadata may match explicit policy configuration:
 
-   - policy maps a GitHub actor to an agent name
+   - configured commit email
+   - configured commit author name
 
-Important: Do not claim certainty unless the actor is explicitly configured or known.
+6. Explicit config match:
+
+   - policy maps an actor, commit author, or label to an agent name
+
+Important: `confirmed` describes detection confidence, not authentication.
+Only an explicitly configured actor or known bot has `identityTrust: "verified"`.
+Commit authors, labels, titles, and bodies are attacker-controlled metadata;
+they are `"unverified"` and cannot grant privileged agent actions.
 
 ## 13. Action detection
 
@@ -529,6 +539,7 @@ infra_path_changed: +40
 permissions_changed: +60
 secrets_pattern_detected: +80
 agent_unknown_confidence: +20
+agent_unverified_identity: +20
 agent_confirmed: +0
 blocked_action_detected: +100
 ```
@@ -683,7 +694,7 @@ jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: '.github/AGENTOWNERS.yml'
@@ -718,6 +729,10 @@ inputs:
     default: 'true'
   known-agent-actors:
     required: false
+  comment-author:
+    required: false
+    default: 'github-actions[bot]'
+    description: 'GitHub login whose complete verdict markers may be updated'
 ```
 
 Action outputs:
@@ -1439,7 +1454,7 @@ jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: '.github/AGENTOWNERS.yml'

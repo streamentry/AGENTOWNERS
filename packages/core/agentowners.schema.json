@@ -1480,10 +1480,12 @@
                     }
                   },
                   "diff_lines_over": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                   },
                   "commits_over": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                   },
                   "changes_package_files": {
                     "type": "boolean"

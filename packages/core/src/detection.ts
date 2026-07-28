@@ -1,8 +1,10 @@
-import type { AgentDetectionConfidence, AgentDetectionResult, AgentOwnersPolicy } from './types.js';
+import type { AgentDetectionResult, AgentIdentityTrust, AgentOwnersPolicy } from './types.js';
 
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   issueBody?: string;
@@ -31,25 +33,64 @@ export const AGENT_COMMIT_SIGNATURES = [
 
 const AGENT_LABELS = ['ai-generated', 'agent', 'copilot', 'codex', 'claude'];
 
-const PR_BODY_MARKERS = [
-  '🤖 Generated with',
-  '<!-- agentowners',
-];
-
-const BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
+const PR_BODY_MARKERS = ['🤖 Generated with', '<!-- agentowners'];
 
 export function isKnownBotActor(actor: string): boolean {
   return KNOWN_BOT_ACTORS.includes(actor);
 }
 
-export function matchesAgentPolicy(
-  actor: string,
+function hasBotCoAuthorMarker(value: string): boolean {
+  const normalized = value.toLowerCase();
+  let lineStart = 0;
+
+  while (lineStart <= normalized.length) {
+    const lineEnd = normalized.indexOf('\n', lineStart);
+    const line = normalized.slice(lineStart, lineEnd === -1 ? normalized.length : lineEnd);
+    if (line.includes('co-authored-by:') && line.includes('[bot]')) return true;
+    if (lineEnd === -1) return false;
+    lineStart = lineEnd + 1;
+  }
+
+  return false;
+}
+
+export function matchesAgentPolicy(actor: string, policy: AgentOwnersPolicy): string | null {
+  return findPolicyAgent({ actor }, policy)?.name ?? null;
+}
+
+type PolicyAgentMatch = {
+  name: string;
+  signal: string;
+  identityTrust: AgentIdentityTrust;
+};
+
+type PolicyMatchMode = 'actor' | 'metadata' | 'any';
+
+function findPolicyAgent(
+  input: AgentDetectionInput,
   policy: AgentOwnersPolicy,
-): string | null {
+  mode: PolicyMatchMode = 'any',
+): PolicyAgentMatch | null {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-    if (agentPolicy.match?.actors?.includes(actor)) {
-      return name;
+    const match = agentPolicy.match;
+    if (mode !== 'metadata' && match.actors?.includes(input.actor)) {
+      return { name, signal: 'actors', identityTrust: 'verified' };
+    }
+    if (
+      mode !== 'actor' &&
+      match.commitEmails?.some((email) => input.commitEmails?.includes(email))
+    ) {
+      return { name, signal: 'commitEmails', identityTrust: 'unverified' };
+    }
+    if (
+      mode !== 'actor' &&
+      match.commitNames?.some((commitName) => input.commitNames?.includes(commitName))
+    ) {
+      return { name, signal: 'commitNames', identityTrust: 'unverified' };
+    }
+    if (mode !== 'actor' && match.labels?.some((label) => input.labels?.includes(label))) {
+      return { name, signal: 'labels', identityTrust: 'unverified' };
     }
   }
   return null;
@@ -68,6 +109,8 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -80,15 +123,52 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
     (value): value is string => value !== undefined,
   );
 
-  // 1. Policy match (confirmed)
+  // 1. Policy match. Exact metadata matches are confirmed detection but do
+  // not authenticate the actor; identityTrust keeps that boundary explicit.
   if (policy) {
-    const matchedAgent = matchesAgentPolicy(actor, policy);
-    if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
-      return { agentName: matchedAgent, confidence: 'confirmed', signals };
+    // Authenticated actor mappings outrank all metadata mappings, regardless
+    // of YAML object order. This prevents a forged email or label from
+    // shadowing a verified actor identity.
+    const actorPolicyMatch = findPolicyAgent({ actor }, policy, 'actor');
+    if (actorPolicyMatch) {
+      signals.push(
+        `policy match: agents.${actorPolicyMatch.name}.match.${actorPolicyMatch.signal}`,
+      );
+      return {
+        agentName: actorPolicyMatch.name,
+        confidence: 'confirmed',
+        signals,
+        identityTrust: actorPolicyMatch.identityTrust,
+      };
+    }
+  }
+
+  // 2. Known bot actor (confirmed and verified). Weak metadata and body
+  // patterns must not shadow an authenticated GitHub actor.
+  if (isKnownBotActor(actor)) {
+    signals.push(`known bot actor: ${actor}`);
+    return { confidence: 'confirmed', signals, identityTrust: 'verified' };
+  }
+
+  if (policy) {
+    const metadataPolicyMatch = findPolicyAgent(
+      { actor, commitEmails, commitNames, labels },
+      policy,
+      'metadata',
+    );
+    if (metadataPolicyMatch) {
+      signals.push(
+        `policy match: agents.${metadataPolicyMatch.name}.match.${metadataPolicyMatch.signal}`,
+      );
+      return {
+        agentName: metadataPolicyMatch.name,
+        confidence: 'confirmed',
+        signals,
+        identityTrust: metadataPolicyMatch.identityTrust,
+      };
     }
 
-    // 6. Configured body patterns (from policy) — checked alongside policy
+    // Configured body patterns (from policy) are unverified metadata.
     if (policy.agents) {
       for (const [name, agentPolicy] of Object.entries(policy.agents)) {
         const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
@@ -96,23 +176,27 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
         for (const pattern of bodyPatterns) {
           if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
             signals.push(`policy body pattern match: agents.${name}`);
-            return { agentName: name, confidence: 'confirmed', signals };
+            return {
+              agentName: name,
+              confidence: 'confirmed',
+              signals,
+              identityTrust: 'unverified',
+            };
           }
         }
         for (const pattern of titlePatterns) {
           if (matchesConfiguredPattern(prTitle, pattern)) {
             signals.push(`policy title pattern match: agents.${name}`);
-            return { agentName: name, confidence: 'confirmed', signals };
+            return {
+              agentName: name,
+              confidence: 'confirmed',
+              signals,
+              identityTrust: 'unverified',
+            };
           }
         }
       }
     }
-  }
-
-  // 2. Known bot actor (confirmed)
-  if (isKnownBotActor(actor)) {
-    signals.push(`known bot actor: ${actor}`);
-    return { confidence: 'confirmed', signals };
   }
 
   // 3. Commit message signatures (likely)
@@ -129,12 +213,12 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
       signals.push(`body marker: "${marker}"`);
     }
   }
-  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+  if (bodyTexts.some(hasBotCoAuthorMarker)) {
     signals.push('body co-author [bot] pattern');
   }
 
   if (signals.length > 0) {
-    return { confidence: 'likely', signals };
+    return { confidence: 'likely', signals, identityTrust: 'unverified' };
   }
 
   // 5. Labels (possible)
@@ -143,9 +227,9 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
     for (const label of matchedLabels) {
       signals.push(`label: "${label}"`);
     }
-    return { confidence: 'possible', signals };
+    return { confidence: 'possible', signals, identityTrust: 'unverified' };
   }
 
   // Fallthrough
-  return { confidence: 'unknown', signals };
+  return { confidence: 'unknown', signals, identityTrust: 'unverified' };
 }

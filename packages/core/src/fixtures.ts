@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as yaml from 'js-yaml';
 import { z } from 'zod';
-import { classifyFiles } from './classifier.js';
+import { classifyFiles, detectSecretPatterns } from './classifier.js';
 import { detectAgent } from './detection.js';
 import { inferActions } from './actions.js';
 import { evaluatePolicy } from './evaluator.js';
@@ -50,12 +50,15 @@ const fixtureInputSchema = z
       .refine(uniqueValues, { message: 'Expected unique values' })
       .default([]),
     commit_messages: z.array(z.string()).default([]),
+    commit_emails: z.array(z.string()).default([]),
+    commit_names: z.array(z.string()).default([]),
     labels: z.array(z.string()).default([]),
     pr_title: z.string().optional(),
     pr_body: z.string().optional(),
     issue_title: z.string().optional(),
     issue_body: z.string().optional(),
     review_state: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED']).optional(),
+    diff_content: z.string().optional(),
     diff_lines_count: z.number().int().nonnegative().optional(),
     commits_count: z.number().int().nonnegative().optional(),
   })
@@ -84,6 +87,15 @@ const fixtureInputSchema = z
         message: 'commit_messages requires a pull request event',
       });
     }
+    for (const field of ['commit_emails', 'commit_names'] as const) {
+      if (!isPullRequestEvent && input[field].length > 0) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field} requires a pull request event`,
+        });
+      }
+    }
     for (const field of ['diff_lines_count', 'commits_count'] as const) {
       if (!isPullRequestEvent && input[field] !== undefined) {
         context.addIssue({
@@ -92,6 +104,13 @@ const fixtureInputSchema = z
           message: `${field} requires a pull request event`,
         });
       }
+    }
+    if (!isPullRequestEvent && input.diff_content !== undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['diff_content'],
+        message: 'diff_content requires a pull request event',
+      });
     }
     const hasPullRequestMetadata =
       isPullRequestEvent || input.event.startsWith('issue_comment.');
@@ -212,10 +231,18 @@ function runFixtureCase(
   policy: AgentOwnersPolicy,
   fixture: PolicyFixtureCase,
 ): PolicyFixtureCaseResult {
-  const filesClassification = classifyFiles(fixture.input.changed_files);
+  const baseClassification = classifyFiles(fixture.input.changed_files);
+  const filesClassification = {
+    ...baseClassification,
+    secretFilesDetected:
+      baseClassification.secretFilesDetected ||
+      detectSecretPatterns(fixture.input.diff_content ?? '').length > 0,
+  };
   const agentDetection = detectAgent({
     actor: fixture.input.actor,
     commitMessages: fixture.input.commit_messages,
+    commitEmails: fixture.input.commit_emails,
+    commitNames: fixture.input.commit_names,
     prTitle: fixture.input.pr_title,
     prBody: fixture.input.pr_body,
     issueBody: fixture.input.issue_body,
@@ -225,6 +252,7 @@ function runFixtureCase(
   const detectedActions = inferActions({
     eventType: fixture.input.event,
     changedFiles: fixture.input.changed_files,
+    diffContent: fixture.input.diff_content,
     reviewState: fixture.input.review_state,
     filesClassification,
   });

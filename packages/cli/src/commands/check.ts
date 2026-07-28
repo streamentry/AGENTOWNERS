@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import {
   loadPolicyFile,
   classifyFiles,
+  detectSecretPatterns,
   inferActions,
   detectAgent,
   evaluatePolicy,
@@ -11,7 +12,15 @@ import {
   type AgentOwnersPolicy,
   type Decision,
 } from '@agent-owners/core';
-import { getChangedFiles, getCommitMessages, getCurrentActor } from '../git.js';
+import {
+  getChangedFiles,
+  getDiffContent,
+  getCommitEmails,
+  getCommitMessages,
+  getCommitNames,
+  getCurrentActor,
+} from '../git.js';
+import { sanitizeTerminalText } from '../terminal.js';
 
 type CheckOptions = {
   policy: string;
@@ -24,12 +33,24 @@ type CheckOptions = {
 
 type GitInputs = {
   changedFiles: string[];
+  diffContent: string;
   commitMessages: string[];
+  commitEmails: string[];
+  commitNames: string[];
 };
+
+const CHECK_MODES = ['advisory', 'enforcement', 'dry-run'] as const;
 
 function validateOutput(output: string): boolean {
   if (['text', 'json', 'sarif'].includes(output)) return true;
   process.stderr.write('Output format must be one of: text, json, sarif.\n');
+  process.exit(64);
+  return false;
+}
+
+function validateMode(mode: string): mode is CheckOptions['mode'] {
+  if (CHECK_MODES.includes(mode as CheckOptions['mode'])) return true;
+  process.stderr.write('Mode must be one of: advisory, enforcement, dry-run.\n');
   process.exit(64);
   return false;
 }
@@ -50,7 +71,10 @@ function readGit(options: CheckOptions): GitInputs | undefined {
   try {
     return {
       changedFiles: getChangedFiles(options.base, options.head, process.cwd()),
+      diffContent: getDiffContent(options.base, options.head, process.cwd()),
       commitMessages: getCommitMessages(options.base, options.head, process.cwd()),
+      commitEmails: getCommitEmails(options.base, options.head, process.cwd()),
+      commitNames: getCommitNames(options.base, options.head, process.cwd()),
     };
   } catch (error: unknown) {
     const detail = error instanceof Error ? error.message : String(error);
@@ -61,14 +85,22 @@ function readGit(options: CheckOptions): GitInputs | undefined {
 }
 
 function evaluate(policy: AgentOwnersPolicy, inputs: GitInputs, actor: string): Decision {
-  const filesClassification = classifyFiles(inputs.changedFiles);
+  const baseClassification = classifyFiles(inputs.changedFiles);
+  const filesClassification = {
+    ...baseClassification,
+    secretFilesDetected:
+      baseClassification.secretFilesDetected || detectSecretPatterns(inputs.diffContent).length > 0,
+  };
   const detectedActions = inferActions({
     eventType: 'pull_request.opened',
     changedFiles: inputs.changedFiles,
+    diffContent: inputs.diffContent,
   });
   const agentDetection = detectAgent({
     actor,
     commitMessages: inputs.commitMessages,
+    commitEmails: inputs.commitEmails,
+    commitNames: inputs.commitNames,
     policy,
   });
   return evaluatePolicy({
@@ -87,12 +119,13 @@ function writeDecision(decision: Decision, output: string, actor: string): void 
   } else if (output === 'sarif') {
     process.stdout.write(`${JSON.stringify(renderSarif(decision), null, 2)}\n`);
   } else {
-    process.stdout.write(`${renderVerdict(decision, { actor })}\n`);
+    process.stdout.write(`${sanitizeTerminalText(renderVerdict(decision, { actor }))}\n`);
   }
 }
 
 async function executeCheck(options: CheckOptions): Promise<void> {
   if (!validateOutput(options.output)) return;
+  if (!validateMode(options.mode)) return;
   const policy = await loadPolicy(options);
   if (!policy) return;
   const inputs = readGit(options);

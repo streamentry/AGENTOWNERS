@@ -78,6 +78,8 @@ describe('parsePolicyFixtureSuite', () => {
           input: {
             ...validSuite().cases[0]?.input,
             commit_messages: [],
+            commit_emails: [],
+            commit_names: [],
             labels: [],
           },
         },
@@ -194,6 +196,17 @@ describe('parsePolicyFixtureSuite', () => {
     },
   );
 
+  it('rejects diff_content outside pull request events', () => {
+    const suite = validSuite();
+    suite.cases[0]!.input.event = 'issue_comment.created';
+    suite.cases[0]!.input.changed_files = [];
+    Object.assign(suite.cases[0]!.input, { diff_content: 'OPENAI_API_KEY=example' });
+
+    expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+      'diff_content requires a pull request event',
+    );
+  });
+
   it('rejects commit messages outside pull request events', () => {
     const suite = validSuite();
     suite.cases[0]!.input.event = 'issues.opened';
@@ -204,6 +217,20 @@ describe('parsePolicyFixtureSuite', () => {
       'commit_messages requires a pull request event',
     );
   });
+
+  it.each(['commit_emails', 'commit_names'] as const)(
+    'rejects %s outside pull request events',
+    (field) => {
+      const suite = validSuite();
+      suite.cases[0]!.input.event = 'issues.opened';
+      suite.cases[0]!.input.changed_files = [];
+      Object.assign(suite.cases[0]!.input, { [field]: ['unreachable author'] });
+
+      expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+        `${field} requires a pull request event`,
+      );
+    },
+  );
 
   it('loads and validates a portable YAML suite from disk', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'agentowners-fixtures-'));
@@ -245,6 +272,31 @@ describe('parsePolicyFixtureSuite', () => {
 });
 
 describe('runPolicyFixtureSuite', () => {
+  it('uses configured commit author signals through the public fixture contract', () => {
+    const authorPolicy = parsePolicy({
+      version: 1,
+      agents: {
+        automation: { match: { commitEmails: ['bot@example.test'] } },
+      },
+    });
+    const suite = parsePolicyFixtureSuite({
+      version: 1,
+      cases: [
+        {
+          name: 'commit email identifies automation',
+          input: {
+            event: 'pull_request.opened',
+            actor: 'human-user',
+            commit_emails: ['bot@example.test'],
+          },
+          expect: { decision: 'require_approval', matched_agent: 'automation' },
+        },
+      ],
+    });
+
+    expect(runPolicyFixtureSuite(authorPolicy, suite).passed).toBe(true);
+  });
+
   it('evaluates complete cases through detection, classification, inference, and policy', () => {
     const suite = parsePolicyFixtureSuite({
       version: 1,
@@ -362,6 +414,45 @@ describe('runPolicyFixtureSuite', () => {
     });
 
     expect(runPolicyFixtureSuite(policy, suite).passed).toBe(true);
+  });
+
+  it('routes diff-content secret matches through the redacted production path', () => {
+    const secretPolicy = parsePolicy({
+      version: 1,
+      defaults: { unknown_agent: 'require_approval', secrets: 'block' },
+    });
+    const suite = parsePolicyFixtureSuite({
+      version: 1,
+      cases: [
+        {
+          name: 'secret content is blocked',
+          input: {
+            event: 'pull_request.opened',
+            actor: 'untrusted-human',
+            changed_files: ['src/index.ts'],
+            diff_content: 'const key = OPENAI_API_KEY=example;',
+          },
+          expect: {
+            decision: 'block',
+            detected_actions: ['open_pr', 'touch_secrets'],
+            risk_level: 'critical',
+            risk_score: 100,
+          },
+        },
+      ],
+    });
+
+    const result = runPolicyFixtureSuite(secretPolicy, suite);
+
+    expect(JSON.stringify(result)).not.toContain('OPENAI_API_KEY');
+    expect(JSON.stringify(result)).not.toContain('example');
+    expect(result).toEqual({
+      passed: true,
+      total: 1,
+      passedCount: 1,
+      failedCount: 0,
+      cases: [{ name: 'secret content is blocked', passed: true, failures: [] }],
+    });
   });
 
   it('evaluates issue-only rule fields on compatible issue events', () => {

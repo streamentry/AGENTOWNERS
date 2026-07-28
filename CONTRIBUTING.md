@@ -3,7 +3,17 @@
 ## For AI agents
 
 Read [AGENTS.md](AGENTS.md) first. It has everything you need: repo map,
-invariants, commands, and common mistakes. Before opening a pull request, run:
+invariants, commands, and common mistakes. From a clean checkout, bootstrap
+the generated CLI bundle before invoking the self-check command:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm --filter @agent-owners/cli build
+```
+
+The `dist/` directory is intentionally ignored, so this build step is
+required after every fresh clone. Before opening a pull request, run:
 
 ```bash
 node packages/cli/dist/index.js self-check \
@@ -13,6 +23,13 @@ node packages/cli/dist/index.js self-check \
   --actor <your-agent-name>
 ```
 
+Then run `pnpm verify` for the repository-wide gate. If the self-check returns
+`10`, open the pull request but do not merge it without human approval. A
+return code of `20` means revise the change before requesting review.
+The self-check reads the same bounded, zero-context diff-content secret scan as
+the Action, so a clean local result does not bypass content-based secret
+detection.
+
 Exit `0` may proceed, exit `10` requires human approval, and exit `20` requires
 revising the change. Input and environment failures use exits `64` through
 `70`; the complete contract is in
@@ -20,12 +37,17 @@ revising the change. Input and environment failures use exits `64` through
 
 ## For humans
 
+The fastest newcomer path is the [five-minute quickstart](docs/quickstart.md).
+It proves the source checkout, creates a policy, runs a local decision, and
+shows the safe Action rollout boundary before a contributor changes code.
+
 ### Setup
 
 ```bash
 git clone https://github.com/streamentry/AGENTOWNERS.git
 cd AGENTOWNERS
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 pnpm verify
 ```
 
@@ -36,8 +58,12 @@ Node.js 22+ and pnpm 9+ required.
 1. **Find or create an issue:** all work starts with an issue
 2. **Fork and branch:** `feat/my-feature` or `fix/the-bug`
 3. **Write tests first:** capture the intended behavior with a failing test
-4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
+4. **Run `pnpm verify`:** lint, types, executable demo, build, tests, and release smoke tests
 5. **Open a PR:** use a conventional-commit title and complete the evidence template
+
+For a fast first proof that the repository is working, run `pnpm demo` after
+installing dependencies. It builds the production CLI and executes the
+strict-OSS fixtures for approval, block, and dependency-review decisions.
 
 ### Contribution evidence matrix
 
@@ -53,7 +79,7 @@ above. Add the smallest focused proof for each surface the change touches:
 | GitHub Action adapter | Focused Action test, then `pnpm build` | Commit the regenerated bundle and show that base-policy loading and least privilege remain intact |
 | Package metadata or dependencies | `pnpm verify:packages` | Include isolated install, runtime smoke tests, and production dependency audit results |
 | Example policy | Parse the policy and run its portable fixture suite | Assert exact decisions and detected actions; do not rely on prose examples |
-| Documentation only | Validate every command, path, version, and link changed by the PR | State which product behavior is unchanged and cite dated primary sources for ecosystem claims |
+| Documentation only | Run `pnpm verify:docs`; validate every command, path, version, and link changed by the PR | State which product behavior is unchanged and cite dated primary sources for ecosystem claims |
 
 Evidence is scoped. A green full suite does not replace the focused proof that
 reaches the changed branch. A focused test does not justify a repository-wide
@@ -81,6 +107,20 @@ If an issue lacks a bounded contract, use
 [Discussions](https://github.com/streamentry/AGENTOWNERS/discussions) before
 writing code. Comment on an issue before starting substantial work when
 parallel implementation is likely.
+
+### Find a review lane
+
+The open pull-request queue is routed by the same labels used in this section:
+
+- [Core and policy review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Acore-review)
+- [Security review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Asecurity-review)
+- [Release and dependency review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Adependency-review)
+- [Governance review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Agovernance)
+- [Documentation and newcomer work](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Adocumentation)
+
+Choose the narrowest queue that matches the changed files, then read the
+[maintainer review contract](#maintainer-review-contract). Labels route
+attention; they never replace required checks or independent human approval.
 
 ### Maintainer review contract
 
@@ -116,6 +156,11 @@ Before opening a PR:
 4. If upstream work lands first, rebase and remove duplicated assertions.
 5. Keep distinct counterexamples, mutation-sensitive tests, and compatibility
    findings.
+
+For release-facing changes, read the [release runbook](docs/releasing.md).
+Preparing a tarball or opening a Marketplace draft is not publication; the
+runbook names the human approval, provenance, and clean-consumer evidence that
+must exist before a stable release is documented.
 
 ### Commit format
 

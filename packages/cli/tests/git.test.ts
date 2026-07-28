@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'child_process';
-import { getChangedFiles, getCommitMessages, getCurrentActor } from '../src/git.js';
+import {
+  getChangedFiles,
+  getDiffContent,
+  getCommitEmails,
+  getCommitMessages,
+  getCommitNames,
+  getCurrentActor,
+} from '../src/git.js';
 
 vi.mock('child_process', () => ({
   execFileSync: vi.fn(),
@@ -31,6 +38,47 @@ describe('git helpers', () => {
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
       ['log', '--format=%s%n%b', '--end-of-options', 'main..HEAD'],
+      expect.any(Object),
+    );
+  });
+
+  it('reads a bounded diff without external diff drivers or shell interpretation', () => {
+    vi.mocked(execFileSync).mockReturnValue('+OPENAI_API_KEY=example\n');
+
+    expect(getDiffContent('main', 'HEAD', '/repo')).toBe('+OPENAI_API_KEY=example');
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'diff',
+        '--no-ext-diff',
+        '--no-textconv',
+        '--unified=0',
+        '--end-of-options',
+        'main',
+        'HEAD',
+        '--',
+      ],
+      expect.objectContaining({ cwd: '/repo' }),
+    );
+  });
+
+  it('reads commit authors from the requested range', () => {
+    vi.mocked(execFileSync)
+      .mockReturnValueOnce('bot@example.test\n')
+      .mockReturnValueOnce('Automation Bot\n');
+
+    expect(getCommitEmails('main', 'HEAD')).toEqual(['bot@example.test']);
+    expect(getCommitNames('main', 'HEAD')).toEqual(['Automation Bot']);
+    expect(execFileSync).toHaveBeenNthCalledWith(
+      1,
+      'git',
+      ['log', '--format=%ae', '--end-of-options', 'main..HEAD'],
+      expect.any(Object),
+    );
+    expect(execFileSync).toHaveBeenNthCalledWith(
+      2,
+      'git',
+      ['log', '--format=%an', '--end-of-options', 'main..HEAD'],
       expect.any(Object),
     );
   });

@@ -16,7 +16,7 @@ The roadmap is ordered by user risk removed, not feature count.
 
 ## Next: explainability and interoperability
 
-- Explicit reviewer requests and label lifecycle controls
+- Explicit reviewer requests
 
 ## Later: governed expansion
 

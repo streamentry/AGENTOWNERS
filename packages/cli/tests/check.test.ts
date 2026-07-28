@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
-import { evaluatePolicy, loadPolicyFile, renderSarif, type Decision } from '@agent-owners/core';
-import { getChangedFiles, getCommitMessages } from '../src/git.js';
+import {
+  evaluatePolicy,
+  loadPolicyFile,
+  renderSarif,
+  renderVerdict,
+  type Decision,
+} from '@agent-owners/core';
+import { getChangedFiles, getCommitMessages, getDiffContent } from '../src/git.js';
 import { registerCheck } from '../src/commands/check.js';
 
 vi.mock('@agent-owners/core', async () => {
@@ -11,12 +17,16 @@ vi.mock('@agent-owners/core', async () => {
     evaluatePolicy: vi.fn(),
     loadPolicyFile: vi.fn(),
     renderSarif: vi.fn(),
+    renderVerdict: vi.fn(),
   };
 });
 
 vi.mock('../src/git.js', () => ({
   getChangedFiles: vi.fn(),
+  getDiffContent: vi.fn(() => ''),
+  getCommitEmails: vi.fn(() => []),
   getCommitMessages: vi.fn(),
+  getCommitNames: vi.fn(() => []),
   getCurrentActor: vi.fn(() => undefined),
 }));
 
@@ -57,6 +67,7 @@ describe('check command SARIF output', () => {
     vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
     vi.mocked(loadPolicyFile).mockResolvedValue({ version: 1 });
     vi.mocked(getChangedFiles).mockReturnValue(['src/index.ts']);
+    vi.mocked(getDiffContent).mockReturnValue('');
     vi.mocked(getCommitMessages).mockReturnValue(['feat: change']);
     vi.mocked(evaluatePolicy).mockReturnValue(approval);
   });
@@ -82,11 +93,42 @@ describe('check command SARIF output', () => {
     expect(stderr).toBe('');
   });
 
+  it('sanitizes human-readable verdict output', async () => {
+    vi.mocked(renderVerdict).mockReturnValue('\u001b[31munsafe\u001b[0m\nForged line');
+
+    await program().parseAsync(['node', 'agentowners', 'check', '--actor', 'agent']);
+
+    expect(stdout).toBe('unsafe\nForged line\n');
+    expect(stdout).not.toContain('\u001b[31m');
+  });
+
+  it('carries diff-content secret evidence into local evaluation', async () => {
+    vi.mocked(getDiffContent).mockReturnValue('+OPENAI_API_KEY=example');
+
+    await program().parseAsync(['node', 'agentowners', 'check', '--actor', 'agent']);
+
+    const evaluationInput = vi.mocked(evaluatePolicy).mock.calls.at(-1)?.[0] as {
+      detectedActions: string[];
+      filesClassification: { secretFilesDetected: boolean };
+    };
+    expect(evaluationInput.detectedActions).toContain('touch_secrets');
+    expect(evaluationInput.filesClassification.secretFilesDetected).toBe(true);
+  });
+
   it('fails loudly for an unsupported output format before reading Git', async () => {
     await program().parseAsync(['node', 'agentowners', 'check', '--output', 'xml']);
 
     expect(process.exit).toHaveBeenCalledWith(64);
     expect(stderr).toContain('Output format must be one of: text, json, sarif.');
+    expect(getChangedFiles).not.toHaveBeenCalled();
+    expect(stdout).toBe('');
+  });
+
+  it('fails loudly for an unsupported mode before reading Git', async () => {
+    await program().parseAsync(['node', 'agentowners', 'check', '--mode', 'silent']);
+
+    expect(process.exit).toHaveBeenCalledWith(64);
+    expect(stderr).toContain('Mode must be one of: advisory, enforcement, dry-run.');
     expect(getChangedFiles).not.toHaveBeenCalled();
     expect(stdout).toBe('');
   });

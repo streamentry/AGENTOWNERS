@@ -6,6 +6,8 @@ case in `adversarial-corpus.json` must include:
 - a stable `id`;
 - one sentence naming the invariant under attack;
 - complete deterministic inputs;
+- diff content may be included for pull-request secret-scanning cases, but
+  matched values must never appear in assertions or diagnostics;
 - either an exact decision or an exact validation rejection;
 - no network, clock, randomness, credentials, or machine-specific path.
 

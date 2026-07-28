@@ -2,7 +2,22 @@
 
 Local, deterministic governance checks for AI-agent contributions.
 
+> **Pre-release:** this package is not published yet. The install command and
+> CLI below describe the intended `0.1.0` contract. Evaluate the current source
+> from the [AGENTOWNERS repository](https://github.com/streamentry/AGENTOWNERS);
+> do not depend on an unpublished registry artifact.
+
+Use the CLI for local Git ranges, policy validation, portable fixtures, SARIF,
+and machine-readable agent preflight. Use `@agent-owners/core` when embedding
+the engine, or the repository Action for GitHub event enforcement.
+
+New contributors should start with the repository’s
+[five-minute quickstart](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/quickstart.md)
+before wiring the CLI into an automated merge gate.
+
 ## Install
+
+Available after the first public release:
 
 ```bash
 npm install --global @agent-owners/cli
@@ -38,13 +53,31 @@ agentowners check --base main --head HEAD --mode enforcement
 # Emit SARIF 2.1.0 for standard code-scanning tools
 agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 
+# Explain a saved decision without trusting arbitrary JSON shape
+agentowners explain --decision agentowners-decision.json
+
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
 ```
 
+`fingerprint` reports detection confidence and identity trust separately. A
+matching commit author or label is useful evidence, but it is not an
+authenticated actor and cannot grant privileged policy actions.
+Human-readable names and signals are sanitized before terminal output; JSON
+output remains structured for machine consumers.
+
+`check --mode` accepts only `advisory`, `enforcement`, or `dry-run`; unknown
+modes fail before Git is read so a typo cannot silently weaken enforcement.
+
 Git refs are passed directly to Git as arguments, never interpolated into a
 shell command. Invalid refs fail closed instead of producing an empty,
 potentially misleading decision.
+
+`check` and `self-check` also read a zero-context patch with external diff
+drivers and text conversion disabled. The patch is scanned for secret patterns
+using the same redacted detector as the GitHub Action; only the
+`touch_secrets` action and resulting decision are exposed, never matched
+values.
 
 `self-check` emits a versioned JSON contract and distinct exit codes for allow
 (`0`), approval (`10`), block (`20`), invalid input (`64`), invalid policy
@@ -60,5 +93,6 @@ versioned machine result. See the
 SARIF output is deterministic and contains only non-allow policy results.
 Approval decisions are warnings and blocked decisions are errors.
 
-See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
-and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).
+See the [policy reference](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/policy-reference.md),
+[full documentation](https://github.com/streamentry/AGENTOWNERS#readme), and
+[policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

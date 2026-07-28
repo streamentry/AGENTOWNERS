@@ -1,9 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  extractPullRequestBaseSha,
   loadTrustedPolicy,
   normalizeRepositoryPolicyPath,
   selectTrustedPolicyRef,
 } from '../src/policy.js';
+
+describe('extractPullRequestBaseSha', () => {
+  it('uses the SHA captured in the webhook payload', () => {
+    expect(extractPullRequestBaseSha({ pull_request: { base: { sha: ' event-base-sha ' } } })).toBe(
+      'event-base-sha',
+    );
+  });
+
+  it.each([
+    undefined,
+    {},
+    { pull_request: {} },
+    { pull_request: { base: { sha: '' } } },
+    { pull_request: { base: { sha: 123 } } },
+  ])('fails closed when the webhook has no usable base SHA: %j', (payload) => {
+    expect(() => extractPullRequestBaseSha(payload)).toThrow(/pull_request\.base\.sha/);
+  });
+});
 
 describe('selectTrustedPolicyRef', () => {
   it('uses the immutable base SHA for pull request events', () => {

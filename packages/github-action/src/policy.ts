@@ -14,6 +14,26 @@ export function selectTrustedPolicyRef(
   return ref;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+/**
+ * Return the base revision captured by the webhook event, not a later PR API
+ * response that may observe a force-push after the event was delivered.
+ */
+export function extractPullRequestBaseSha(payload: unknown): string {
+  const pullRequest = asRecord(asRecord(payload)?.pull_request);
+  const base = asRecord(pullRequest?.base);
+  const sha = base?.sha;
+  if (typeof sha !== 'string' || sha.trim() === '') {
+    throw new Error('Missing pull_request.base.sha in trusted webhook payload.');
+  }
+  return sha.trim();
+}
+
 export function normalizeRepositoryPolicyPath(policyPath: string): string {
   if (path.posix.isAbsolute(policyPath) || path.win32.isAbsolute(policyPath)) {
     throw new Error('Policy path must be a repository-relative policy path.');

@@ -10,9 +10,27 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `specs/`: canonical product and feature requirements
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
+- `policy-reference.md`: end-user schema, condition, action, and trust contract
+- `quickstart.md`: five-minute source checkout and first-decision path
 - `philosophy.md`: durable design principles
 - `roadmap.md`: explicit future scope
+- `releasing.md`: maintainer-only release gates and publication evidence
 - `assets/`: maintained documentation and social-preview media
+
+The evaluator specification must state that action-scoped allow rules cannot
+drop unlisted detected actions, while block and approval rules may match any
+listed action.
+The verdict-renderer specification must keep human-readable Markdown escaped
+while leaving audit JSON structured.
+The policy reference and schema specification must describe numeric threshold
+inputs as nonnegative; negative thresholds are rejected by the runtime schema.
+The action-inference specification must keep omitted classification and
+canonical preclassification behavior equivalent, including diff-content secret
+signals that never expose matched values.
+The portable-fixture specification must keep `diff_content` restricted to
+pull-request events and route it through the same redacted scan as the Action.
+The CLI specification must keep local `check` and `self-check` diff scanning
+equivalent to the Action's secret boundary.
 
 ## Diagrams
 
@@ -20,8 +38,11 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 flowchart LR
   OfficialSources --> Ecosystem
   Specs --> Architecture
+  Schema[Runtime schema] --> PolicyReference
+  README --> Quickstart
   Philosophy --> Specs
   Architecture --> README
+  PolicyReference --> README
   Ecosystem --> README
 ```
 
@@ -45,5 +66,7 @@ sequenceDiagram
 
 ## Verification
 
-Run `pnpm verify`, check every external link against its primary source, and
-separate current product facts from roadmap claims.
+Run `pnpm verify` to catch broken local Markdown targets, check every external
+link against its primary source, and separate current product facts from
+roadmap claims. `pnpm verify:docs` is the focused network-free documentation
+gate when only prose or links change.

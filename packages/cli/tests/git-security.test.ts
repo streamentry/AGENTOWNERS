@@ -4,7 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
-import { getChangedFiles, getCommitMessages } from '../src/git.js';
+import {
+  getChangedFiles,
+  getCommitEmails,
+  getCommitMessages,
+  getCommitNames,
+} from '../src/git.js';
 
 const temporaryDirectories: string[] = [];
 
@@ -62,6 +67,17 @@ describe('git revision option boundaries', () => {
     const target = join(repository, 'log-output');
 
     expect(() => getCommitMessages(`--output=${target}`, 'HEAD', repository)).toThrow();
+    expect(existsSync(`${target}..HEAD`)).toBe(false);
+  });
+
+  it.each([
+    ['commit email', getCommitEmails],
+    ['commit name', getCommitNames],
+  ] as const)('keeps the --end-of-options boundary for %s metadata', async (_label, reader) => {
+    const repository = await makeRepository();
+    const target = join(repository, 'author-output');
+
+    expect(() => reader(`--output=${target}`, 'HEAD', repository)).toThrow();
     expect(existsSync(`${target}..HEAD`)).toBe(false);
   });
 });

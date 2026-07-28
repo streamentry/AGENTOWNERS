@@ -21510,6 +21510,7 @@ var require_picomatch2 = __commonJS({
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  applyLabels: () => applyLabels,
   run: () => run
 });
 module.exports = __toCommonJS(index_exports);
@@ -33178,8 +33179,8 @@ var ruleConditionSchema = external_exports.object({
   pr_body: external_exports.array(external_exports.string()).optional(),
   issue_title: external_exports.array(external_exports.string()).optional(),
   issue_body: external_exports.array(external_exports.string()).optional(),
-  diff_lines_over: external_exports.number().optional(),
-  commits_over: external_exports.number().optional(),
+  diff_lines_over: external_exports.number().nonnegative().optional(),
+  commits_over: external_exports.number().nonnegative().optional(),
   changes_package_files: external_exports.boolean().optional(),
   changes_workflows: external_exports.boolean().optional(),
   changes_permissions: external_exports.boolean().optional(),
@@ -33358,19 +33359,37 @@ var AGENT_COMMIT_SIGNATURES = [
   "Cursor"
 ];
 var AGENT_LABELS = ["ai-generated", "agent", "copilot", "codex", "claude"];
-var PR_BODY_MARKERS = [
-  "\u{1F916} Generated with",
-  "<!-- agentowners"
-];
-var BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
+var PR_BODY_MARKERS = ["\u{1F916} Generated with", "<!-- agentowners"];
 function isKnownBotActor(actor) {
   return KNOWN_BOT_ACTORS.includes(actor);
 }
-function matchesAgentPolicy(actor, policy) {
+function hasBotCoAuthorMarker(value) {
+  const normalized = value.toLowerCase();
+  let lineStart = 0;
+  while (lineStart <= normalized.length) {
+    const lineEnd = normalized.indexOf("\n", lineStart);
+    const line = normalized.slice(lineStart, lineEnd === -1 ? normalized.length : lineEnd);
+    if (line.includes("co-authored-by:") && line.includes("[bot]")) return true;
+    if (lineEnd === -1) return false;
+    lineStart = lineEnd + 1;
+  }
+  return false;
+}
+function findPolicyAgent(input, policy, mode = "any") {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-    if (agentPolicy.match?.actors?.includes(actor)) {
-      return name;
+    const match = agentPolicy.match;
+    if (mode !== "metadata" && match.actors?.includes(input.actor)) {
+      return { name, signal: "actors", identityTrust: "verified" };
+    }
+    if (mode !== "actor" && match.commitEmails?.some((email) => input.commitEmails?.includes(email))) {
+      return { name, signal: "commitEmails", identityTrust: "unverified" };
+    }
+    if (mode !== "actor" && match.commitNames?.some((commitName) => input.commitNames?.includes(commitName))) {
+      return { name, signal: "commitNames", identityTrust: "unverified" };
+    }
+    if (mode !== "actor" && match.labels?.some((label) => input.labels?.includes(label))) {
+      return { name, signal: "labels", identityTrust: "unverified" };
     }
   }
   return null;
@@ -33387,6 +33406,8 @@ function detectAgent(input) {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -33399,10 +33420,39 @@ function detectAgent(input) {
     (value) => value !== void 0
   );
   if (policy) {
-    const matchedAgent = matchesAgentPolicy(actor, policy);
-    if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
-      return { agentName: matchedAgent, confidence: "confirmed", signals };
+    const actorPolicyMatch = findPolicyAgent({ actor }, policy, "actor");
+    if (actorPolicyMatch) {
+      signals.push(
+        `policy match: agents.${actorPolicyMatch.name}.match.${actorPolicyMatch.signal}`
+      );
+      return {
+        agentName: actorPolicyMatch.name,
+        confidence: "confirmed",
+        signals,
+        identityTrust: actorPolicyMatch.identityTrust
+      };
+    }
+  }
+  if (isKnownBotActor(actor)) {
+    signals.push(`known bot actor: ${actor}`);
+    return { confidence: "confirmed", signals, identityTrust: "verified" };
+  }
+  if (policy) {
+    const metadataPolicyMatch = findPolicyAgent(
+      { actor, commitEmails, commitNames, labels },
+      policy,
+      "metadata"
+    );
+    if (metadataPolicyMatch) {
+      signals.push(
+        `policy match: agents.${metadataPolicyMatch.name}.match.${metadataPolicyMatch.signal}`
+      );
+      return {
+        agentName: metadataPolicyMatch.name,
+        confidence: "confirmed",
+        signals,
+        identityTrust: metadataPolicyMatch.identityTrust
+      };
     }
     if (policy.agents) {
       for (const [name, agentPolicy] of Object.entries(policy.agents)) {
@@ -33411,21 +33461,27 @@ function detectAgent(input) {
         for (const pattern of bodyPatterns) {
           if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
             signals.push(`policy body pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
+            return {
+              agentName: name,
+              confidence: "confirmed",
+              signals,
+              identityTrust: "unverified"
+            };
           }
         }
         for (const pattern of titlePatterns) {
           if (matchesConfiguredPattern(prTitle, pattern)) {
             signals.push(`policy title pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
+            return {
+              agentName: name,
+              confidence: "confirmed",
+              signals,
+              identityTrust: "unverified"
+            };
           }
         }
       }
     }
-  }
-  if (isKnownBotActor(actor)) {
-    signals.push(`known bot actor: ${actor}`);
-    return { confidence: "confirmed", signals };
   }
   const allText = [...commitMessages, ...bodyTexts].join("\n");
   for (const sig of AGENT_COMMIT_SIGNATURES) {
@@ -33438,62 +33494,20 @@ function detectAgent(input) {
       signals.push(`body marker: "${marker}"`);
     }
   }
-  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+  if (bodyTexts.some(hasBotCoAuthorMarker)) {
     signals.push("body co-author [bot] pattern");
   }
   if (signals.length > 0) {
-    return { confidence: "likely", signals };
+    return { confidence: "likely", signals, identityTrust: "unverified" };
   }
   const matchedLabels = labels.filter((l) => AGENT_LABELS.includes(l));
   if (matchedLabels.length > 0) {
     for (const label of matchedLabels) {
       signals.push(`label: "${label}"`);
     }
-    return { confidence: "possible", signals };
+    return { confidence: "possible", signals, identityTrust: "unverified" };
   }
-  return { confidence: "unknown", signals };
-}
-var DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
-var TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
-var DEPENDENCY_PATTERNS2 = [
-  /^package\.json$/,
-  /^package-lock\.json$/,
-  /^yarn\.lock$/,
-  /^pnpm-lock\.yaml$/,
-  /^Cargo\.toml$/,
-  /^Cargo\.lock$/,
-  /^go\.mod$/,
-  /^go\.sum$/,
-  /^requirements.*\.txt$/,
-  /^pyproject\.toml$/,
-  /^Pipfile/,
-  /^Gemfile/
-];
-var WORKFLOW_PATTERNS2 = [/^\.github\/workflows\//];
-var AUTH_PATTERNS2 = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-var INFRA_PATTERNS2 = [
-  /^terraform\//i,
-  /\.tf$/,
-  /^infra\//i,
-  /^deploy\//i,
-  /dockerfile$/i,
-  /docker-compose/i,
-  /^k8s\//i,
-  /^kubernetes\//i,
-  /^helm\//i
-];
-var SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
-function classifyFilesLocal(files) {
-  if (files.length === 0) return {};
-  const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS2.some((p) => p.test(f)));
-  const hasAuth = files.some((f) => AUTH_PATTERNS2.some((p) => p.test(f)));
-  const hasInfra = files.some((f) => INFRA_PATTERNS2.some((p) => p.test(f)));
-  const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
-  const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS2.some((p) => p.test(f)));
-  const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
-  const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
-  const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
+  return { confidence: "unknown", signals, identityTrust: "unverified" };
 }
 function hasClassifiedTests(classification) {
   if (typeof classification["hasTests"] === "boolean") {
@@ -33507,6 +33521,17 @@ function hasClassifiedTests(classification) {
   }
   return classification["testsOnly"] === true;
 }
+function toLocalClassification(classification) {
+  return {
+    docsOnly: classification.docsOnly,
+    hasTests: Object.values(classification.files).some((file) => file.isTests),
+    hasDependencies: classification.changesDependencies,
+    hasWorkflows: classification.changesWorkflows,
+    hasAuth: classification.changesAuth,
+    hasInfra: classification.changesInfra,
+    hasSecrets: classification.secretFilesDetected
+  };
+}
 function inferFileBasedActions(classification) {
   const actions = [];
   if (classification.docsOnly) actions.push("modify_docs");
@@ -33519,10 +33544,10 @@ function inferFileBasedActions(classification) {
   return actions;
 }
 function inferActions(input) {
-  const { eventType, changedFiles, reviewState, filesClassification } = input;
+  const { eventType, changedFiles, diffContent, reviewState, filesClassification } = input;
   const actions = /* @__PURE__ */ new Set();
   const fc = filesClassification;
-  const classification = fc ? {
+  const inferredClassification = fc ? {
     docsOnly: fc["docsOnly"] ?? (fc["changesWorkflows"] === void 0 && false),
     hasTests: hasClassifiedTests(fc),
     hasDependencies: fc["hasDependencies"] ?? fc["changesDependencies"],
@@ -33530,7 +33555,8 @@ function inferActions(input) {
     hasAuth: fc["hasAuth"] ?? fc["changesAuth"],
     hasInfra: fc["hasInfra"] ?? fc["changesInfra"],
     hasSecrets: fc["hasSecrets"] ?? fc["secretFilesDetected"]
-  } : changedFiles ? classifyFilesLocal(changedFiles) : {};
+  } : changedFiles ? toLocalClassification(classifyFiles(changedFiles)) : {};
+  const classification = diffContent && detectSecretPatterns(diffContent).length > 0 ? { ...inferredClassification, hasSecrets: true } : inferredClassification;
   switch (eventType) {
     case "pull_request.opened":
     case "pull_request.reopened":
@@ -33574,7 +33600,13 @@ function inferActions(input) {
   return Array.from(actions);
 }
 function computeRiskScore(input) {
-  const { filesClassification, diffLinesCount, detectedActions, agentConfidence } = input;
+  const {
+    filesClassification,
+    diffLinesCount,
+    detectedActions,
+    agentConfidence,
+    agentIdentityTrust
+  } = input;
   let score = 0;
   if (filesClassification.docsOnly) {
     score += 5;
@@ -33609,7 +33641,7 @@ function computeRiskScore(input) {
       score += 30;
     }
   }
-  if (agentConfidence !== "confirmed") {
+  if (agentConfidence !== "confirmed" || agentIdentityTrust === "unverified") {
     score += 20;
   }
   const blockedActions = [
@@ -33634,6 +33666,15 @@ function scoreToLevel(score) {
 }
 var MARKER_OPEN = "<!-- agentowners-verdict -->";
 var MARKER_CLOSE = "<!-- /agentowners-verdict -->";
+function escapeMarkdownInline(value) {
+  return value.replace(/[\u0000-\u001F\u007F]/g, "").replace(/\r?\n/g, " ").replace(/([\\`*_\[\]<>~])/g, "\\$1");
+}
+function escapeMarkdownBlock(value) {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").replace(/\r\n?/g, "\n").split("\n").map((line) => {
+    const escaped = escapeMarkdownInline(line);
+    return /^(?:#{1,6}\s|[-+*>]\s|\d+\.\s)/.test(escaped) ? `\\${escaped}` : escaped;
+  }).join("\n");
+}
 function wrapWithMarker(content) {
   return `${MARKER_OPEN}
 ${content}
@@ -33641,19 +33682,21 @@ ${MARKER_CLOSE}`;
 }
 function renderAllowed(decision, options) {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(", ");
+    const ruleNames = decision.matchedRules.map((r) => `\`${escapeMarkdownInline(r.name)}\``).join(", ");
     return `AGENTOWNERS: allowed${ruleNames ? ` \u2014 ${ruleNames}` : ""}`;
   }
   const lines = [];
   lines.push("## AGENTOWNERS verdict: allowed");
   lines.push("");
-  lines.push(decision.explanation || "This appears to be a low-risk AI contribution.");
+  lines.push(
+    escapeMarkdownBlock(decision.explanation || "This appears to be a low-risk AI contribution.")
+  );
   lines.push("");
   if (decision.matchedRules.length > 0) {
     lines.push("Matched rule:");
     lines.push("");
     for (const mr of decision.matchedRules) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- \`${escapeMarkdownInline(mr.name)}\``);
     }
     lines.push("");
   }
@@ -33668,7 +33711,7 @@ function renderRequiresApproval(decision, options) {
   lines.push("## AGENTOWNERS verdict: requires approval");
   lines.push("");
   if (options.actor) {
-    lines.push(`This PR appears to be created by \`${options.actor}\`.`);
+    lines.push(`This PR appears to be created by \`${escapeMarkdownInline(options.actor)}\`.`);
     lines.push("");
   }
   lines.push(`Risk level: ${decision.riskLevel}  `);
@@ -33678,13 +33721,15 @@ function renderRequiresApproval(decision, options) {
     lines.push("Matched rules:");
     lines.push("");
     decision.matchedRules.forEach((mr, idx) => {
-      lines.push(`${idx + 1}. \`${mr.name}\``);
+      lines.push(`${idx + 1}. \`${escapeMarkdownInline(mr.name)}\``);
       const fileConditions = (mr.matchedConditions ?? []).filter((c) => c.startsWith("files:"));
       const matchedFiles = mr.matchedFiles ?? fileConditions.flatMap((c) => c.replace("files: ", "").split(", "));
       if (matchedFiles.length > 0) {
-        lines.push(`   - matched files: ${matchedFiles.map((f) => `\`${f}\``).join(", ")}`);
+        lines.push(
+          `   - matched files: ${matchedFiles.map((f) => `\`${escapeMarkdownInline(f)}\``).join(", ")}`
+        );
       }
-      lines.push(`   - reason: ${mr.reason}`);
+      lines.push(`   - reason: ${escapeMarkdownInline(mr.reason)}`);
       lines.push("");
     });
   }
@@ -33692,7 +33737,7 @@ function renderRequiresApproval(decision, options) {
     lines.push("Required reviewers:");
     lines.push("");
     for (const reviewer of decision.requiredReviewers) {
-      lines.push(`- ${reviewer}`);
+      lines.push(`- ${escapeMarkdownInline(reviewer)}`);
     }
     lines.push("");
   }
@@ -33700,20 +33745,20 @@ function renderRequiresApproval(decision, options) {
     lines.push("Suggested labels:");
     lines.push("");
     for (const label of decision.labelsToApply) {
-      lines.push(`- ${label}`);
+      lines.push(`- ${escapeMarkdownInline(label)}`);
     }
     lines.push("");
   }
   if (decision.explanation) {
     lines.push("Decision:");
     lines.push("");
-    lines.push(decision.explanation);
+    lines.push(escapeMarkdownBlock(decision.explanation));
   }
   return lines.join("\n");
 }
 function renderBlocked(decision, options) {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(", ");
+    const ruleNames = decision.matchedRules.map((r) => `\`${escapeMarkdownInline(r.name)}\``).join(", ");
     return `AGENTOWNERS: blocked${ruleNames ? ` \u2014 ${ruleNames}` : ""}`;
   }
   const lines = [];
@@ -33727,7 +33772,7 @@ function renderBlocked(decision, options) {
     lines.push("Matched rule:");
     lines.push("");
     for (const mr of rulesToShow) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- \`${escapeMarkdownInline(mr.name)}\``);
     }
     lines.push("");
   }
@@ -33735,7 +33780,7 @@ function renderBlocked(decision, options) {
   if (firstRule) {
     lines.push("Reason:");
     lines.push("");
-    lines.push(firstRule.reason);
+    lines.push(escapeMarkdownBlock(firstRule.reason));
     lines.push("");
   }
   lines.push("Recommended next step:");
@@ -33778,6 +33823,7 @@ function renderAuditJson(context3) {
     actor,
     matchedAgent: agentDetection.matchedAgent ?? decision.matchedAgent,
     confidence: agentDetection.confidence,
+    identityTrust: agentDetection.identityTrust ?? "unverified",
     decision: decision.effect,
     riskScore: decision.riskScore,
     riskLevel: decision.riskLevel,
@@ -33791,6 +33837,28 @@ function renderAuditJson(context3) {
     requiredReviewers: decision.requiredReviewers
   };
 }
+var SENSITIVE_ALLOW_ACTIONS = [
+  "approve_pr",
+  "merge_pr",
+  "edit_workflows",
+  "modify_dependencies",
+  "modify_auth",
+  "modify_infra",
+  "touch_secrets",
+  "change_permissions"
+];
+function hasUntrustedMetadataCondition(when) {
+  return when.labels !== void 0 || when.pr_title !== void 0 || when.pr_body !== void 0 || when.issue_title !== void 0 || when.issue_body !== void 0;
+}
+function rejectsUntrustedAllow(rule, input) {
+  if (rule.effect !== "allow" || !hasUntrustedMetadataCondition(rule.when)) return false;
+  if (!input.detectedActions.some((action) => SENSITIVE_ALLOW_ACTIONS.includes(action))) {
+    return false;
+  }
+  const hasTrustedActorCondition = rule.when.actors !== void 0;
+  const hasVerifiedAgentCondition = rule.when.agents !== void 0 && input.agentDetection.identityTrust === "verified";
+  return !hasTrustedActorCondition && !hasVerifiedAgentCondition;
+}
 function matchesTextPattern(value, patterns) {
   if (!value) return false;
   return patterns.some((pattern) => {
@@ -33802,6 +33870,7 @@ function matchesTextPattern(value, patterns) {
   });
 }
 function evaluateRule(rule, input) {
+  if (rejectsUntrustedAllow(rule, input)) return null;
   const { when } = rule;
   const {
     agentDetection,
@@ -33822,6 +33891,7 @@ function evaluateRule(rule, input) {
   if (when.agents !== void 0) {
     const agentName = agentDetection.agentName ?? "unknown";
     if (!when.agents.includes(agentName)) return null;
+    if (agentDetection.identityTrust !== "verified" && rule.effect === "allow") return null;
     matchedConditions.push("agents");
   }
   if (when.actors !== void 0) {
@@ -33831,6 +33901,9 @@ function evaluateRule(rule, input) {
   if (when.actions !== void 0) {
     const hasAction = when.actions.some((a) => detectedActions.includes(a));
     if (!hasAction) return null;
+    if (rule.effect === "allow" && detectedActions.some((action) => !when.actions.includes(action))) {
+      return null;
+    }
     matchedConditions.push("actions");
   }
   if (when.files !== void 0) {
@@ -33929,7 +34002,7 @@ function evaluateAgentActions(input) {
   const approval = input.detectedActions.filter(
     (action) => agentPolicy.requires_approval?.includes(action)
   );
-  const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
+  const allowed = input.agentDetection.identityTrust !== "verified" ? [] : input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
   const effect = blocked.length > 0 ? "block" : approval.length > 0 ? "require_approval" : allowed.length === input.detectedActions.length ? "allow" : null;
   if (effect === null) return null;
   const matchedActions = effect === "block" ? blocked : effect === "require_approval" ? approval : allowed;
@@ -33952,7 +34025,7 @@ function computeDefaultEffect(input) {
   if (filesClassification.docsOnly) {
     return defaults2?.docs_only ?? "allow";
   }
-  if (agentDetection.confidence !== "confirmed") {
+  if (agentDetection.confidence !== "confirmed" || agentDetection.identityTrust !== "verified") {
     return defaults2?.unknown_agent ?? "require_approval";
   }
   return defaults2?.known_agent ?? "require_approval";
@@ -33990,7 +34063,8 @@ function evaluatePolicy(input) {
     filesClassification,
     diffLinesCount,
     detectedActions,
-    agentConfidence: agentDetection.confidence
+    agentConfidence: agentDetection.confidence,
+    agentIdentityTrust: agentDetection.identityTrust
   });
   ruleLabelSet.add("ai-agent");
   ruleLabelSet.add(`risk-${level}`);
@@ -34057,12 +34131,15 @@ var fixtureInputSchema = external_exports.object({
   actor: external_exports.string().trim().min(1),
   changed_files: external_exports.array(repositoryPathSchema).refine(uniqueValues, { message: "Expected unique values" }).default([]),
   commit_messages: external_exports.array(external_exports.string()).default([]),
+  commit_emails: external_exports.array(external_exports.string()).default([]),
+  commit_names: external_exports.array(external_exports.string()).default([]),
   labels: external_exports.array(external_exports.string()).default([]),
   pr_title: external_exports.string().optional(),
   pr_body: external_exports.string().optional(),
   issue_title: external_exports.string().optional(),
   issue_body: external_exports.string().optional(),
   review_state: external_exports.enum(["APPROVED", "CHANGES_REQUESTED", "COMMENTED"]).optional(),
+  diff_content: external_exports.string().optional(),
   diff_lines_count: external_exports.number().int().nonnegative().optional(),
   commits_count: external_exports.number().int().nonnegative().optional()
 }).strict().superRefine((input, context3) => {
@@ -34088,6 +34165,15 @@ var fixtureInputSchema = external_exports.object({
       message: "commit_messages requires a pull request event"
     });
   }
+  for (const field of ["commit_emails", "commit_names"]) {
+    if (!isPullRequestEvent && input[field].length > 0) {
+      context3.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} requires a pull request event`
+      });
+    }
+  }
   for (const field of ["diff_lines_count", "commits_count"]) {
     if (!isPullRequestEvent && input[field] !== void 0) {
       context3.addIssue({
@@ -34096,6 +34182,13 @@ var fixtureInputSchema = external_exports.object({
         message: `${field} requires a pull request event`
       });
     }
+  }
+  if (!isPullRequestEvent && input.diff_content !== void 0) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: ["diff_content"],
+      message: "diff_content requires a pull request event"
+    });
   }
   const hasPullRequestMetadata = isPullRequestEvent || input.event.startsWith("issue_comment.");
   for (const field of ["pr_title", "pr_body"]) {
@@ -34218,6 +34311,7 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     repo,
     pull_number: pullNumber
   });
+  const commitAuthors = await getPRCommitAuthors(octokit, owner, repo, pullNumber);
   return {
     title: data.title,
     body: data.body ?? "",
@@ -34230,8 +34324,32 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     changedFiles: data.changed_files,
     base: data.base.ref,
     baseSha: data.base.sha,
-    head: data.head.ref
+    head: data.head.ref,
+    commitEmails: commitAuthors.emails,
+    commitNames: commitAuthors.names
   };
+}
+async function getPRCommitAuthors(octokit, owner, repo, pullNumber) {
+  const emails = [];
+  const names = [];
+  let page = 1;
+  while (true) {
+    const response = await octokit.rest.pulls.listCommits({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100,
+      page
+    });
+    for (const commit of response.data) {
+      const author = commit.commit?.author;
+      if (typeof author?.email === "string" && author.email) emails.push(author.email);
+      if (typeof author?.name === "string" && author.name) names.push(author.name);
+    }
+    if (response.data.length < 100) break;
+    page += 1;
+  }
+  return { emails, names };
 }
 async function getIssueMetadata(octokit, owner, repo, issueNumber) {
   const { data } = await octokit.rest.issues.get({
@@ -34250,14 +34368,29 @@ async function getIssueMetadata(octokit, owner, repo, issueNumber) {
 
 // src/comment.ts
 var MARKER = "<!-- agentowners-verdict -->";
-async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
-  const comments = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    per_page: 100
-  });
-  const existing = comments.data.find((c) => c.body?.includes(MARKER));
+var MARKER_CLOSE2 = "<!-- /agentowners-verdict -->";
+function isVerdictComment(comment, trustedAuthor) {
+  return comment.user?.login?.toLowerCase() === trustedAuthor.toLowerCase() && comment.body?.startsWith(`${MARKER}
+`) === true && comment.body.includes(`
+${MARKER_CLOSE2}`);
+}
+async function upsertVerdictComment(octokit, owner, repo, issueNumber, body, trustedAuthor) {
+  let page = 1;
+  let existing;
+  while (!existing) {
+    const comments = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      per_page: 100,
+      page
+    });
+    existing = comments.data.find(
+      (comment) => isVerdictComment(comment, trustedAuthor)
+    );
+    if (existing || comments.data.length < 100) break;
+    page += 1;
+  }
   if (existing) {
     await octokit.rest.issues.updateComment({
       owner,
@@ -34276,6 +34409,24 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
 }
 
 // src/config.ts
+var ACTION_MODES = ["comment", "check", "both", "dry-run"];
+var DEFAULT_COMMENT_AUTHOR = "github-actions[bot]";
+function parseActionMode(rawMode) {
+  const mode = rawMode.trim() || "comment";
+  if (ACTION_MODES.includes(mode)) {
+    return mode;
+  }
+  throw new Error(
+    `Invalid mode "${mode}". Expected one of: ${ACTION_MODES.join(", ")}.`
+  );
+}
+function parseBooleanInput(rawValue, name, defaultValue) {
+  const value = rawValue.trim();
+  if (!value) return defaultValue;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  throw new Error(`Invalid ${name} input. Expected "true" or "false".`);
+}
 function requireGitHubToken(environmentToken, inputToken) {
   const token = environmentToken ?? inputToken;
   if (!token) {
@@ -34291,6 +34442,18 @@ function selectTrustedPolicyRef(eventName, pullRequestBaseSha, defaultBranch) {
   const ref = isPullRequestEvent ? pullRequestBaseSha : defaultBranch;
   if (!ref) throw new Error("Missing trusted repository ref for policy load.");
   return ref;
+}
+function asRecord(value) {
+  return typeof value === "object" && value !== null ? value : void 0;
+}
+function extractPullRequestBaseSha(payload) {
+  const pullRequest = asRecord(asRecord(payload)?.pull_request);
+  const base = asRecord(pullRequest?.base);
+  const sha = base?.sha;
+  if (typeof sha !== "string" || sha.trim() === "") {
+    throw new Error("Missing pull_request.base.sha in trusted webhook payload.");
+  }
+  return sha.trim();
 }
 function normalizeRepositoryPolicyPath(policyPath) {
   if (import_node_path.default.posix.isAbsolute(policyPath) || import_node_path.default.win32.isAbsolute(policyPath)) {
@@ -34310,13 +34473,30 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
 }
 
 // src/index.ts
+var SUPPORTED_EVENT_ACTIONS = {
+  pull_request: ["opened", "synchronize", "reopened", "ready_for_review"],
+  issues: ["labeled", "closed", "reopened", "opened"],
+  issue_comment: ["created", "edited"]
+};
+function parseEventType(eventName, action) {
+  if (eventName === "pull_request_review") {
+    return action === "submitted" ? "pull_request_review.submitted" : void 0;
+  }
+  const supportedActions = SUPPORTED_EVENT_ACTIONS[eventName];
+  return supportedActions?.includes(action) ? `${eventName}.${action}` : void 0;
+}
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
-    const mode = getInput("mode") || "comment";
-    const failOnBlock = getInput("fail-on-block") !== "false";
-    const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
-    const addLabels = getInput("add-labels") !== "false";
+    const mode = parseActionMode(getInput("mode"));
+    const failOnBlock = parseBooleanInput(getInput("fail-on-block"), "fail-on-block", true);
+    const failOnRequireApproval = parseBooleanInput(
+      getInput("fail-on-require-approval"),
+      "fail-on-require-approval",
+      false
+    );
+    const addLabels = parseBooleanInput(getInput("add-labels"), "add-labels", true);
+    const commentAuthor = getInput("comment-author").trim() || DEFAULT_COMMENT_AUTHOR;
     const knownAgentActorsRaw = getInput("known-agent-actors");
     const knownAgentActors = knownAgentActorsRaw ? knownAgentActorsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
     const token = requireGitHubToken(process.env["GITHUB_TOKEN"], getInput("github-token"));
@@ -34331,6 +34511,8 @@ async function run() {
     let diffContent = "";
     let patchesComplete = true;
     let pullRequestBaseSha;
+    let commitEmails = [];
+    let commitNames = [];
     let actor = ctx.actor;
     let prTitle;
     let prBody;
@@ -34348,20 +34530,20 @@ async function run() {
       if (!pr) throw new Error("Missing pull_request payload");
       issueNumber = pr.number;
       const prAction = payload.action;
-      const validPrActions = [
-        "pull_request.opened",
-        "pull_request.synchronize",
-        "pull_request.reopened",
-        "pull_request.ready_for_review"
-      ];
-      const inferredEvent = `pull_request.${prAction}`;
-      eventType = validPrActions.includes(inferredEvent) ? inferredEvent : "pull_request.opened";
+      eventType = parseEventType(eventName, prAction);
+      if (!eventType) {
+        warning(`Unsupported pull_request action: ${prAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
+      const eventBaseSha = extractPullRequestBaseSha(payload);
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       actor = metadata.actor || actor;
       prTitle = metadata.title;
       prBody = metadata.body;
@@ -34371,7 +34553,11 @@ async function run() {
       if (!issue2) throw new Error("Missing issue payload");
       issueNumber = issue2.number;
       const issueAction = payload.action;
-      eventType = `issues.${issueAction}`;
+      eventType = parseEventType(eventName, issueAction);
+      if (!eventType) {
+        warning(`Unsupported issues action: ${issueAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
@@ -34382,7 +34568,11 @@ async function run() {
       if (!issue2) throw new Error("Missing issue payload for issue_comment");
       issueNumber = issue2.number;
       const commentAction = payload.action;
-      eventType = `issue_comment.${commentAction}`;
+      eventType = parseEventType(eventName, commentAction);
+      if (!eventType) {
+        warning(`Unsupported issue_comment action: ${commentAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
       const comment = payload.comment;
       actor = comment?.user?.login || actor;
       commentBody = comment?.body ?? void 0;
@@ -34400,7 +34590,14 @@ async function run() {
       const pr = payload.pull_request;
       if (!pr) throw new Error("Missing pull_request payload for review");
       issueNumber = pr.number;
-      eventType = "pull_request_review.submitted";
+      eventType = parseEventType(eventName, payload.action);
+      if (!eventType) {
+        warning(
+          `Unsupported pull_request_review action: ${String(payload.action)}. Skipping AGENTOWNERS check.`
+        );
+        return;
+      }
+      const eventBaseSha = extractPullRequestBaseSha(payload);
       const review = payload.review;
       reviewState = review?.state;
       actor = review?.user?.login || actor;
@@ -34409,7 +34606,9 @@ async function run() {
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -34449,6 +34648,8 @@ async function run() {
     });
     const agentDetection = detectAgent({
       actor,
+      commitEmails,
+      commitNames,
       prTitle,
       prBody,
       issueBody,
@@ -34480,11 +34681,11 @@ async function run() {
     const isDryRun = mode === "dry-run";
     const shouldComment = (mode === "comment" || mode === "both") && !isDryRun;
     if (shouldComment && issueNumber !== void 0) {
-      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody);
+      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody, commentAuthor);
       info("Verdict comment posted/updated.");
     }
     if (addLabels && issueNumber !== void 0 && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply, labels);
     }
     setOutput("decision", decision.effect);
     setOutput("risk-score", String(decision.riskScore));
@@ -34501,7 +34702,8 @@ async function run() {
       event: eventName,
       agentDetection: {
         matchedAgent: agentDetection.agentName,
-        confidence: agentDetection.confidence
+        confidence: agentDetection.confidence,
+        identityTrust: agentDetection.identityTrust
       },
       decision,
       changedFiles
@@ -34522,7 +34724,23 @@ async function run() {
     setFailed(error2 instanceof Error ? error2.message : String(error2));
   }
 }
-async function applyLabels(octokit, owner, repo, issueNumber, labels) {
+var MANAGED_LABELS = ["ai-agent", "risk-low", "risk-medium", "risk-high", "risk-critical"];
+async function applyLabels(octokit, owner, repo, issueNumber, labels, currentLabels = []) {
+  const desiredLabels = new Set(labels);
+  const staleManagedLabels = currentLabels.filter(
+    (label) => MANAGED_LABELS.includes(label) && !desiredLabels.has(label)
+  );
+  for (const label of staleManagedLabels) {
+    try {
+      await octokit.rest.issues.removeLabel({
+        owner,
+        repo,
+        issue_number: issueNumber,
+        name: label
+      });
+    } catch {
+    }
+  }
   const labelColors = {
     "ai-agent": "a2eeef",
     "risk-low": "0e8a16",
@@ -34551,6 +34769,7 @@ async function applyLabels(octokit, owner, repo, issueNumber, labels) {
 run();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  applyLabels,
   run
 });
 /*! Bundled license information:

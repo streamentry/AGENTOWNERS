@@ -9,7 +9,7 @@ from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
-- `src/git.ts`: bounded Git subprocess adapter
+- `src/git.ts`: bounded Git subprocess adapter for files, zero-context diff content, messages, and commit authors
 - `src/commands/init.ts`: profile installation
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
@@ -17,6 +17,7 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/fingerprint.ts`: agent-signal inspection
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
 - `src/commands/test.ts`: portable policy fixture execution
+- `README.md`: CLI contract, exit codes, and policy-reference entry point
 
 ## Diagrams
 
@@ -28,6 +29,8 @@ flowchart LR
   Policy --> Core
   Core --> Output
   Core --> ExitCode
+  DecisionFile --> Explain
+  Explain --> Output
 ```
 
 ```mermaid
@@ -42,6 +45,18 @@ sequenceDiagram
   CLI->>Core: evaluation input
   Core-->>CLI: decision
   CLI-->>User: Markdown, JSON, or SARIF and exit code
+```
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Explain
+  participant DecisionFile
+  User->>Explain: explain --decision path
+  Explain->>DecisionFile: read untrusted JSON
+  DecisionFile-->>Explain: bytes
+  Explain->>Explain: validate shape and sanitize terminal text
+  Explain-->>User: human-readable explanation or exit 1
 ```
 
 `test` reads explicit policy and fixture paths. It does not inspect Git state
@@ -98,4 +113,17 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
-Unknown output formats must fail before reading Git.
+The fingerprint command must expose `identityTrust` separately from detection
+confidence so spoofable commit metadata and labels are not presented as
+authenticated agent identity.
+The human-readable `check`, `explain`, and `fingerprint` commands must strip
+terminal control sequences from untrusted text; `explain` must also validate
+the complete saved decision shape before reading fields. Malformed input must
+fail nonzero instead of crashing or spoofing the terminal. JSON and SARIF
+output must remain structured and unsanitized.
+Unknown output formats must fail before reading Git. Commit author metadata is
+read with the same `--end-of-options` boundary as commit messages.
+The `check` and `self-check` adapters must read diff content with external diff
+drivers and text conversion disabled, then combine the redacted secret scan with
+canonical file classification before inference and evaluation. Their local
+secret boundary must remain equivalent; matched values must never reach output.

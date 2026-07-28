@@ -22,6 +22,9 @@ type DecisionFixture = {
     eventType: GitHubEventType;
     actor: string;
     changedFiles: string[];
+    commitEmails?: string[];
+    commitNames?: string[];
+    labels?: string[];
     prTitle?: string;
     prBody?: string;
     diffLinesCount?: number;
@@ -60,6 +63,9 @@ function evaluateFixture(fixture: DecisionFixture) {
   const filesClassification = classifyFiles(fixture.input.changedFiles);
   const agentDetection = detectAgent({
     actor: fixture.input.actor,
+    commitEmails: fixture.input.commitEmails,
+    commitNames: fixture.input.commitNames,
+    labels: fixture.input.labels,
     prTitle: fixture.input.prTitle,
     prBody: fixture.input.prBody,
     policy,

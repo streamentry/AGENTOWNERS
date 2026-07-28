@@ -48,6 +48,10 @@ inputs:
   known-agent-actors:
     required: false
     description: "Comma-separated list of known agent actor names"
+  comment-author:
+    required: false
+    default: "github-actions[bot]"
+    description: "GitHub login whose complete verdict markers may be updated"
 
 outputs:
   decision:
@@ -74,13 +78,17 @@ runs:
 ```
 1. Get inputs
 2. Get GitHub context (event, payload)
-3. Load policy file
+3. Load policy file from the immutable `pull_request.base.sha` in the webhook
+   payload for pull-request and review events; use the default branch only for
+   issue and issue-comment events. Refreshed PR metadata must not replace the
+   event-captured base SHA.
 4. Branch on event type:
    - pull_request → fetchPRFiles, fetchPRMetadata
    - issues → inspect actor/title/body/labels
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
      PR or issue fields
+   - unsupported actions → warn and stop before reading repository metadata
 5. Classify files
 6. Infer actions
 7. Detect agent
@@ -94,17 +102,23 @@ runs:
 
 ## Sticky Comment
 
-Marker: `<!-- agentowners-verdict -->`
+Markers: `<!-- agentowners-verdict -->` and
+`<!-- /agentowners-verdict -->`
 
 Logic:
 1. List existing PR comments
-2. Find comment containing the marker
+2. Find a comment authored by the configured `comment-author` that starts with
+   the opening marker and contains the closing marker. Quoted, incomplete, or
+   complete markers authored by another account are not owned verdicts.
 3. If found → update it (PATCH)
 4. If not found → create new comment (POST)
 
 ## Label Application
 Apply `labelsToApply` from Decision to the PR/issue.
 Create labels if they don't exist (with sensible colors).
+Before adding the current verdict, remove only stale AGENTOWNERS-managed
+labels (`ai-agent` and `risk-*`). Preserve unrelated maintainer and policy
+labels.
 
 ## Audit Artifact
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
@@ -115,11 +129,21 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Block decision → does not fail when fail-on-block is false
 - Dry-run mode → no comment posted, no labels
 - Sticky comment updated on re-run
+- Quoted, incomplete, or wrong-author marker comments are never overwritten
 - Audit JSON written correctly
 - Labels applied to PR
+- Unsupported pull request, issue, comment, and review actions are skipped
 
 ## Security Requirements
 - Never print secret patterns from diff content
 - Treat all PR content as untrusted input
 - Do not execute content from policy as code
 - Use least-privilege permissions
+- Reject unknown `mode` values before evaluation so a typo cannot silently skip
+  comments, labels, or enforcement behavior.
+- Reject invalid boolean inputs instead of silently disabling an enforcement
+  flag such as `fail-on-require-approval`.
+- Bind pull-request policy evaluation to the event-captured base SHA so a
+  force-push after delivery cannot change the policy judging that event.
+- Bind sticky-comment updates to the configured author login so a contributor
+  cannot forge a complete marker and cause their comment to be overwritten.

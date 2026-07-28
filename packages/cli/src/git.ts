@@ -18,10 +18,38 @@ export function getChangedFiles(base: string, head: string, cwd?: string): strin
   return output.split('\n').filter(Boolean);
 }
 
+export function getDiffContent(base: string, head: string, cwd?: string): string {
+  return exec(
+    'git',
+    ['diff', '--no-ext-diff', '--no-textconv', '--unified=0', '--end-of-options', base, head, '--'],
+    cwd,
+  );
+}
+
 export function getCommitMessages(base: string, head: string, cwd?: string): string[] {
   const output = exec(
     'git',
     ['log', '--format=%s%n%b', '--end-of-options', `${base}..${head}`],
+    cwd,
+  );
+  if (!output) return [];
+  return output.split('\n').filter(Boolean);
+}
+
+export function getCommitEmails(base: string, head: string, cwd?: string): string[] {
+  const output = exec(
+    'git',
+    ['log', '--format=%ae', '--end-of-options', `${base}..${head}`],
+    cwd,
+  );
+  if (!output) return [];
+  return output.split('\n').filter(Boolean);
+}
+
+export function getCommitNames(base: string, head: string, cwd?: string): string[] {
+  const output = exec(
+    'git',
+    ['log', '--format=%an', '--end-of-options', `${base}..${head}`],
     cwd,
   );
   if (!output) return [];

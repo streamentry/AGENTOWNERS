@@ -11,8 +11,12 @@ Detect whether a PR, issue, comment, or commit likely came from an AI agent.
 
 ## Detection Signals (in priority order)
 
-### 1. Explicit policy match (confirmed)
-Actor matches a configured `agents[name].match.actors` entry.
+### 1. Explicit policy match (confirmed detection)
+Actor, commit email, commit name, or label matches a configured
+`agents[name].match` entry. The result also carries identity trust: actor
+matches are `verified`, while commit-author and label matches are
+`unverified` metadata. Configured title/body patterns are likewise
+`unverified`; they can route to review but cannot grant privileged actions.
 
 ### 2. Known bot actor (confirmed)
 Actor is one of: `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]`
@@ -45,12 +49,20 @@ Malformed configured regular expressions are ignored individually. Detection
 continues with remaining patterns and falls through conservatively if nothing
 valid matches.
 
+Configured actor, commit-author, and label matches are exact comparisons. A
+commit author signal is available to the CLI, portable fixtures, and pull
+request Action adapter; issue and comment events have no commit-author context.
+
 ## Types
 
 ```ts
+export type AgentIdentityTrust = 'verified' | 'unverified';
+
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   labels?: string[];
@@ -61,6 +73,7 @@ export type AgentDetectionResult = {
   agentName?: string;
   confidence: AgentDetectionConfidence;
   signals: string[];
+  identityTrust?: AgentIdentityTrust;
 };
 ```
 
@@ -77,6 +90,8 @@ Return matched agent name from policy configuration or null.
 
 ## Tests (`packages/core/tests/detection.test.ts`)
 - Configured actor → `confirmed`
+- Configured commit author or label → `confirmed` detection with `identityTrust: "unverified"`
+- Configured actor or known bot → `identityTrust: "verified"`
 - `github-copilot[bot]` → `confirmed`
 - Commit with `Co-Authored-By: Claude` → `likely`
 - PR body with `🤖 Generated with` → `likely`

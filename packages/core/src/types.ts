@@ -36,6 +36,11 @@ export type GitHubEventType =
 
 export type AgentDetectionConfidence = 'confirmed' | 'likely' | 'possible' | 'unknown';
 
+// Detection confidence describes how strongly the evidence indicates agent
+// involvement. Identity trust is separate: commit metadata and labels can be
+// forged by a pull-request author even when they match policy exactly.
+export type AgentIdentityTrust = 'verified' | 'unverified';
+
 export type AgentPolicy = {
   match: {
     actors?: string[];
@@ -130,6 +135,8 @@ export type AgentDetectionResult = {
   agentName?: string;
   confidence: AgentDetectionConfidence;
   signals: string[];
+  /** Whether the matched agent identity came from an authenticated actor. */
+  identityTrust?: AgentIdentityTrust;
 };
 
 export type PolicyFixtureInput = {
@@ -137,12 +144,15 @@ export type PolicyFixtureInput = {
   actor: string;
   changed_files: string[];
   commit_messages: string[];
+  commit_emails: string[];
+  commit_names: string[];
   labels: string[];
   pr_title?: string;
   pr_body?: string;
   issue_title?: string;
   issue_body?: string;
   review_state?: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED';
+  diff_content?: string;
   diff_lines_count?: number;
   commits_count?: number;
 };

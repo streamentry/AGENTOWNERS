@@ -107,6 +107,8 @@ All fields from spec section 11.5.
 - AgentAction enum: `z.enum([...])`
 - All policy objects are strict. Unknown fields fail validation so typos cannot
   silently disable enforcement.
+- Numeric `diff_lines_over` and `commits_over` thresholds must be nonnegative;
+  negative values would turn a threshold rule into an unintended global match.
 - Every `match` and `when` object must contain at least one supported field.
 - The same action cannot appear in more than one of `allowed`,
   `requires_approval`, and `blocked` for a single agent.

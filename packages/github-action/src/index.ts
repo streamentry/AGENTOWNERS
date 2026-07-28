@@ -16,17 +16,43 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
-import { requireGitHubToken } from './config.js';
-import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import {
+  DEFAULT_COMMENT_AUTHOR,
+  parseActionMode,
+  parseBooleanInput,
+  requireGitHubToken,
+} from './config.js';
+import { extractPullRequestBaseSha, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+
+const SUPPORTED_EVENT_ACTIONS: Readonly<Record<string, readonly string[]>> = {
+  pull_request: ['opened', 'synchronize', 'reopened', 'ready_for_review'],
+  issues: ['labeled', 'closed', 'reopened', 'opened'],
+  issue_comment: ['created', 'edited'],
+};
+
+function parseEventType(eventName: string, action: string): GitHubEventType | undefined {
+  if (eventName === 'pull_request_review') {
+    return action === 'submitted' ? 'pull_request_review.submitted' : undefined;
+  }
+  const supportedActions = SUPPORTED_EVENT_ACTIONS[eventName];
+  return supportedActions?.includes(action)
+    ? (`${eventName}.${action}` as GitHubEventType)
+    : undefined;
+}
 
 export async function run(): Promise<void> {
   try {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
-    const mode = core.getInput('mode') || 'comment';
-    const failOnBlock = core.getInput('fail-on-block') !== 'false';
-    const failOnRequireApproval = core.getInput('fail-on-require-approval') === 'true';
-    const addLabels = core.getInput('add-labels') !== 'false';
+    const mode = parseActionMode(core.getInput('mode'));
+    const failOnBlock = parseBooleanInput(core.getInput('fail-on-block'), 'fail-on-block', true);
+    const failOnRequireApproval = parseBooleanInput(
+      core.getInput('fail-on-require-approval'),
+      'fail-on-require-approval',
+      false,
+    );
+    const addLabels = parseBooleanInput(core.getInput('add-labels'), 'add-labels', true);
+    const commentAuthor = core.getInput('comment-author').trim() || DEFAULT_COMMENT_AUTHOR;
     const knownAgentActorsRaw = core.getInput('known-agent-actors');
     const knownAgentActors = knownAgentActorsRaw
       ? knownAgentActorsRaw
@@ -50,6 +76,8 @@ export async function run(): Promise<void> {
     let diffContent = '';
     let patchesComplete = true;
     let pullRequestBaseSha: string | undefined;
+    let commitEmails: string[] = [];
+    let commitNames: string[] = [];
     let actor = ctx.actor;
     let prTitle: string | undefined;
     let prBody: string | undefined;
@@ -70,21 +98,22 @@ export async function run(): Promise<void> {
       issueNumber = pr.number as number;
 
       const prAction = payload.action as string;
-      const validPrActions: GitHubEventType[] = [
-        'pull_request.opened',
-        'pull_request.synchronize',
-        'pull_request.reopened',
-        'pull_request.ready_for_review',
-      ];
-      const inferredEvent = `pull_request.${prAction}` as GitHubEventType;
-      eventType = validPrActions.includes(inferredEvent) ? inferredEvent : 'pull_request.opened';
+      eventType = parseEventType(eventName, prAction);
+      if (!eventType) {
+        core.warning(`Unsupported pull_request action: ${prAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
+
+      const eventBaseSha = extractPullRequestBaseSha(payload);
 
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       actor = metadata.actor || actor;
       prTitle = metadata.title;
       prBody = metadata.body;
@@ -95,7 +124,11 @@ export async function run(): Promise<void> {
       issueNumber = issue.number as number;
 
       const issueAction = payload.action as string;
-      eventType = `issues.${issueAction}` as GitHubEventType;
+      eventType = parseEventType(eventName, issueAction);
+      if (!eventType) {
+        core.warning(`Unsupported issues action: ${issueAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
 
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
@@ -108,7 +141,11 @@ export async function run(): Promise<void> {
       issueNumber = issue.number as number;
 
       const commentAction = payload.action as string;
-      eventType = `issue_comment.${commentAction}` as GitHubEventType;
+      eventType = parseEventType(eventName, commentAction);
+      if (!eventType) {
+        core.warning(`Unsupported issue_comment action: ${commentAction}. Skipping AGENTOWNERS check.`);
+        return;
+      }
 
       const comment = payload.comment;
       actor = (comment?.user?.login as string) || actor;
@@ -128,7 +165,15 @@ export async function run(): Promise<void> {
       const pr = payload.pull_request;
       if (!pr) throw new Error('Missing pull_request payload for review');
       issueNumber = pr.number as number;
-      eventType = 'pull_request_review.submitted';
+      eventType = parseEventType(eventName, payload.action as string);
+      if (!eventType) {
+        core.warning(
+          `Unsupported pull_request_review action: ${String(payload.action)}. Skipping AGENTOWNERS check.`,
+        );
+        return;
+      }
+
+      const eventBaseSha = extractPullRequestBaseSha(payload);
 
       const review = payload.review;
       reviewState = review?.state as 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;
@@ -139,7 +184,9 @@ export async function run(): Promise<void> {
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -191,6 +238,8 @@ export async function run(): Promise<void> {
     // Extend policy actors with known-agent-actors input
     const agentDetection = detectAgent({
       actor,
+      commitEmails,
+      commitNames,
       prTitle,
       prBody,
       issueBody,
@@ -231,13 +280,13 @@ export async function run(): Promise<void> {
     const isDryRun = mode === 'dry-run';
     const shouldComment = (mode === 'comment' || mode === 'both') && !isDryRun;
     if (shouldComment && issueNumber !== undefined) {
-      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody);
+      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody, commentAuthor);
       core.info('Verdict comment posted/updated.');
     }
 
     // 11. Apply labels
     if (addLabels && issueNumber !== undefined && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply, labels);
     }
 
     // 12. Set outputs
@@ -259,6 +308,7 @@ export async function run(): Promise<void> {
       agentDetection: {
         matchedAgent: agentDetection.agentName,
         confidence: agentDetection.confidence,
+        identityTrust: agentDetection.identityTrust,
       },
       decision,
       changedFiles,
@@ -285,13 +335,35 @@ export async function run(): Promise<void> {
   }
 }
 
-async function applyLabels(
+const MANAGED_LABELS = ['ai-agent', 'risk-low', 'risk-medium', 'risk-high', 'risk-critical'] as const;
+
+export async function applyLabels(
   octokit: ReturnType<typeof github.getOctokit>,
   owner: string,
   repo: string,
   issueNumber: number,
   labels: string[],
+  currentLabels: string[] = [],
 ): Promise<void> {
+  const desiredLabels = new Set(labels);
+  const staleManagedLabels = currentLabels.filter(
+    (label) =>
+      (MANAGED_LABELS as readonly string[]).includes(label) && !desiredLabels.has(label),
+  );
+
+  for (const label of staleManagedLabels) {
+    try {
+      await octokit.rest.issues.removeLabel({
+        owner,
+        repo,
+        issue_number: issueNumber,
+        name: label,
+      });
+    } catch {
+      // The label may have been removed concurrently; continue applying the verdict.
+    }
+  }
+
   // Ensure labels exist before applying
   const labelColors: Record<string, string> = {
     'ai-agent': 'a2eeef',

@@ -11,14 +11,16 @@ network calls, clocks, randomness, or persistent state.
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
 - `classifier.ts`: path and secret classification
-- `detection.ts`: actor, commit, PR, issue, and comment evidence
+- `detection.ts`: actor, commit-author, label, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
+- `evaluatePolicy.ts`: public `evaluatePolicyFromEvent` wrapper that preserves action inference
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
 - `fixtures.ts`: strict portable suites and assertion comparison
 - `sarif.ts`: deterministic SARIF 2.1.0 output
+- `README.md`: package API contract and links to the end-user policy reference
 
 ## Diagrams
 
@@ -84,11 +86,41 @@ sequenceDiagram
 
 ## Verification
 
-Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`. Configured
+actor, commit-author, and label matches must have focused detection or fixture
+coverage; a schema field that the detector ignores is a policy safety defect.
+Actor and known-bot matches are `identityTrust: verified`. Commit-author,
+label, title, and body matches remain detection evidence but are
+`identityTrust: unverified`; they must never grant an agent-specific allow
+decision or the `known_agent` default. Unverified labels, titles, and bodies
+also cannot satisfy an allow rule for sensitive actions unless the rule names
+an explicit trusted actor or verified agent. Missing trust from a legacy
+adapter is also treated as unverified at the evaluator boundary.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
+Action-scoped allow rules may match any listed action, but must enumerate every
+detected action before contributing `allow`; block and approval rules retain
+any-action matching. Keep this boundary covered by the evaluator test and
+adversarial corpus.
+The simplified `evaluatePolicy.ts` wrapper must infer actions from its event
+and changed files before delegating to the canonical evaluator; an empty action
+list silently bypasses action-scoped rules.
+`inferActions` must derive omitted classifications through `classifier.ts`,
+not a second path-pattern implementation. The same changed paths must produce
+the same file actions whether classification is supplied or derived. If diff
+content is supplied, secret-pattern matches must add `touch_secrets` without
+returning the matched value.
+Portable fixture suites may include `diff_content` only for pull-request
+events. The runner must combine its redacted secret scan with file
+classification before inference and evaluation, so fixture behavior matches
+the GitHub Action boundary.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
+Threshold conditions `diff_lines_over` and `commits_over` must remain
+nonnegative; negative values would turn a count threshold into a global match.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.
+Markdown verdict output must escape untrusted actor, path, policy, reviewer,
+label, reason, and explanation text before interpolation. Audit JSON remains
+structured and unescaped.

@@ -41,6 +41,10 @@ inputs:
       in addition to those configured in the policy file
     required: false
     default: ""
+  comment-author:
+    description: GitHub login whose complete marker comments may be updated
+    required: false
+    default: github-actions[bot]
 
 outputs:
   decision:

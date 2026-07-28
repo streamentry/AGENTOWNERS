@@ -10,7 +10,13 @@ import type { Decision } from '../src/types.js';
 
 const allowDecision: Decision = {
   effect: 'allow',
-  matchedRules: [{ name: 'Allow docs-only agent PRs', effect: 'allow', reason: 'Docs-only changes are low risk.' }],
+  matchedRules: [
+    {
+      name: 'Allow docs-only agent PRs',
+      effect: 'allow',
+      reason: 'Docs-only changes are low risk.',
+    },
+  ],
   detectedActions: ['open_pr', 'modify_docs'],
   riskScore: 5,
   riskLevel: 'low',
@@ -35,7 +41,8 @@ const approvalDecision: Decision = {
   riskLevel: 'high',
   requiredReviewers: ['@maintainers/security'],
   labelsToApply: ['ai-agent', 'needs-human-review', 'risk-high'],
-  explanation: 'This PR should not be merged until a human maintainer reviews the auth-related changes.',
+  explanation:
+    'This PR should not be merged until a human maintainer reviews the auth-related changes.',
 };
 
 const blockDecision: Decision = {
@@ -117,7 +124,7 @@ describe('renderVerdict', () => {
 
   it('actor shown in require_approval verdict when provided', () => {
     const result = renderVerdict(approvalDecision, { actor: 'github-copilot[bot]' });
-    expect(result).toContain('github-copilot[bot]');
+    expect(result).toContain('github-copilot\\[bot\\]');
   });
 
   it('matched files shown in require_approval verdict', () => {
@@ -138,7 +145,9 @@ describe('renderVerdict', () => {
 
   it('block verdict contains reason', () => {
     const result = renderVerdict(blockDecision);
-    expect(result).toContain('AI agents may not modify CI/CD workflows without maintainer approval.');
+    expect(result).toContain(
+      'AI agents may not modify CI/CD workflows without maintainer approval.',
+    );
   });
 });
 
@@ -148,7 +157,11 @@ describe('renderAuditJson', () => {
       actor: 'github-copilot[bot]',
       repository: 'owner/repo',
       event: 'pull_request',
-      agentDetection: { matchedAgent: 'github-copilot', confidence: 'confirmed' },
+      agentDetection: {
+        matchedAgent: 'github-copilot',
+        confidence: 'confirmed',
+        identityTrust: 'verified',
+      },
       decision: approvalDecision,
       changedFiles: ['src/auth/session.ts'],
     });
@@ -159,6 +172,7 @@ describe('renderAuditJson', () => {
     expect(record.event).toBe('pull_request');
     expect(record.matchedAgent).toBe('github-copilot');
     expect(record.confidence).toBe('confirmed');
+    expect(record.identityTrust).toBe('verified');
     expect(record.decision).toBe('require_approval');
     expect(record.riskScore).toBe(65);
     expect(record.riskLevel).toBe('high');
@@ -178,6 +192,7 @@ describe('renderAuditJson', () => {
     });
     expect(() => new Date(record.timestamp)).not.toThrow();
     expect(record.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(record.identityTrust).toBe('unverified');
   });
 
   it('optional fields absent when not provided', () => {
@@ -221,5 +236,29 @@ describe('renderRequiresApproval', () => {
     const result = renderRequiresApproval(approvalDecision, {});
     expect(result).toContain('Risk level: high');
     expect(result).toContain('Risk score: 65/100');
+  });
+
+  it('escapes untrusted Markdown in human-readable verdicts', () => {
+    const result = renderRequiresApproval(
+      {
+        ...approvalDecision,
+        matchedRules: [
+          {
+            ...approvalDecision.matchedRules[0],
+            name: '`[spoofed](https://evil.example)`\n# forged heading',
+            reason: '- forged list item\n[spoofed](https://evil.example)',
+            matchedFiles: ['`[secret](https://evil.example)`\nforged-path.ts'],
+          },
+        ],
+        explanation: '## forged heading\n[spoofed](https://evil.example)',
+      },
+      { actor: '`[spoofed](https://evil.example)`\nforged-actor' },
+    );
+
+    expect(result).toContain('\\[spoofed\\]');
+    expect(result).not.toContain('[spoofed](https://evil.example)');
+    expect(result).not.toContain('\n# forged heading');
+    expect(result).not.toContain('\n- forged list item');
+    expect(result).not.toContain('\nforged-actor');
   });
 });

@@ -1,14 +1,17 @@
 # F6: Rule Evaluation and Risk Scoring
 
 ## Objective
+
 Evaluate policy rules against a GitHub event context and compute a deterministic risk score.
 
 ## Package
+
 `packages/core/src/evaluator.ts` and `packages/core/src/scoring.ts`
 
 ## Rule Evaluation
 
 ### Decision Priority (spec section 14)
+
 `block > require_approval > allow`
 
 If any matched rule blocks → final decision is `block`
@@ -25,6 +28,7 @@ Agent-specific action lists participate in the same priority resolution:
 - Unlisted actions fall through to repository rules and conservative defaults.
 
 ### Default Behavior (conservative)
+
 ```yaml
 defaults:
   unknown_agent: require_approval
@@ -35,6 +39,7 @@ defaults:
 ```
 
 ### Rule Condition Matching
+
 A rule matches when ALL specified conditions in `when` are satisfied:
 
 - `agents`: agent name matches list
@@ -56,6 +61,19 @@ A rule matches when ALL specified conditions in `when` are satisfied:
 - `changes_infra`: FilesClassification.changesInfra
 - `docs_only`: FilesClassification.docsOnly
 - `tests_only`: FilesClassification.testsOnly
+
+For a rule with `effect: allow`, matching one action is not sufficient: every
+detected action must be listed in `when.actions`. Block and approval rules keep
+the any-action behavior above so a single dangerous action can trigger review.
+
+Allow-rule trust boundary:
+
+- Labels, PR titles/bodies, and issue titles/bodies are attacker-controlled
+  metadata.
+- They may route a decision to review, but they cannot produce `allow` for a
+  sensitive action (`approve_pr`, `merge_pr`, workflow, dependency, auth,
+  infrastructure, secret, or permission changes) unless the same rule also
+  matches an explicit actor or a verified agent identity.
 
 ## Types
 
@@ -83,17 +101,28 @@ export type MatchedRule = {
 ## Functions
 
 ### `evaluatePolicy(input: EvaluationInput): Decision`
+
 Main evaluation function. Returns full Decision object.
 
+The package also exports `evaluatePolicyFromEvent` from
+`packages/core/src/evaluatePolicy.ts` for callers with `{ policy, changedFiles,
+event }`. It must classify files, infer event/file actions, and then delegate
+to the canonical evaluator; it must never pass an empty action list. The
+unexported legacy `evaluatePolicy` alias remains only for direct-module
+compatibility.
+
 ### `evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | null`
+
 Evaluate a single rule. Return MatchedRule if it matches, null otherwise.
 
 ### `computeDecision(matchedRules: MatchedRule[], agentDetection: AgentDetectionResult, policy: AgentOwnersPolicy, filesClassification: FilesClassification): Decision['effect']`
+
 Apply priority logic to compute final effect.
 
 ## Risk Scoring (spec section 14)
 
 Additive scoring:
+
 ```
 docs_only: +5
 tests_only: +10
@@ -107,6 +136,7 @@ infra_path_changed: +40
 permissions_changed: +60
 secrets_pattern_detected: +80
 agent_unknown_confidence: +20
+agent_unverified_identity: +20
 agent_confirmed: +0
 blocked_action_detected: +100
 ```
@@ -114,6 +144,7 @@ blocked_action_detected: +100
 The additive score is capped at 100 before assigning the risk level.
 
 Risk levels:
+
 - 0-20: low
 - 21-49: medium
 - 50-79: high
@@ -122,6 +153,7 @@ Risk levels:
 ### `computeRiskScore(input: RiskScoringInput): { score: number; level: RiskLevel }`
 
 ## Tests (`packages/core/tests/evaluator.test.ts`)
+
 - Block rule takes precedence over allow
 - Require_approval takes precedence over allow
 - Unknown agent defaults to require_approval

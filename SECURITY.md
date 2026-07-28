@@ -48,6 +48,11 @@ is treated as untrusted input. It is used for matching only, never executed or
 interpolated into shell commands. CLI Git ranges use Git's explicit
 `--end-of-options` boundary.
 
+Detection confidence is not authentication. Only configured actors and known
+GitHub bot actors receive `identityTrust: verified`; commit authors, labels,
+titles, and bodies remain `unverified` and cannot grant privileged agent
+allowlists or known-agent defaults. Missing trust is fail-closed.
+
 ### Audit artifacts
 
 The GitHub Action produces `agentowners-decision.json` as a workflow artifact.

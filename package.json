@@ -18,11 +18,14 @@
     "lint": "eslint packages/*/src/**/*.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
+    "demo": "pnpm build && node scripts/demo.mjs",
     "generate:schema": "pnpm build && node scripts/generate-json-schema.mjs",
     "verify:schema": "node scripts/generate-json-schema.mjs --check",
+    "verify:docs": "node scripts/verify-doc-links.mjs",
+    "verify:demo": "node scripts/demo.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "verify:packages": "node scripts/verify-packed-packages.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm verify:schema && pnpm test && pnpm verify:release"
+    "verify": "pnpm lint && pnpm typecheck && pnpm verify:docs && pnpm build && pnpm verify:demo && pnpm verify:schema && pnpm test && pnpm verify:release"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

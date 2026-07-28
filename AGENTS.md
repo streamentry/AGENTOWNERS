@@ -15,15 +15,19 @@ AGENTOWNERS is a TypeScript monorepo that ships a governance layer for AI agents
 
 ```bash
 # 1. Install dependencies
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 
-# 2. Build all packages
+# 2. Prove the product path from the production CLI
+pnpm demo
+
+# 3. Build all packages (dist/ is generated and ignored)
 pnpm build
 
-# 3. Run all tests (must pass before any commit)
+# 4. Run all tests (must pass before any commit)
 pnpm test
 
-# 4. Type check
+# 5. Type check
 pnpm typecheck
 
 # Complete gate, including release-artifact smoke tests
@@ -42,6 +46,7 @@ packages/core/src/
   detection.ts   — AI agent detection from actor/commit/body signals
   actions.ts     — action inference from GitHub event types
   evaluator.ts   — event-specific rule evaluation, decision logic, default policy
+  evaluatePolicy.ts — public event wrapper that preserves inferred actions
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
@@ -59,6 +64,7 @@ packages/core/tests/
   detection.test.ts  — agent detection signals
   actions.test.ts    — action inference
   evaluator.test.ts  — rule evaluation
+  evaluatePolicy-wrapper.test.ts — simplified wrapper action preservation
   scoring.test.ts    — risk scoring
   renderer.test.ts   — verdict rendering
   sarif.test.ts      — SARIF stability, severity, and safe locations
@@ -104,6 +110,8 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/policy-reference.md — end-user schema, condition, action, and trust reference
+docs/quickstart.md      — five-minute source checkout and first-decision path
 docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/
@@ -171,13 +179,22 @@ These are immutable safety rules. Never change them:
 | Decision priority | `block > require_approval > allow` — always, no exceptions |
 | Policy as data | Never `eval()`, `new Function()`, or execute policy content as code |
 | Strict schema | Unknown fields and empty rule conditions fail validation |
+| Threshold safety | `diff_lines_over` and `commits_over` must be nonnegative |
 | Secret redaction | Never print matched secret values — use `[REDACTED]` |
+| Markdown output safety | Human-readable verdicts escape untrusted actor, path, policy, reviewer, label, reason, and explanation text; audit JSON remains structured |
 | Determinism | Same inputs → same output. No randomness, no timestamps in evaluation |
 | No database | The core engine is stateless: policy file + event context → Decision |
 | Least privilege | GitHub Action never requests `repo:admin` or `secrets:read` permissions |
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
-| Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
+| Identity trust | Commit metadata, labels, titles, and bodies are unverified evidence; only authenticated actors may use `known_agent` privileges |
+| Complete allow coverage | An action-scoped `allow` rule must list every detected action; block and approval rules may match any listed action |
+| CLI audit safety | Human-readable `check`, `explain`, and `fingerprint` output strips terminal controls; `explain` validates saved decisions before rendering |
+| Trusted policy | Pull requests use `pull_request.base.sha` from the webhook event, never a later mutable metadata response |
+| Sticky comment ownership | Action updates only complete verdict markers authored by the configured `comment-author` |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+| Inference parity | `inferActions` derives omitted classifications through the canonical classifier; diff secret matches add `touch_secrets` without exposing values |
+| Fixture fidelity | Portable `diff_content` cases are pull-request-only and mirror the Action's redacted secret scan before evaluation |
+| Adapter parity | CLI `check` and `self-check` scan zero-context Git diffs with external diff drivers disabled, matching the Action's redacted secret boundary |
 
 ## How to add a new feature
 
@@ -247,6 +264,10 @@ Before implementation, refresh `origin/main` and inspect open or recently
 merged work for the same invariant. If another contribution overlaps, preserve
 distinct counterexamples and mutation evidence. Do not replace an external
 contribution silently; record the exact overlap and attribution in the PR.
+
+Before opening a PR, complete `.github/PULL_REQUEST_TEMPLATE.md`: include the
+immutable-base self-check decision and exit code, focused evidence for the
+changed branch, and the conditional documentation or packed-package gates.
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 

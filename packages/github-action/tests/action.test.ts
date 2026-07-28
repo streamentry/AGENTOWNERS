@@ -25,6 +25,7 @@ const mockOctokit = {
     },
     pulls: {
       listFiles: vi.fn(),
+      listCommits: vi.fn(),
       get: vi.fn(),
     },
     issues: {
@@ -32,6 +33,7 @@ const mockOctokit = {
       createComment: vi.fn(),
       updateComment: vi.fn(),
       addLabels: vi.fn(),
+      removeLabel: vi.fn(),
       getLabel: vi.fn(),
       createLabel: vi.fn(),
       get: vi.fn(),
@@ -103,6 +105,7 @@ vi.mock('@agent-owners/core', () => ({
   detectAgent: vi.fn().mockReturnValue({
     agentName: 'copilot',
     confidence: 'confirmed',
+    identityTrust: 'verified',
     signals: ['known bot actor'],
   }),
   evaluatePolicy: vi.fn().mockReturnValue(mockDecisionAllow),
@@ -135,6 +138,7 @@ function setupInputs(overrides: Record<string, string> = {}): void {
     'fail-on-require-approval': 'false',
     'add-labels': 'true',
     'known-agent-actors': '',
+    'comment-author': 'github-actions[bot]',
   };
   const merged = { ...defaults, ...overrides };
   mockCore.getInput.mockImplementation((name: string) => merged[name] ?? '');
@@ -159,12 +163,14 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
       head: { ref: 'feature-branch' },
     },
   });
+  mockOctokit.rest.pulls.listCommits.mockResolvedValue({ data: [] });
   mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
   mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 1 } });
   mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 1 } });
   mockOctokit.rest.issues.getLabel.mockRejectedValue(new Error('not found'));
   mockOctokit.rest.issues.createLabel.mockResolvedValue({ data: {} });
   mockOctokit.rest.issues.addLabels.mockResolvedValue({ data: [] });
+  mockOctokit.rest.issues.removeLabel.mockResolvedValue({ data: {} });
 }
 
 // Integration tests — we import action logic directly and test run() behaviour
@@ -259,6 +265,11 @@ describe('GitHub Action — integration via mocks', () => {
         prBody: undefined,
       }),
     );
+    expect(core.renderAuditJson).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agentDetection: expect.objectContaining({ identityTrust: 'verified' }),
+      }),
+    );
   });
 
   it('maps pull request comments to PR metadata without leaking into issue conditions', async () => {
@@ -321,6 +332,7 @@ describe('GitHub Action — integration via mocks', () => {
       'test-repo',
       1,
       '<!-- agentowners-verdict -->\nverdict',
+      'github-actions[bot]',
     );
     expect(mockOctokit.rest.issues.createComment).toHaveBeenCalled();
 
@@ -334,6 +346,53 @@ describe('GitHub Action — integration via mocks', () => {
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-score', '10');
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-level', 'low');
     expect(mockCore.setFailed).not.toHaveBeenCalled();
+  });
+
+  it('uses the webhook base SHA when refreshed PR metadata has moved', async () => {
+    setupInputs({ mode: 'dry-run' });
+    setupOctokitPR(['src/index.ts']);
+    mockContext.payload = {
+      action: 'opened',
+      pull_request: { number: 1, base: { sha: 'event-base-sha' } },
+      repository: { default_branch: 'main' },
+    };
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledWith(
+      expect.objectContaining({ ref: 'event-base-sha' }),
+    );
+    expect(mockOctokit.rest.repos.getContent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ ref: 'base-sha' }),
+    );
+  });
+
+  it('does not overwrite a complete marker owned by another account', async () => {
+    setupInputs({ 'comment-author': 'github-actions[bot]' });
+    setupOctokitPR(['src/index.ts']);
+    mockContext.payload = {
+      action: 'opened',
+      pull_request: { number: 1, base: { sha: 'event-base-sha' } },
+      repository: { default_branch: 'main' },
+    };
+    mockOctokit.rest.issues.listComments.mockResolvedValue({
+      data: [
+        {
+          id: 900,
+          body: '<!-- agentowners-verdict -->\nForged\n<!-- /agentowners-verdict -->',
+          user: { login: 'attacker' },
+        },
+      ],
+    });
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
+      expect.objectContaining({ issue_number: 1 }),
+    );
   });
 
   it('block with fail-on-block=true → setFailed called', async () => {
@@ -367,7 +426,7 @@ describe('GitHub Action — integration via mocks', () => {
     // In dry-run mode, no octokit comment or label calls are made
     if (shouldComment) {
       const { upsertVerdictComment } = await import('../src/comment.js');
-      await upsertVerdictComment(mockOctokit as never, 'o', 'r', 1, 'body');
+      await upsertVerdictComment(mockOctokit as never, 'o', 'r', 1, 'body', 'github-actions[bot]');
     }
     if (mode !== 'dry-run') {
       await mockOctokit.rest.issues.addLabels({
@@ -393,19 +452,74 @@ describe('GitHub Action — integration via mocks', () => {
         {
           id: 99,
           body: '<!-- agentowners-verdict -->\nOld verdict\n<!-- /agentowners-verdict -->',
+          user: { login: 'github-actions[bot]' },
         },
       ],
     });
     mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 99 } });
 
     const { upsertVerdictComment } = await import('../src/comment.js');
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new verdict body');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new verdict body',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
       expect.objectContaining({ comment_id: 99 }),
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['mode', 'silent', 'Invalid mode'],
+    ['fail-on-block', 'yes', 'Invalid fail-on-block'],
+    ['fail-on-require-approval', 'yes', 'Invalid fail-on-require-approval'],
+    ['add-labels', 'yes', 'Invalid add-labels'],
+  ])(
+    'rejects invalid %s before creating a GitHub client or reading the PR',
+    async (input, value, expectedMessage) => {
+      setupInputs({ [input]: value });
+
+      const { run } = await import('../src/index.js');
+      await run();
+      const github = await import('@actions/github');
+
+      expect(mockCore.setFailed).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
+      expect(github.getOctokit).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ['pull_request', 'closed', { action: 'closed', pull_request: { number: 1 } }],
+    ['issues', 'edited', { action: 'edited', issue: { number: 1 } }],
+    [
+      'issue_comment',
+      'deleted',
+      { action: 'deleted', issue: { number: 1 }, comment: { body: 'comment' } },
+    ],
+    ['pull_request_review', 'dismissed', { action: 'dismissed', pull_request: { number: 1 } }],
+  ])(
+    'skips unsupported %s action before reading repository metadata',
+    async (eventName, _action, payload) => {
+      setupInputs();
+      mockContext.eventName = eventName;
+      mockContext.payload = payload;
+
+      const core = await import('@agent-owners/core');
+      const { run } = await import('../src/index.js');
+      await run();
+
+      expect(mockCore.warning).toHaveBeenCalledWith(expect.stringContaining('Unsupported'));
+      expect(core.evaluatePolicy).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.issues.get).not.toHaveBeenCalled();
+    },
+  );
 });
 
 // --- Unit tests for comment.ts ---
@@ -420,7 +534,14 @@ describe('upsertVerdictComment', () => {
     mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
     mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 1 } });
 
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'body text');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'body text',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
       expect.objectContaining({ issue_number: 1, body: 'body text' }),
@@ -432,16 +553,140 @@ describe('upsertVerdictComment', () => {
     const { upsertVerdictComment } = await import('../src/comment.js');
 
     mockOctokit.rest.issues.listComments.mockResolvedValue({
-      data: [{ id: 55, body: '<!-- agentowners-verdict -->\nOld content' }],
+      data: [
+        {
+          id: 55,
+          body: '<!-- agentowners-verdict -->\nOld content\n<!-- /agentowners-verdict -->',
+          user: { login: 'github-actions[bot]' },
+        },
+      ],
     });
     mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 55 } });
 
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new body',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
       expect.objectContaining({ comment_id: 55, body: 'new body' }),
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+  });
+
+  it('paginates comment history before creating a duplicate verdict', async () => {
+    const { upsertVerdictComment } = await import('../src/comment.js');
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      id: index + 1,
+      body: `ordinary comment ${index + 1}`,
+    }));
+    mockOctokit.rest.issues.listComments
+      .mockResolvedValueOnce({ data: firstPage })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 201,
+            body: '<!-- agentowners-verdict -->\nOld content\n<!-- /agentowners-verdict -->',
+            user: { login: 'github-actions[bot]' },
+          },
+        ],
+      });
+
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new body',
+      'github-actions[bot]',
+    );
+
+    expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(1, {
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      per_page: 100,
+      page: 1,
+    });
+    expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(2, {
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      per_page: 100,
+      page: 2,
+    });
+    expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
+      expect.objectContaining({ comment_id: 201, body: 'new body' }),
+    );
+    expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite a quoted or incomplete marker comment', async () => {
+    const { upsertVerdictComment } = await import('../src/comment.js');
+
+    mockOctokit.rest.issues.listComments.mockResolvedValue({
+      data: [
+        { id: 77, body: 'A user quoted <!-- agentowners-verdict --> in a discussion.' },
+        { id: 78, body: '<!-- agentowners-verdict -->\nIncomplete' },
+        {
+          id: 80,
+          body: '<!-- agentowners-verdict -->\nForged\n<!-- /agentowners-verdict -->',
+          user: { login: 'attacker' },
+        },
+      ],
+    });
+    mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 79 } });
+
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new body',
+      'github-actions[bot]',
+    );
+
+    expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
+      expect.objectContaining({ issue_number: 1, body: 'new body' }),
+    );
+  });
+});
+
+describe('applyLabels', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('removes stale managed risk labels while preserving unrelated labels', async () => {
+    const { applyLabels } = await import('../src/index.js');
+
+    await applyLabels(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      ['ai-agent', 'risk-low'],
+      ['ai-agent', 'risk-high', 'security-review'],
+    );
+
+    expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      name: 'risk-high',
+    });
+    expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledTimes(1);
+    expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith({
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      labels: ['ai-agent', 'risk-low'],
+    });
   });
 });
 
@@ -485,6 +730,32 @@ describe('getPRFiles', () => {
   });
 });
 
+describe('getPRCommitAuthors', () => {
+  it('paginates commit metadata and returns only available author fields', async () => {
+    const { getPRCommitAuthors } = await import('../src/github.js');
+    const firstPage = Array.from({ length: 100 }, () => ({
+      commit: { author: { email: 'bot@example.test', name: 'Automation Bot' } },
+    }));
+    mockOctokit.rest.pulls.listCommits
+      .mockResolvedValueOnce({ data: firstPage })
+      .mockResolvedValueOnce({
+        data: [{ commit: { author: { email: 'other@example.test', name: 'Other Bot' } } }],
+      });
+
+    await expect(getPRCommitAuthors(mockOctokit as never, 'owner', 'repo', 1)).resolves.toEqual({
+      emails: [...Array.from({ length: 100 }, () => 'bot@example.test'), 'other@example.test'],
+      names: [...Array.from({ length: 100 }, () => 'Automation Bot'), 'Other Bot'],
+    });
+    expect(mockOctokit.rest.pulls.listCommits).toHaveBeenNthCalledWith(2, {
+      owner: 'owner',
+      repo: 'repo',
+      pull_number: 1,
+      per_page: 100,
+      page: 2,
+    });
+  });
+});
+
 describe('getPRMetadata', () => {
   it('maps PR API response to PRMetadata', async () => {
     const { getPRMetadata } = await import('../src/github.js');
@@ -504,6 +775,11 @@ describe('getPRMetadata', () => {
         head: { ref: 'feature' },
       },
     });
+    mockOctokit.rest.pulls.listCommits.mockResolvedValue({
+      data: [
+        { commit: { author: { email: 'bot@example.test', name: 'Automation Bot' } } },
+      ],
+    });
 
     const meta = await getPRMetadata(mockOctokit as never, 'owner', 'repo', 1);
     expect(meta.title).toBe('Test PR');
@@ -511,6 +787,8 @@ describe('getPRMetadata', () => {
     expect(meta.labels).toEqual(['ai-agent']);
     expect(meta.commits).toBe(2);
     expect(meta.baseSha).toBe('base-sha');
+    expect(meta.commitEmails).toEqual(['bot@example.test']);
+    expect(meta.commitNames).toEqual(['Automation Bot']);
   });
 });
 
@@ -538,6 +816,20 @@ describe('getIssueMetadata', () => {
 
 // --- Action logic unit tests (pure logic, no async) ---
 describe('Action logic — pure unit tests', () => {
+  it('accepts only the documented action modes', async () => {
+    const { parseActionMode, parseBooleanInput } = await import('../src/config.js');
+
+    expect(parseActionMode('comment')).toBe('comment');
+    expect(parseActionMode('check')).toBe('check');
+    expect(parseActionMode('both')).toBe('both');
+    expect(parseActionMode('dry-run')).toBe('dry-run');
+    expect(() => parseActionMode('silent')).toThrow('Invalid mode');
+    expect(parseBooleanInput('', 'fail-on-block', true)).toBe(true);
+    expect(parseBooleanInput('false', 'fail-on-block', true)).toBe(false);
+    expect(parseBooleanInput('true', 'fail-on-block', false)).toBe(true);
+    expect(() => parseBooleanInput('yes', 'fail-on-block', true)).toThrow('Invalid fail-on-block');
+  });
+
   it('fails closed when no GitHub token is configured', async () => {
     const { requireGitHubToken } = await import('../src/config.js');
 

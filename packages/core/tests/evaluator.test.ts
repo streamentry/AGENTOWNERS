@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluatePolicy, evaluateRule } from '../src/evaluator.js';
+import { detectAgent } from '../src/detection.js';
 import type { EvaluationInput } from '../src/evaluator.js';
 import type { AgentOwnersPolicy, Rule } from '../src/types.js';
 import type { FilesClassification } from '../src/classifier.js';
@@ -68,16 +69,19 @@ describe('evaluateRule', () => {
       input: {},
       pattern: 'leaked token',
     },
-  ])('does not match $field when issue metadata is absent or different', ({ field, input, pattern }) => {
-    const rule: Rule = {
-      name: `Block matching ${field}`,
-      when: { [field]: [pattern] },
-      effect: 'block',
-      reason: 'Sensitive issue content requires intervention.',
-    };
+  ])(
+    'does not match $field when issue metadata is absent or different',
+    ({ field, input, pattern }) => {
+      const rule: Rule = {
+        name: `Block matching ${field}`,
+        when: { [field]: [pattern] },
+        effect: 'block',
+        reason: 'Sensitive issue content requires intervention.',
+      };
 
-    expect(evaluateRule(rule, baseInput(input))).toBeNull();
-  });
+      expect(evaluateRule(rule, baseInput(input))).toBeNull();
+    },
+  );
 
   it.each([
     {
@@ -231,6 +235,22 @@ describe('evaluateRule', () => {
     expect(noMatch).toBeNull();
   });
 
+  it('does not let an action-scoped allow authorize unlisted actions', () => {
+    const rule: Rule = {
+      name: 'Allow pull request creation',
+      when: { actions: ['open_pr'] },
+      effect: 'allow',
+      reason: 'Opening a pull request is routine.',
+    };
+
+    const result = evaluateRule(
+      rule,
+      baseInput({ detectedActions: ['open_pr', 'modify_dependencies'] }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('files_not condition blocks when a file matches the exclusion pattern', () => {
     const rule: Rule = {
       name: 'No secrets',
@@ -346,12 +366,156 @@ describe('evaluatePolicy', () => {
       baseInput({
         policy,
         actor: 'github-copilot[bot]',
-        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+        agentDetection: {
+          confidence: 'confirmed',
+          agentName: 'copilot',
+          signals: [],
+          identityTrust: 'verified',
+        },
         detectedActions: ['modify_docs'],
       }),
     );
 
     expect(decision.effect).toBe('allow');
+  });
+
+  it('fails closed when an adapter omits identity trust', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        copilot: {
+          match: { actors: ['github-copilot[bot]'] },
+          allowed: ['modify_docs'],
+        },
+      },
+    };
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        actor: 'github-copilot[bot]',
+        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+        detectedActions: ['modify_docs'],
+      }),
+    );
+
+    expect(decision.effect).toBe('require_approval');
+  });
+
+  it('does not allow actions from spoofable policy metadata', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        automation: {
+          match: { commitEmails: ['automation@example.test'] },
+          allowed: ['modify_docs'],
+        },
+      },
+    };
+    const agentDetection = detectAgent({
+      actor: 'human-user',
+      commitEmails: ['automation@example.test'],
+      policy,
+    });
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        agentDetection,
+        actor: 'human-user',
+        detectedActions: ['modify_docs'],
+      }),
+    );
+
+    expect(agentDetection.identityTrust).toBe('unverified');
+    expect(decision.effect).toBe('require_approval');
+    expect(decision.matchedRules).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ effect: 'allow' })]),
+    );
+  });
+
+  it('does not allow an agent rule from spoofable metadata', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        automation: { match: { labels: ['ai-generated'] } },
+      },
+      rules: [
+        {
+          name: 'Allow automation docs',
+          when: { agents: ['automation'] },
+          effect: 'allow',
+          reason: 'Automation docs are routine.',
+        },
+      ],
+    };
+    const agentDetection = detectAgent({
+      actor: 'human-user',
+      labels: ['ai-generated'],
+      policy,
+    });
+
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        agentDetection,
+        actor: 'human-user',
+        detectedActions: ['modify_docs'],
+      }),
+    );
+
+    expect(decision.effect).toBe('require_approval');
+    expect(decision.matchedRules).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Allow automation docs' })]),
+    );
+  });
+
+  it.each([
+    ['labels', { labels: ['safe'] }],
+    ['pr_title', { prTitle: 'safe change' }],
+    ['pr_body', { prBody: 'safe change' }],
+    ['issue_title', { issueTitle: 'safe change' }],
+    ['issue_body', { issueBody: 'safe change' }],
+  ] as const)('does not let untrusted %s metadata allow sensitive actions', (field, metadata) => {
+    const rule: Rule = {
+      name: `Allow by ${field}`,
+      when: { [field]: ['safe'] },
+      effect: 'allow',
+      reason: 'Metadata must not grant sensitive actions.',
+    };
+
+    const result = evaluateRule(
+      rule,
+      baseInput({
+        ...metadata,
+        detectedActions: ['modify_dependencies'],
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('permits metadata conditions when an explicit trusted actor also matches', () => {
+    const rule: Rule = {
+      name: 'Allow trusted actor with safe label',
+      when: { actors: ['trusted-bot[bot]'], labels: ['safe'] },
+      effect: 'allow',
+      reason: 'The actor is explicitly trusted by policy.',
+    };
+
+    const result = evaluateRule(
+      rule,
+      baseInput({
+        actor: 'trusted-bot[bot]',
+        labels: ['safe'],
+        detectedActions: ['modify_dependencies'],
+        agentDetection: {
+          confidence: 'confirmed',
+          signals: [],
+          identityTrust: 'verified',
+        },
+      }),
+    );
+
+    expect(result?.effect).toBe('allow');
   });
 
   it('block rule takes precedence over allow', () => {

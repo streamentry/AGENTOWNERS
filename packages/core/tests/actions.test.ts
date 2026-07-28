@@ -105,6 +105,49 @@ describe('inferActions', () => {
     expect(result).not.toContain('modify_tests');
   });
 
+  it('uses the canonical classifier when no classification is supplied', () => {
+    const changedFiles = [
+      '.github/actions/verify.yml',
+      'composer.lock',
+      'src/permissions/roles.ts',
+      'infra/main.tf',
+      '.env.local',
+      'tests/policy.test.ts',
+    ];
+    const inferred = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles,
+    });
+    const preclassified = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles,
+      filesClassification: classifyFiles(changedFiles),
+    });
+
+    expect(inferred).toEqual(preclassified);
+    expect(inferred).toEqual(
+      expect.arrayContaining([
+        'open_pr',
+        'modify_tests',
+        'modify_dependencies',
+        'edit_workflows',
+        'modify_auth',
+        'modify_infra',
+        'touch_secrets',
+      ]),
+    );
+  });
+
+  it('infers secret-touching actions from diff content without leaking values', () => {
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles: ['src/index.ts'],
+      diffContent: 'const token = OPENAI_API_KEY=ghs_example_secret;',
+    });
+
+    expect(result).toContain('touch_secrets');
+  });
+
   it('infers modify_tests for mixed source and test classifications', () => {
     const changedFiles = ['src/index.ts', 'tests/index.test.ts'];
     const result = inferActions({

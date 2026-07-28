@@ -1,5 +1,69 @@
 [
   {
+    "id": "untrusted-label-cannot-allow-sensitive-action",
+    "invariant": "An attacker-controlled label cannot satisfy an allow rule for dependency changes.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Allow safe label",
+          "when": {
+            "labels": ["safe"]
+          },
+          "effect": "allow",
+          "reason": "Labels are not authenticated identity."
+        }
+      ]
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "untrusted-human",
+      "labels": ["safe"],
+      "changedFiles": ["package.json"]
+    },
+    "expected": {
+      "effect": "require_approval",
+      "riskScore": 50,
+      "riskLevel": "high",
+      "detectedActions": ["open_pr", "modify_dependencies"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "spoofed-commit-author-cannot-use-agent-allowlist",
+    "invariant": "A forged commit email may identify configured automation but cannot use its allowlist or known-agent default.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "automation": {
+          "match": {
+            "commitEmails": ["automation@example.test"]
+          },
+          "allowed": ["open_pr"]
+        }
+      },
+      "defaults": {
+        "unknown_agent": "block",
+        "known_agent": "allow"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "untrusted-human",
+      "commitEmails": ["automation@example.test"],
+      "changedFiles": ["src/index.ts"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 20,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
     "id": "self-asserted-agent-marker-remains-unknown",
     "invariant": "An untrusted pull request body marker cannot escape the unknown-agent default.",
     "outcome": "decision",
@@ -90,6 +154,40 @@
       "riskScore": 10,
       "riskLevel": "low",
       "detectedActions": ["open_pr", "modify_tests"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "action-rule-cannot-drop-unlisted-action",
+    "invariant": "An allow rule that names only one detected action cannot authorize an additional unlisted action.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Allow pull request creation",
+          "when": {
+            "actions": ["open_pr"]
+          },
+          "effect": "allow",
+          "reason": "Opening a pull request is routine."
+        }
+      ],
+      "defaults": {
+        "known_agent": "require_approval",
+        "unknown_agent": "require_approval"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unknown-user",
+      "changedFiles": ["package.json"]
+    },
+    "expected": {
+      "effect": "require_approval",
+      "riskScore": 50,
+      "riskLevel": "high",
+      "detectedActions": ["open_pr", "modify_dependencies"],
       "matchedRuleEffects": []
     }
   },
@@ -240,6 +338,50 @@
     "expected": {
       "issuePath": ["agents", "contradictory-agent", "blocked"],
       "messageIncludes": "\"modify_docs\" is already assigned to allowed"
+    }
+  },
+  {
+    "id": "negative-diff-threshold",
+    "invariant": "A negative diff threshold is rejected instead of matching every normal event.",
+    "outcome": "validation_error",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Invalid negative diff threshold",
+          "when": {
+            "diff_lines_over": -1
+          },
+          "effect": "require_approval",
+          "reason": "Thresholds must be nonnegative."
+        }
+      ]
+    },
+    "expected": {
+      "issuePath": ["rules", 0, "when", "diff_lines_over"],
+      "messageIncludes": "greater than or equal to 0"
+    }
+  },
+  {
+    "id": "negative-commit-threshold",
+    "invariant": "A negative commit threshold is rejected instead of matching every normal event.",
+    "outcome": "validation_error",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Invalid negative commit threshold",
+          "when": {
+            "commits_over": -1
+          },
+          "effect": "require_approval",
+          "reason": "Thresholds must be nonnegative."
+        }
+      ]
+    },
+    "expected": {
+      "issuePath": ["rules", 0, "when", "commits_over"],
+      "messageIncludes": "greater than or equal to 0"
     }
   },
   {

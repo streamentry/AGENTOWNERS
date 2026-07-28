@@ -10,6 +10,39 @@ import type {
 import { matchGlob, type FilesClassification } from './classifier.js';
 import { computeRiskScore } from './scoring.js';
 
+const SENSITIVE_ALLOW_ACTIONS: readonly import('./types.js').AgentAction[] = [
+  'approve_pr',
+  'merge_pr',
+  'edit_workflows',
+  'modify_dependencies',
+  'modify_auth',
+  'modify_infra',
+  'touch_secrets',
+  'change_permissions',
+];
+
+function hasUntrustedMetadataCondition(when: Rule['when']): boolean {
+  return (
+    when.labels !== undefined ||
+    when.pr_title !== undefined ||
+    when.pr_body !== undefined ||
+    when.issue_title !== undefined ||
+    when.issue_body !== undefined
+  );
+}
+
+function rejectsUntrustedAllow(rule: Rule, input: EvaluationInput): boolean {
+  if (rule.effect !== 'allow' || !hasUntrustedMetadataCondition(rule.when)) return false;
+  if (!input.detectedActions.some((action) => SENSITIVE_ALLOW_ACTIONS.includes(action))) {
+    return false;
+  }
+
+  const hasTrustedActorCondition = rule.when.actors !== undefined;
+  const hasVerifiedAgentCondition =
+    rule.when.agents !== undefined && input.agentDetection.identityTrust === 'verified';
+  return !hasTrustedActorCondition && !hasVerifiedAgentCondition;
+}
+
 export type EvaluationInput = {
   policy: AgentOwnersPolicy;
   agentDetection: AgentDetectionResult;
@@ -42,6 +75,8 @@ function matchesTextPattern(value: string | undefined, patterns: string[]): bool
  * Returns a MatchedRule if all specified conditions match, null otherwise.
  */
 export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | null {
+  if (rejectsUntrustedAllow(rule, input)) return null;
+
   const { when } = rule;
   const {
     agentDetection,
@@ -65,6 +100,9 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   if (when.agents !== undefined) {
     const agentName = agentDetection.agentName ?? 'unknown';
     if (!when.agents.includes(agentName)) return null;
+    // A rule may still block or require review for a metadata match, but a
+    // spoofable identity must never satisfy an explicit allow rule.
+    if (agentDetection.identityTrust !== 'verified' && rule.effect === 'allow') return null;
     matchedConditions.push('agents');
   }
 
@@ -78,6 +116,14 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   if (when.actions !== undefined) {
     const hasAction = when.actions.some((a) => detectedActions.includes(a));
     if (!hasAction) return null;
+    // A rule may trigger on any listed action, but an allow cannot silently
+    // authorize additional actions that the rule does not enumerate.
+    if (
+      rule.effect === 'allow' &&
+      detectedActions.some((action) => !when.actions!.includes(action))
+    ) {
+      return null;
+    }
     matchedConditions.push('actions');
   }
 
@@ -200,7 +246,10 @@ function evaluateAgentActions(input: EvaluationInput): MatchedRule | null {
   const approval = input.detectedActions.filter((action) =>
     agentPolicy.requires_approval?.includes(action),
   );
-  const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
+  const allowed =
+    input.agentDetection.identityTrust !== 'verified'
+      ? []
+      : input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
 
   const effect =
     blocked.length > 0
@@ -242,8 +291,10 @@ function computeDefaultEffect(input: EvaluationInput): 'allow' | 'require_approv
     return defaults?.docs_only ?? 'allow';
   }
 
-  // Only non-spoofable confirmation may use the known-agent default.
-  if (agentDetection.confidence !== 'confirmed') {
+  // Only a verified identity may use the known-agent default. A policy match
+  // from commit metadata, labels, titles, or bodies remains confirmed
+  // detection, but it is not authentication.
+  if (agentDetection.confidence !== 'confirmed' || agentDetection.identityTrust !== 'verified') {
     return defaults?.unknown_agent ?? 'require_approval';
   }
 
@@ -301,6 +352,7 @@ export function evaluatePolicy(input: EvaluationInput): Decision {
     diffLinesCount,
     detectedActions,
     agentConfidence: agentDetection.confidence,
+    agentIdentityTrust: agentDetection.identityTrust,
   });
 
   // Add standard labels

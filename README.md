@@ -66,6 +66,10 @@ block by default.
 
 Until the first signed release, run the repository directly:
 
+For the shortest path from checkout to a first policy decision, follow the
+[five-minute quickstart](docs/quickstart.md). The detailed commands below are
+the complete source-tree contract.
+
 ```bash
 git clone https://github.com/streamentry/AGENTOWNERS.git
 cd AGENTOWNERS
@@ -78,8 +82,29 @@ node packages/cli/dist/index.js validate .github/AGENTOWNERS.yml
 node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 ```
 
-Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
-artifact smoke tests.
+Run `pnpm verify` to execute lint, type checking, the executable product proof,
+all tests, builds, and release artifact smoke tests.
+
+### Prove the product in one command
+
+After dependencies are installed, run:
+
+```bash
+pnpm demo
+```
+
+This builds the production CLI and executes the shipped strict-OSS policy
+fixtures locally. The proof intentionally covers three repository decisions:
+
+| Fixture | Expected result | What it demonstrates |
+| --- | --- | --- |
+| Documentation change | `require_approval` | conservative review routing |
+| Workflow change | `block` | sensitive automation protection |
+| `package.json` change | `require_approval` | dependency review routing |
+
+The command is deterministic and network-free after `pnpm install`; it exercises
+the same policy loader, classifier, action inference, and evaluator used by the
+CLI rather than a documentation-only example.
 
 ## Configure a policy
 
@@ -89,6 +114,26 @@ Add `.github/AGENTOWNERS.yml`:
 # yaml-language-server: $schema=https://raw.githubusercontent.com/streamentry/AGENTOWNERS/main/packages/core/agentowners.schema.json
 
 version: 1
+
+agents:
+  release-bot:
+    match:
+      actors:
+        - 'release-bot[bot]'
+      commitEmails:
+        - 'automation@example.com'
+      labels:
+        - 'ai-generated'
+      prTitlePatterns:
+        - '^chore\\(release\\):'
+    allowed:
+      - open_pr
+      - update_pr
+    requires_approval:
+      - merge_pr
+    blocked:
+      - edit_workflows
+      - touch_secrets
 
 defaults:
   known_agent: require_approval
@@ -122,7 +167,13 @@ The first-line schema directive gives compatible YAML editors completion and
 validation against the same Zod contract used at runtime. The generated
 [JSON Schema](packages/core/agentowners.schema.json) rejects unknown fields,
 empty `match` and `when` objects, and actions assigned to conflicting policy
-lists.
+lists. Configured matches are exact policy signals. Actor matches are the only
+non-spoofable identity signal; commit authors, labels, titles, and bodies are
+attacker-controlled metadata and must not be used alone to grant privileged
+actions. Use `prTitlePatterns` and `bodyPatterns` for conservative routing,
+with `unknown_agent: require_approval` or `block` as the safety boundary.
+Sensitive `allow` rules that use labels, titles, or bodies must also name a
+trusted actor or verified agent identity.
 
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the
@@ -156,6 +207,8 @@ jobs:
           policy-path: '.github/AGENTOWNERS.yml'
           mode: 'both'
           fail-on-block: 'true'
+          # Set this when github-token writes as another account.
+          comment-author: 'github-actions[bot]'
 ```
 
 Open an agent-generated PR and inspect the verdict before switching from
@@ -211,6 +264,9 @@ agentowners check --base main --head HEAD
 
 # Produce deterministic SARIF 2.1.0 for code-scanning upload
 agentowners check --base main --head HEAD --output sarif > agentowners.sarif
+
+# Explain a saved decision for a human reviewer
+agentowners explain --decision agentowners-decision.json
 
 # Give an agent a versioned pre-PR decision contract
 agentowners self-check \
@@ -353,8 +409,10 @@ AGENTOWNERS infers these actions from GitHub events and changed files:
 
 AGENTOWNERS detects AI agents from:
 
-1. **Policy config:** explicit actor → agent mapping (`confirmed`)
-2. **Known bots:** `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]` (`confirmed`)
+1. **Policy config:** explicit mappings (`confirmed` detection); actor matches
+   are `verified`, while commit-author, label, title, and body matches are
+   `unverified` metadata
+2. **Known bots:** `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]` (`confirmed`, verified actor)
 3. **Commit signatures:** `Co-Authored-By: Claude`, `Generated with`, `🤖`, `Claude Code` (`likely`)
 4. **PR body markers:** tool-specific footers (`likely`)
 5. **Labels:** `ai-generated`, `agent`, `claude`, `copilot` (`possible`)
@@ -453,9 +511,17 @@ The repository is designed for both human and agent contributors:
   identifies deeper work with explicit acceptance criteria.
 - [AGENTS.md](AGENTS.md) maps the codebase and immutable invariants.
 - [SKILL.md](SKILL.md) gives compatible agents a compact execution workflow.
+- [Policy examples](examples/README.md) compare the copyable profiles and show
+  how to execute the portable contract.
+- [Policy reference](docs/policy-reference.md) documents every schema field,
+  condition, action, fallback, and trust boundary.
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
 - [Ecosystem boundaries](docs/ecosystem.md) distinguishes guidance, runtime
   controls, repository governance, and audit evidence.
+- [Release runbook](docs/releasing.md) defines the evidence required before
+  tagging, publishing, or documenting a stable release.
+- [Review lanes](CONTRIBUTING.md#find-a-review-lane) route open PRs to core,
+  security, release, governance, or documentation reviewers.
 - [Roadmap](docs/roadmap.md) names what is next and what will remain out of scope.
 
 High-value contributions are adversarial fixtures, policy ambiguity reports,
