@@ -215,6 +215,11 @@ git commit -m "test(core): add coverage for W"
 git commit -m "docs: update policy reference for V"
 ```
 
+Before implementation, refresh `origin/main` and inspect open or recently
+merged work for the same invariant. If another contribution overlaps, preserve
+distinct counterexamples and mutation evidence. Do not replace an external
+contribution silently; record the exact overlap and attribution in the PR.
+
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 
 ## TypeScript rules
