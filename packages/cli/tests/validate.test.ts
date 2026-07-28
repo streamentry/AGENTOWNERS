@@ -198,6 +198,34 @@ describe('validate command', () => {
     )
   })
 
+  it('redacts received values from Zod diagnostics', async () => {
+    const zodError = new ZodError([
+      {
+        code: ZodIssueCode.invalid_enum_value,
+        path: ['defaults', 'unknown_agent'],
+        message: "Invalid enum value. Expected 'allow', received 'SCHEMA_SECRET_SENTINEL'",
+        options: ['allow'],
+        received: 'SCHEMA_SECRET_SENTINEL',
+      },
+    ])
+    vi.mocked(loadPolicyFile).mockRejectedValue(zodError)
+
+    const program = makeProgram()
+    await program.parseAsync([
+      'node',
+      'agentowners',
+      'validate',
+      'bad.yml',
+      '--output',
+      'json',
+    ])
+
+    const output = stderrSpy.mock.calls.map(([value]) => value).join('')
+    expect(output).toContain('defaults.unknown_agent')
+    expect(output).toContain('received [REDACTED]')
+    expect(output).not.toContain('SCHEMA_SECRET_SENTINEL')
+  })
+
   it('rejects unsupported output formats before loading policy', async () => {
     const program = makeProgram()
     await program.parseAsync([

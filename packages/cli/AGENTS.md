@@ -51,7 +51,8 @@ or infer missing inputs.
 `validate --output json` is a side-effect-free machine contract: valid results
 go to stdout, invalid results go to stderr, and unsupported formats fail before
 the policy loader runs. Text diagnostics preserve YAML line and column context
-without echoing malformed policy source snippets.
+without echoing malformed policy source snippets. Schema diagnostics must also
+redact received values while retaining field paths.
 
 ```mermaid
 stateDiagram-v2

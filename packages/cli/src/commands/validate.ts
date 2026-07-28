@@ -12,6 +12,12 @@ type ValidateIssue = {
   message: string
 }
 
+function sanitizeDiagnosticMessage(message: string): string {
+  return message
+    .replace(/received '(?:[^']|'')*'/g, 'received [REDACTED]')
+    .replace(/received "(?:[^"]|"")*"/g, 'received [REDACTED]')
+}
+
 function findZodError(error: unknown): ZodError | null {
   if (error instanceof ZodError) return error
 
@@ -29,7 +35,7 @@ function getIssues(error: unknown): ValidateIssue[] | null {
 
   return zodError.issues.map((issue) => ({
     path: issue.path.join('.'),
-    message: issue.message,
+    message: sanitizeDiagnosticMessage(issue.message),
   }))
 }
 
@@ -67,7 +73,9 @@ function writeTextError(error: unknown): void {
   const zodError = findZodError(error)
   if (zodError) {
     for (const issue of zodError.issues) {
-      process.stderr.write(`- ${issue.path.join('.')} ${issue.message}\n`)
+      process.stderr.write(
+        `- ${issue.path.join('.')} ${sanitizeDiagnosticMessage(issue.message)}\n`,
+      )
     }
   } else if (error instanceof Error) {
     process.stderr.write(`- ${error.message}\n`)

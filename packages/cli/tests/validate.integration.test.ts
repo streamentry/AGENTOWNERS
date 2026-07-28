@@ -73,4 +73,24 @@ describe('validate command integration', () => {
     expect(stderr).toMatch(/line \d+, column \d+/)
     expect(stderr).not.toContain(sourceMarker)
   })
+
+  it('does not print received values from schema errors', async () => {
+    const sourceMarker = 'SCHEMA_SECRET_SENTINEL'
+    const policyPath = path.join(tempDir, 'AGENTOWNERS.yml')
+    await writeFile(policyPath, `version: 1\ndefaults:\n  unknown_agent: ${sourceMarker}\n`, 'utf8')
+
+    await makeProgram().parseAsync([
+      'node',
+      'agentowners',
+      'validate',
+      policyPath,
+      '--output',
+      'json',
+    ])
+
+    expect(process.exitCode).toBe(1)
+    expect(stderr).toContain('defaults.unknown_agent')
+    expect(stderr).toContain('[REDACTED]')
+    expect(stderr).not.toContain(sourceMarker)
+  })
 })
