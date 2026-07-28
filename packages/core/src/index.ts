@@ -14,3 +14,5 @@ export * from './sarif.js';
 export * from './profiles.js';
 export * from './evaluator.js';
 export * from './fixtures.js';
+export { evaluatePolicyFromEvent } from './evaluatePolicy.js';
+export type { EventContext, EvaluatePolicyInput, Policy } from './evaluatePolicy.js';

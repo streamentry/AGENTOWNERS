@@ -14,7 +14,7 @@ network calls, clocks, randomness, or persistent state.
 - `detection.ts`: actor, commit-author, label, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
-- `evaluatePolicy.ts`: simplified event wrapper that must preserve action inference
+- `evaluatePolicy.ts`: public `evaluatePolicyFromEvent` wrapper that preserves action inference
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts

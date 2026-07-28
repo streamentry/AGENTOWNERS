@@ -28,7 +28,7 @@ export type EvaluatePolicyInput = {
   event: EventContext;
 };
 
-export function evaluatePolicy(input: EvaluatePolicyInput): Decision {
+export function evaluatePolicyFromEvent(input: EvaluatePolicyInput): Decision {
   const { policy, changedFiles, event } = input;
 
   const filesClassification = classifyFiles(changedFiles);
@@ -60,3 +60,6 @@ export function evaluatePolicy(input: EvaluatePolicyInput): Decision {
     labels: event.labels,
   });
 }
+
+/** @deprecated Use evaluatePolicyFromEvent for the simplified event adapter. */
+export const evaluatePolicy = evaluatePolicyFromEvent;

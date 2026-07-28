@@ -53,6 +53,8 @@ semantic versioning.
   explainer also validates saved JSON before reading it.
 - The simplified core evaluation wrapper now preserves inferred event and file
   actions instead of silently evaluating an empty action set.
+- Exported the simplified adapter as `evaluatePolicyFromEvent` so consumers can
+  use the safe event contract without reconstructing the low-level pipeline.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

@@ -55,7 +55,7 @@ try {
     process.execPath,
     [
       '-e',
-      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function') process.exit(1)",
+      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.evaluatePolicyFromEvent!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -64,7 +64,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "import { evaluatePolicy,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function') process.exit(1)",
+      "import { evaluatePolicy, evaluatePolicyFromEvent,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof evaluatePolicyFromEvent!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
