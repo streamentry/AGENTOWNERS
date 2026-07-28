@@ -1,0 +1,259 @@
+[
+  {
+    "id": "agent-block-overrides-repository-allow",
+    "invariant": "Agent-specific block wins over a repository allow rule.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "workflow-agent": {
+          "match": {
+            "actors": ["workflow-agent[bot]"]
+          },
+          "blocked": ["edit_workflows"]
+        }
+      },
+      "rules": [
+        {
+          "name": "Allow workflow files",
+          "when": {
+            "changes_workflows": true
+          },
+          "effect": "allow",
+          "reason": "Adversarial precedence fixture."
+        }
+      ]
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "workflow-agent[bot]",
+      "changedFiles": [".github/workflows/ci.yml"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 100,
+      "riskLevel": "critical",
+      "detectedActions": ["open_pr", "edit_workflows"],
+      "matchedRuleEffects": ["block", "allow"]
+    }
+  },
+  {
+    "id": "mixed-allowed-and-unlisted-actions",
+    "invariant": "A partially allowed action set falls through to conservative known-agent defaults.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "partial-agent": {
+          "match": {
+            "actors": ["partial-agent[bot]"]
+          },
+          "allowed": ["open_pr"]
+        }
+      },
+      "defaults": {
+        "known_agent": "require_approval"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "partial-agent[bot]",
+      "changedFiles": ["tests/policy.test.ts"]
+    },
+    "expected": {
+      "effect": "require_approval",
+      "riskScore": 10,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr", "modify_tests"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "dotfile-secret",
+    "invariant": "A nested environment dotfile is classified as secret and blocked.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "defaults": {
+        "secrets": "block"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unknown-user",
+      "changedFiles": [".env.local"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 100,
+      "riskLevel": "critical",
+      "detectedActions": ["open_pr", "touch_secrets"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "nested-workflow",
+    "invariant": "A workflow nested below the workflows directory remains blocked.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "defaults": {
+        "workflows": "block"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unknown-user",
+      "changedFiles": [".github/workflows/release/nested.yml"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 100,
+      "riskLevel": "critical",
+      "detectedActions": ["open_pr", "edit_workflows"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "windows-style-path-is-conservative",
+    "invariant": "A Windows-style documentation path retains docs-only classification.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "windows-agent": {
+          "match": {
+            "actors": ["windows-agent[bot]"]
+          }
+        }
+      },
+      "defaults": {
+        "known_agent": "require_approval",
+        "docs_only": "allow"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "windows-agent[bot]",
+      "changedFiles": ["docs\\guide.md"]
+    },
+    "expected": {
+      "effect": "allow",
+      "riskScore": 5,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr", "modify_docs"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "malformed-detection-pattern",
+    "invariant": "A malformed configured regex cannot abort evaluation or confer agent identity.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "malformed-agent": {
+          "match": {
+            "bodyPatterns": ["["]
+          }
+        }
+      },
+      "defaults": {
+        "unknown_agent": "block"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unrecognized-user",
+      "changedFiles": ["src/index.ts"],
+      "prBody": "ordinary body"
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 20,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
+    "id": "duplicate-agent-action",
+    "invariant": "The same action cannot be assigned twice within one agent action list.",
+    "outcome": "validation_error",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "duplicate-agent": {
+          "match": {
+            "actors": ["duplicate-agent[bot]"]
+          },
+          "allowed": ["modify_docs", "modify_docs"]
+        }
+      }
+    },
+    "expected": {
+      "issuePath": ["agents", "duplicate-agent", "allowed"],
+      "messageIncludes": "\"modify_docs\" is already assigned to allowed"
+    }
+  },
+  {
+    "id": "contradictory-agent-action",
+    "invariant": "The same action cannot be both allowed and blocked for one agent.",
+    "outcome": "validation_error",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "contradictory-agent": {
+          "match": {
+            "actors": ["contradictory-agent[bot]"]
+          },
+          "allowed": ["modify_docs"],
+          "blocked": ["modify_docs"]
+        }
+      }
+    },
+    "expected": {
+      "issuePath": ["agents", "contradictory-agent", "blocked"],
+      "messageIncludes": "\"modify_docs\" is already assigned to allowed"
+    }
+  },
+  {
+    "id": "compounded-risk-cap",
+    "invariant": "Compounded dependency, workflow, auth, infrastructure, secret, size, and unknown-agent risk remains capped at 100.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "defaults": {
+        "unknown_agent": "require_approval",
+        "secrets": "block",
+        "workflows": "block"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unrecognized-user",
+      "changedFiles": [
+        "package.json",
+        ".github/workflows/ci.yml",
+        "src/auth/session.ts",
+        "infra/main.tf",
+        ".env.production"
+      ],
+      "diffLinesCount": 1000
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 100,
+      "riskLevel": "critical",
+      "detectedActions": [
+        "open_pr",
+        "modify_dependencies",
+        "edit_workflows",
+        "modify_auth",
+        "modify_infra",
+        "touch_secrets"
+      ],
+      "matchedRuleEffects": []
+    }
+  }
+]

@@ -66,6 +66,17 @@ Scopes: `core` `cli` `github-action` `examples` `docs`
 4. Update tests in `packages/core/tests/actions.test.ts`
 5. Update `docs/specs/readme.md` section 11.3
 
+### Adding an adversarial fixture
+
+1. Read `packages/core/tests/fixtures/README.md`
+2. Name the invariant and exact expected outcome
+3. Add the smallest deterministic case to `adversarial-corpus.json`
+4. Prove the case fails under a temporary relevant production mutation
+5. Restore production code and run `pnpm verify`
+
+If the case reveals incorrect production behavior, open and fix a separate bug
+before changing the fixture expectation.
+
 ### Code style
 
 - Functions: < 50 lines

@@ -21,6 +21,7 @@ network calls, clocks, randomness, or persistent state.
 
 ```mermaid
 flowchart LR
+  Fixture --> Input
   Input --> Validate --> Detect
   Input --> Classify
   Input --> Infer
@@ -28,6 +29,25 @@ flowchart LR
   Classify --> Evaluate
   Infer --> Evaluate
   Evaluate --> Decision
+```
+
+```mermaid
+flowchart TB
+  Types --> Zod
+  Zod --> Loader
+  Loader --> Detection
+  Loader --> Classification
+  Loader --> Inference
+  Detection --> Evaluator
+  Classification --> Evaluator
+  Inference --> Evaluator
+  Evaluator --> Scoring
+  Evaluator --> Renderer
+  Corpus[Adversarial corpus] -. probes .-> Zod
+  Corpus -. probes .-> Detection
+  Corpus -. probes .-> Classification
+  Corpus -. probes .-> Evaluator
+  Corpus -. probes .-> Scoring
 ```
 
 ```mermaid
@@ -44,3 +64,5 @@ sequenceDiagram
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
+For safety invariants, add a case to the adversarial corpus and prove it fails
+under a temporary relevant mutation before restoring production code.

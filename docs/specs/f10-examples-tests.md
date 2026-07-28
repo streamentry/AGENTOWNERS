@@ -46,7 +46,19 @@ Security-sensitive policy from spec section 18.3.
 - No agent signals
 - Expected: require_approval (unknown_agent default)
 
-## Integration Tests (`packages/core/tests/integration.test.ts`)
+### adversarial-corpus.json
+
+- Table-driven safety cases
+- One named invariant and exact outcome per case
+- Covers precedence, conservative fallthrough, path boundaries, malformed
+  patterns, schema conflicts, and compounded risk
+- Critical cases must fail under a temporary relevant production mutation
+
+## Integration Tests
+
+`packages/core/tests/integration.test.ts` runs directory fixtures.
+`packages/core/tests/adversarial-corpus.test.ts` runs the table-driven corpus.
+
 For each fixture:
 1. Load policy from fixture
 2. Apply event context
@@ -59,7 +71,7 @@ For each fixture:
 Triggers: push and PR on main
 Steps:
 1. Checkout
-2. Setup Node 22
+2. Setup Node 24
 3. Install pnpm
 4. Install dependencies
 5. Build packages
@@ -71,8 +83,8 @@ Triggers: push tag matching `v*`
 Steps:
 1. Checkout
 2. Setup Node 22
-3. Install, build, test
-4. Publish to npm (with npm token)
+3. Install, build, test, and verify packed artifacts
+4. Publish to npm through OIDC trusted publishing
 5. Create GitHub Release
 
 ## README
@@ -120,7 +132,7 @@ Apache-2.0
 
 ### `packages/core/package.json`
 - Name: `@agent-owners/core`
-- Dependencies: zod, js-yaml, minimatch
+- Dependencies: zod, js-yaml, picomatch, zod-to-json-schema
 - DevDependencies: vitest, typescript, tsup
 
 ### `packages/cli/package.json`
