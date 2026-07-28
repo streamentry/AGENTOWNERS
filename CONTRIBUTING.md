@@ -33,7 +33,10 @@ Node.js 22+ and pnpm 9+ required.
 
 ### Development workflow
 
-1. **Find or create an issue:** all work starts with an issue
+1. **Find or create an issue:** all work starts with an issue; use the
+   [implementation task form](https://github.com/streamentry/AGENTOWNERS/issues/new?template=task.yml)
+   when the contract is known, or a [design discussion](https://github.com/streamentry/AGENTOWNERS/discussions)
+   when it is not
 2. **Fork and branch:** `feat/my-feature` or `fix/the-bug`
 3. **Write tests first:** capture the intended behavior with a failing test
 4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
@@ -81,6 +84,11 @@ If an issue lacks a bounded contract, use
 [Discussions](https://github.com/streamentry/AGENTOWNERS/discussions) before
 writing code. Comment on an issue before starting substantial work when
 parallel implementation is likely.
+
+For a known problem, the [implementation task form](https://github.com/streamentry/AGENTOWNERS/issues/new?template=task.yml)
+captures the invariant, exact file scope, acceptance evidence, cheapest
+disconfirming test, overlap search, and review lane in one place. A task form is
+an intake contract, not approval to merge.
 
 ### Maintainer review contract
 
