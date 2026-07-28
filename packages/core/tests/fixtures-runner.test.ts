@@ -154,6 +154,32 @@ describe('parsePolicyFixtureSuite', () => {
     },
   );
 
+  it.each(['issue_title', 'issue_body'] as const)(
+    'rejects %s on pull request events whose production adapter cannot supply issue metadata',
+    (field) => {
+      const suite = validSuite();
+      Object.assign(suite.cases[0]!.input, { [field]: 'unreachable issue metadata' });
+
+      expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+        `${field} requires an issue context`,
+      );
+    },
+  );
+
+  it('rejects mutually exclusive PR and issue metadata on issue comments', () => {
+    const suite = validSuite();
+    suite.cases[0]!.input.event = 'issue_comment.created';
+    suite.cases[0]!.input.changed_files = [];
+    Object.assign(suite.cases[0]!.input, {
+      pr_title: 'pull request target',
+      issue_title: 'issue target',
+    });
+
+    expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+      'issue comments cannot contain both pull request and issue metadata',
+    );
+  });
+
   it.each(['diff_lines_count', 'commits_count'] as const)(
     'rejects %s outside pull request events',
     (field) => {
@@ -336,5 +362,46 @@ describe('runPolicyFixtureSuite', () => {
     });
 
     expect(runPolicyFixtureSuite(policy, suite).passed).toBe(true);
+  });
+
+  it('evaluates issue-only rule fields on compatible issue events', () => {
+    const issuePolicy = parsePolicy({
+      version: 1,
+      defaults: {
+        known_agent: 'allow',
+        unknown_agent: 'allow',
+      },
+      rules: [
+        {
+          name: 'Escalate security issues',
+          when: {
+            issue_title: ['security'],
+            issue_body: ['credential'],
+          },
+          effect: 'require_approval',
+          reason: 'Security reports need review.',
+        },
+      ],
+    });
+    const suite = parsePolicyFixtureSuite({
+      version: 1,
+      cases: [
+        {
+          name: 'security issue requires approval',
+          input: {
+            event: 'issues.opened',
+            actor: 'maintainer',
+            issue_title: 'Security report',
+            issue_body: 'Credential exposure',
+          },
+          expect: {
+            decision: 'require_approval',
+            matched_rules: ['Escalate security issues'],
+          },
+        },
+      ],
+    });
+
+    expect(runPolicyFixtureSuite(issuePolicy, suite).passed).toBe(true);
   });
 });
