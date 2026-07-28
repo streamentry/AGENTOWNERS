@@ -28,7 +28,9 @@ identity signal. Commit authors, labels, pull-request titles, and bodies are
 attacker-controlled metadata: the policy engine can route on exact configured
 matches, but they do not authenticate the actor. Repositories must keep
 `unknown_agent` at `require_approval` or `block` and must not use these weak
-signals alone to grant privileged actions.
+signals alone to grant privileged actions. An `allow` rule using these fields
+cannot authorize sensitive actions unless it also names an explicit trusted
+actor or verified agent identity.
 
 ### 6. Policy injection via PR content
 **Threat**: A malicious PR body contains instructions that change how AGENTOWNERS evaluates the policy.  

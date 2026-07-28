@@ -90,8 +90,10 @@ coverage; a schema field that the detector ignores is a policy safety defect.
 Actor and known-bot matches are `identityTrust: verified`. Commit-author,
 label, title, and body matches remain detection evidence but are
 `identityTrust: unverified`; they must never grant an agent-specific allow
-decision or the `known_agent` default. Missing trust from a legacy adapter is
-also treated as unverified at the evaluator boundary.
+decision or the `known_agent` default. Unverified labels, titles, and bodies
+also cannot satisfy an allow rule for sensitive actions unless the rule names
+an explicit trusted actor or verified agent. Missing trust from a legacy
+adapter is also treated as unverified at the evaluator boundary.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.

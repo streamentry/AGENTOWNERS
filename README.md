@@ -147,6 +147,8 @@ non-spoofable identity signal; commit authors, labels, titles, and bodies are
 attacker-controlled metadata and must not be used alone to grant privileged
 actions. Use `prTitlePatterns` and `bodyPatterns` for conservative routing,
 with `unknown_agent: require_approval` or `block` as the safety boundary.
+Sensitive `allow` rules that use labels, titles, or bodies must also name a
+trusted actor or verified agent identity.
 
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the

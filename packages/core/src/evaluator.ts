@@ -10,6 +10,39 @@ import type {
 import { matchGlob, type FilesClassification } from './classifier.js';
 import { computeRiskScore } from './scoring.js';
 
+const SENSITIVE_ALLOW_ACTIONS: readonly import('./types.js').AgentAction[] = [
+  'approve_pr',
+  'merge_pr',
+  'edit_workflows',
+  'modify_dependencies',
+  'modify_auth',
+  'modify_infra',
+  'touch_secrets',
+  'change_permissions',
+];
+
+function hasUntrustedMetadataCondition(when: Rule['when']): boolean {
+  return (
+    when.labels !== undefined ||
+    when.pr_title !== undefined ||
+    when.pr_body !== undefined ||
+    when.issue_title !== undefined ||
+    when.issue_body !== undefined
+  );
+}
+
+function rejectsUntrustedAllow(rule: Rule, input: EvaluationInput): boolean {
+  if (rule.effect !== 'allow' || !hasUntrustedMetadataCondition(rule.when)) return false;
+  if (!input.detectedActions.some((action) => SENSITIVE_ALLOW_ACTIONS.includes(action))) {
+    return false;
+  }
+
+  const hasTrustedActorCondition = rule.when.actors !== undefined;
+  const hasVerifiedAgentCondition =
+    rule.when.agents !== undefined && input.agentDetection.identityTrust === 'verified';
+  return !hasTrustedActorCondition && !hasVerifiedAgentCondition;
+}
+
 export type EvaluationInput = {
   policy: AgentOwnersPolicy;
   agentDetection: AgentDetectionResult;
@@ -42,6 +75,8 @@ function matchesTextPattern(value: string | undefined, patterns: string[]): bool
  * Returns a MatchedRule if all specified conditions match, null otherwise.
  */
 export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | null {
+  if (rejectsUntrustedAllow(rule, input)) return null;
+
   const { when } = rule;
   const {
     agentDetection,

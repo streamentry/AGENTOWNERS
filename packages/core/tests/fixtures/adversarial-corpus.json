@@ -1,5 +1,36 @@
 [
   {
+    "id": "untrusted-label-cannot-allow-sensitive-action",
+    "invariant": "An attacker-controlled label cannot satisfy an allow rule for dependency changes.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Allow safe label",
+          "when": {
+            "labels": ["safe"]
+          },
+          "effect": "allow",
+          "reason": "Labels are not authenticated identity."
+        }
+      ]
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "untrusted-human",
+      "labels": ["safe"],
+      "changedFiles": ["package.json"]
+    },
+    "expected": {
+      "effect": "require_approval",
+      "riskScore": 50,
+      "riskLevel": "high",
+      "detectedActions": ["open_pr", "modify_dependencies"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
     "id": "spoofed-commit-author-cannot-use-agent-allowlist",
     "invariant": "A forged commit email may identify configured automation but cannot use its allowlist or known-agent default.",
     "outcome": "decision",

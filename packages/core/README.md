@@ -42,6 +42,9 @@ and evaluation without Git, GitHub, network access, or hidden state.
 - Detection confidence is separate from identity trust. Only `verified` actor
   identity may use an agent-specific allowlist or `known_agent` default;
   commit metadata, labels, titles, and bodies are `unverified` evidence.
+- Unverified labels, titles, and bodies cannot satisfy an `allow` rule for
+  sensitive actions unless the same rule also names a trusted actor or verified
+  agent.
 - Unknown policy fields fail validation.
 - No model, network, shell, database, clock, or persistent state.
 

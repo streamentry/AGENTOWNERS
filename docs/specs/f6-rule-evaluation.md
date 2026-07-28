@@ -57,6 +57,15 @@ A rule matches when ALL specified conditions in `when` are satisfied:
 - `docs_only`: FilesClassification.docsOnly
 - `tests_only`: FilesClassification.testsOnly
 
+Allow-rule trust boundary:
+
+- Labels, PR titles/bodies, and issue titles/bodies are attacker-controlled
+  metadata.
+- They may route a decision to review, but they cannot produce `allow` for a
+  sensitive action (`approve_pr`, `merge_pr`, workflow, dependency, auth,
+  infrastructure, secret, or permission changes) unless the same rule also
+  matches an explicit actor or a verified agent identity.
+
 ## Types
 
 ```ts

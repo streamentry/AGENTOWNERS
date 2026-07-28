@@ -33842,6 +33842,28 @@ function renderAuditJson(context3) {
     requiredReviewers: decision.requiredReviewers
   };
 }
+var SENSITIVE_ALLOW_ACTIONS = [
+  "approve_pr",
+  "merge_pr",
+  "edit_workflows",
+  "modify_dependencies",
+  "modify_auth",
+  "modify_infra",
+  "touch_secrets",
+  "change_permissions"
+];
+function hasUntrustedMetadataCondition(when) {
+  return when.labels !== void 0 || when.pr_title !== void 0 || when.pr_body !== void 0 || when.issue_title !== void 0 || when.issue_body !== void 0;
+}
+function rejectsUntrustedAllow(rule, input) {
+  if (rule.effect !== "allow" || !hasUntrustedMetadataCondition(rule.when)) return false;
+  if (!input.detectedActions.some((action) => SENSITIVE_ALLOW_ACTIONS.includes(action))) {
+    return false;
+  }
+  const hasTrustedActorCondition = rule.when.actors !== void 0;
+  const hasVerifiedAgentCondition = rule.when.agents !== void 0 && input.agentDetection.identityTrust === "verified";
+  return !hasTrustedActorCondition && !hasVerifiedAgentCondition;
+}
 function matchesTextPattern(value, patterns) {
   if (!value) return false;
   return patterns.some((pattern) => {
@@ -33853,6 +33875,7 @@ function matchesTextPattern(value, patterns) {
   });
 }
 function evaluateRule(rule, input) {
+  if (rejectsUntrustedAllow(rule, input)) return null;
   const { when } = rule;
   const {
     agentDetection,

@@ -452,6 +452,56 @@ describe('evaluatePolicy', () => {
     );
   });
 
+  it.each([
+    ['labels', { labels: ['safe'] }],
+    ['pr_title', { prTitle: 'safe change' }],
+    ['pr_body', { prBody: 'safe change' }],
+    ['issue_title', { issueTitle: 'safe change' }],
+    ['issue_body', { issueBody: 'safe change' }],
+  ] as const)('does not let untrusted %s metadata allow sensitive actions', (field, metadata) => {
+    const rule: Rule = {
+      name: `Allow by ${field}`,
+      when: { [field]: ['safe'] },
+      effect: 'allow',
+      reason: 'Metadata must not grant sensitive actions.',
+    };
+
+    const result = evaluateRule(
+      rule,
+      baseInput({
+        ...metadata,
+        detectedActions: ['modify_dependencies'],
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('permits metadata conditions when an explicit trusted actor also matches', () => {
+    const rule: Rule = {
+      name: 'Allow trusted actor with safe label',
+      when: { actors: ['trusted-bot[bot]'], labels: ['safe'] },
+      effect: 'allow',
+      reason: 'The actor is explicitly trusted by policy.',
+    };
+
+    const result = evaluateRule(
+      rule,
+      baseInput({
+        actor: 'trusted-bot[bot]',
+        labels: ['safe'],
+        detectedActions: ['modify_dependencies'],
+        agentDetection: {
+          confidence: 'confirmed',
+          signals: [],
+          identityTrust: 'verified',
+        },
+      }),
+    );
+
+    expect(result?.effect).toBe('allow');
+  });
+
   it('block rule takes precedence over allow', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,
