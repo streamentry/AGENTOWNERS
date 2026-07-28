@@ -71,6 +71,9 @@ Return deduplicated list of inferred actions. Never return duplicates.
 
 ### `inferFileBasedActions(classification: FilesClassification): AgentAction[]`
 Infer actions from file classification only.
+When aggregate classification includes per-file records, infer
+`modify_tests` from at least one `isTests` record. `testsOnly: false` does not
+mean that tests changed.
 
 ## Tests (`packages/core/tests/actions.test.ts`)
 - PR opened with docs files → `[open_pr, modify_docs]`
@@ -78,6 +81,8 @@ Infer actions from file classification only.
 - PR opened with auth files → `[open_pr, modify_auth]`
 - PR opened with package.json → `[open_pr, modify_dependencies]`
 - PR opened with test files → `[open_pr, modify_tests]`
+- Source-only classification does not infer `modify_tests`
+- Mixed source and test classification infers `modify_tests`
 - Issue comment → `[comment]`
 - Review approved → `[review_comment, approve_pr]`
 - Review changes_requested → `[review_comment, request_changes]`
