@@ -39,6 +39,9 @@ semantic versioning.
 
 ### Fixed
 
+- `inferActions()` now reuses the canonical file classifier, preventing
+  standalone callers from drifting from CLI and Action behavior on nested
+  documentation and other classified paths.
 - GitHub Action mode inputs now fail closed when they are outside the declared
   `comment`, `check`, `both`, and `dry-run` contract.
 - The copyable `.github/AGENTOWNERS.yml.example` now uses the current strict

@@ -33455,48 +33455,6 @@ function detectAgent(input) {
   }
   return { confidence: "unknown", signals };
 }
-var DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
-var TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
-var DEPENDENCY_PATTERNS2 = [
-  /^package\.json$/,
-  /^package-lock\.json$/,
-  /^yarn\.lock$/,
-  /^pnpm-lock\.yaml$/,
-  /^Cargo\.toml$/,
-  /^Cargo\.lock$/,
-  /^go\.mod$/,
-  /^go\.sum$/,
-  /^requirements.*\.txt$/,
-  /^pyproject\.toml$/,
-  /^Pipfile/,
-  /^Gemfile/
-];
-var WORKFLOW_PATTERNS2 = [/^\.github\/workflows\//];
-var AUTH_PATTERNS2 = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-var INFRA_PATTERNS2 = [
-  /^terraform\//i,
-  /\.tf$/,
-  /^infra\//i,
-  /^deploy\//i,
-  /dockerfile$/i,
-  /docker-compose/i,
-  /^k8s\//i,
-  /^kubernetes\//i,
-  /^helm\//i
-];
-var SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
-function classifyFilesLocal(files) {
-  if (files.length === 0) return {};
-  const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS2.some((p) => p.test(f)));
-  const hasAuth = files.some((f) => AUTH_PATTERNS2.some((p) => p.test(f)));
-  const hasInfra = files.some((f) => INFRA_PATTERNS2.some((p) => p.test(f)));
-  const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
-  const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS2.some((p) => p.test(f)));
-  const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
-  const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
-  const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
-}
 function hasClassifiedTests(classification) {
   if (typeof classification["hasTests"] === "boolean") {
     return classification["hasTests"];
@@ -33509,30 +33467,34 @@ function hasClassifiedTests(classification) {
   }
   return classification["testsOnly"] === true;
 }
+function normalizeClassification(input) {
+  const classification = input;
+  return {
+    docsOnly: classification["docsOnly"],
+    hasTests: hasClassifiedTests(classification),
+    hasDependencies: classification["hasDependencies"] ?? classification["changesDependencies"],
+    hasWorkflows: classification["hasWorkflows"] ?? classification["changesWorkflows"],
+    hasAuth: classification["hasAuth"] ?? classification["changesAuth"],
+    hasInfra: classification["hasInfra"] ?? classification["changesInfra"],
+    hasSecrets: classification["hasSecrets"] ?? classification["secretFilesDetected"]
+  };
+}
 function inferFileBasedActions(classification) {
+  const normalized = normalizeClassification(classification);
   const actions = [];
-  if (classification.docsOnly) actions.push("modify_docs");
-  if (classification.hasTests) actions.push("modify_tests");
-  if (classification.hasDependencies) actions.push("modify_dependencies");
-  if (classification.hasWorkflows) actions.push("edit_workflows");
-  if (classification.hasAuth) actions.push("modify_auth");
-  if (classification.hasInfra) actions.push("modify_infra");
-  if (classification.hasSecrets) actions.push("touch_secrets");
+  if (normalized.docsOnly) actions.push("modify_docs");
+  if (normalized.hasTests) actions.push("modify_tests");
+  if (normalized.hasDependencies) actions.push("modify_dependencies");
+  if (normalized.hasWorkflows) actions.push("edit_workflows");
+  if (normalized.hasAuth) actions.push("modify_auth");
+  if (normalized.hasInfra) actions.push("modify_infra");
+  if (normalized.hasSecrets) actions.push("touch_secrets");
   return actions;
 }
 function inferActions(input) {
   const { eventType, changedFiles, reviewState, filesClassification } = input;
   const actions = /* @__PURE__ */ new Set();
-  const fc = filesClassification;
-  const classification = fc ? {
-    docsOnly: fc["docsOnly"] ?? (fc["changesWorkflows"] === void 0 && false),
-    hasTests: hasClassifiedTests(fc),
-    hasDependencies: fc["hasDependencies"] ?? fc["changesDependencies"],
-    hasWorkflows: fc["hasWorkflows"] ?? fc["changesWorkflows"],
-    hasAuth: fc["hasAuth"] ?? fc["changesAuth"],
-    hasInfra: fc["hasInfra"] ?? fc["changesInfra"],
-    hasSecrets: fc["hasSecrets"] ?? fc["secretFilesDetected"]
-  } : changedFiles ? classifyFilesLocal(changedFiles) : {};
+  const classification = filesClassification ? normalizeClassification(filesClassification) : changedFiles ? normalizeClassification(classifyFiles(changedFiles)) : {};
   switch (eventType) {
     case "pull_request.opened":
     case "pull_request.reopened":

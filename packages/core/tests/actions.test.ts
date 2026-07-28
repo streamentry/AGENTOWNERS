@@ -13,6 +13,10 @@ describe('inferFileBasedActions', () => {
     expect(inferFileBasedActions({ hasTests: true })).toContain('modify_tests');
   });
 
+  it('accepts the canonical FilesClassification shape', () => {
+    expect(inferFileBasedActions(classifyFiles(['package.json']))).toContain('modify_dependencies');
+  });
+
   it('dependencies → modify_dependencies', () => {
     expect(inferFileBasedActions({ hasDependencies: true })).toContain('modify_dependencies');
   });
@@ -47,6 +51,15 @@ describe('inferActions', () => {
     expect(result).toContain('open_pr');
     expect(result).toContain('modify_docs');
     expect(result).toHaveLength(2);
+  });
+
+  it('uses the canonical classifier for nested AsciiDoc files', () => {
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles: ['packages/core/reference.adoc'],
+    });
+
+    expect(result).toContain('modify_docs');
   });
 
   it('PR opened with workflow files → [open_pr, edit_workflows]', () => {

@@ -11,8 +11,8 @@ network calls, clocks, randomness, or persistent state.
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
 - `classifier.ts`: repository-depth-independent path and secret classification
+- `actions.ts`: event-to-action inference normalized to the canonical classifier
 - `detection.ts`: actor, commit, PR, issue, and comment evidence
-- `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
@@ -86,6 +86,8 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+When classifier patterns change, run the action-inference tests too; the public
+`inferActions()` path reuses the canonical file classification contract.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
