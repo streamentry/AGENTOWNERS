@@ -117,12 +117,26 @@ test('skips existing versions and publishes missing packages in order', async ()
     },
     {
       command: 'npm',
-      args: ['view', '@agent-owners/core@0.1.0', 'version', '--json'],
+      args: [
+        'view',
+        '@agent-owners/core@0.1.0',
+        'version',
+        '--json',
+        '--registry',
+        'https://registry.npmjs.org',
+      ],
       cwd: '/repo',
     },
     {
       command: 'npm',
-      args: ['view', '@agent-owners/cli@0.1.0', 'version', '--json'],
+      args: [
+        'view',
+        '@agent-owners/cli@0.1.0',
+        'version',
+        '--json',
+        '--registry',
+        'https://registry.npmjs.org',
+      ],
       cwd: '/repo',
     },
     {
@@ -138,6 +152,8 @@ test('skips existing versions and publishes missing packages in order', async ()
         '--provenance',
         '--access',
         'public',
+        '--registry',
+        'https://registry.npmjs.org',
       ],
       cwd: '/repo',
     },

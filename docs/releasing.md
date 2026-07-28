@@ -34,6 +34,11 @@ Before any registry mutation, the workflow:
 3. queries every exact package version;
 4. aborts on authentication, network, server, or malformed-response errors.
 
+The lookup and publish commands pass the canonical npm registry explicitly.
+They must not inherit a repository-local `.npmrc`: a checked-out tag can carry
+registry configuration that would otherwise override the runner's user-level
+configuration and redirect a release operation.
+
 A confirmed npm `E404` is the only result treated as an unpublished version.
 Already published exact versions are skipped. Missing packages are packed with
 pnpm so `workspace:*` dependencies become release versions, then the resulting

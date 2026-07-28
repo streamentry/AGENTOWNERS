@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 const stableVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const prereleaseVersionPattern =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)$/;
+const npmRegistry = 'https://registry.npmjs.org';
 
 function commandFailure(command, args, result) {
   const detail = [result.stderr, result.stdout].filter(Boolean).join('\n').trim();
@@ -78,7 +79,7 @@ export function requireCompatibleNpm(versionOutput) {
 
 async function lookupPackage(packageInfo, options) {
   const spec = `${packageInfo.name}@${packageInfo.version}`;
-  const lookupArgs = ['view', spec, 'version', '--json'];
+  const lookupArgs = ['view', spec, 'version', '--json', '--registry', npmRegistry];
   const lookup = await options.run('npm', lookupArgs, { cwd: options.root });
   return {
     ...packageInfo,
@@ -101,7 +102,15 @@ async function packAndPublish(packageInfo, options) {
     throw new Error(`pnpm pack did not report expected tarball ${expectedTarball}`);
   }
 
-  const publishArgs = ['publish', expectedTarball, '--provenance', '--access', 'public'];
+  const publishArgs = [
+    'publish',
+    expectedTarball,
+    '--provenance',
+    '--access',
+    'public',
+    '--registry',
+    npmRegistry,
+  ];
   const published = await options.run('npm', publishArgs, { cwd: options.root });
   if (published.status !== 0) throw commandFailure('npm', publishArgs, published);
 }
