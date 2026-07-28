@@ -9,17 +9,19 @@ description: Implement or review deterministic AI-agent governance changes in AG
 2. Refresh `origin/main`; inspect open and recently merged work for overlap.
 3. State the invariant, expected behavior, and any distinct value retained from
    related contributions.
-4. Add the cheapest disconfirming test first.
-5. Implement the smallest complete change.
-6. For a safety invariant, prove the new test fails under a temporary relevant
+4. For ecosystem or positioning claims, use dated official sources and state
+   what AGENTOWNERS does not control.
+5. Add the cheapest disconfirming test first.
+6. Implement the smallest complete change.
+7. For a safety invariant, prove the new test fails under a temporary relevant
    mutation, then restore production code exactly.
-7. Regenerate distributions with `pnpm build`; never hand-edit them.
-8. If policy validation changed, run `pnpm generate:schema`.
-9. Run `pnpm verify`.
-10. Run the explicit `agentowners self-check` contract before opening a pull
+8. Regenerate distributions with `pnpm build`; never hand-edit them.
+9. If policy validation changed, run `pnpm generate:schema`.
+10. Run `pnpm verify`.
+11. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-11. For release-facing changes, run `pnpm verify:packages`.
-12. In the pull request, disclose agent use, overlap, exact evidence, risks,
+12. For release-facing changes, run `pnpm verify:packages`.
+13. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

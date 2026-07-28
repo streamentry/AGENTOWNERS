@@ -31,6 +31,11 @@ AGENTOWNERS answers all of these from a single YAML file checked into the
 repository. It uses no model, hosted service, database, or external policy API.
 The same inputs produce the same decision.
 
+See [Where AGENTOWNERS fits](docs/ecosystem.md) for a dated comparison with
+instructions, custom agents, Copilot hooks, branch protection, and native audit
+records. The comparison states both the defensible boundary and what this
+project does not claim.
+
 ---
 
 ## What ships
@@ -417,6 +422,8 @@ The repository is designed for both human and agent contributors:
 - [AGENTS.md](AGENTS.md) maps the codebase and immutable invariants.
 - [SKILL.md](SKILL.md) gives compatible agents a compact execution workflow.
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
+- [Ecosystem boundaries](docs/ecosystem.md) distinguishes guidance, runtime
+  controls, repository governance, and audit evidence.
 - [Roadmap](docs/roadmap.md) names what is next and what will remain out of scope.
 
 High-value contributions are adversarial fixtures, policy ambiguity reports,
