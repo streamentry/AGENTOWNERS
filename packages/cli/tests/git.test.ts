@@ -19,7 +19,7 @@ describe('git helpers', () => {
     expect(files).toEqual(['src/index.ts', 'README.md']);
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
-      ['diff', '--name-only', 'main; touch /tmp/pwned', 'HEAD'],
+      ['diff', '--name-only', '--end-of-options', 'main; touch /tmp/pwned', 'HEAD', '--'],
       expect.objectContaining({ cwd: '/repo' }),
     );
   });
@@ -30,7 +30,7 @@ describe('git helpers', () => {
     expect(getCommitMessages('main', 'HEAD')).toEqual(['feat: safe change', 'body']);
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
-      ['log', 'main..HEAD', '--format=%s%n%b'],
+      ['log', '--format=%s%n%b', '--end-of-options', 'main..HEAD'],
       expect.any(Object),
     );
   });

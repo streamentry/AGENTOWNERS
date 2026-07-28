@@ -56,7 +56,7 @@ export function computeRiskScore(input: RiskScoringInput): { score: number; leve
   }
 
   // Agent confidence
-  if (agentConfidence === 'unknown') {
+  if (agentConfidence !== 'confirmed') {
     score += 20;
   }
   // agent_confirmed: +0

@@ -62,17 +62,21 @@ export async function loadPolicyFile(filePath: string): Promise<AgentOwnersPolic
     throw new PolicyLoadError(filePath, err)
   }
 
+  return loadPolicyText(raw, filePath)
+}
+
+export function loadPolicyText(raw: string, source = 'policy text'): AgentOwnersPolicy {
   let parsed: unknown
   try {
     parsed = yaml.load(raw)
   } catch (err) {
-    throw new PolicyLoadError(filePath, err)
+    throw new PolicyLoadError(source, err)
   }
 
   try {
     return parsePolicy(parsed)
   } catch (err) {
-    throw new PolicyLoadError(filePath, err)
+    throw new PolicyLoadError(source, err)
   }
 }
 

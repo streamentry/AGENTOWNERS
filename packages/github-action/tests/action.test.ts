@@ -14,6 +14,9 @@ vi.mock('@actions/core', () => mockCore);
 // --- Mock @actions/github ---
 const mockOctokit = {
   rest: {
+    repos: {
+      getContent: vi.fn(),
+    },
     pulls: {
       listFiles: vi.fn(),
       get: vi.fn(),
@@ -337,6 +340,24 @@ describe('getPRChangedFiles', () => {
   });
 });
 
+describe('getPRFiles', () => {
+  it('collects filenames and available patch text without raw API objects', async () => {
+    const { getPRFiles } = await import('../src/github.js');
+    mockOctokit.rest.pulls.listFiles.mockResolvedValue({
+      data: [
+        { filename: 'src/index.ts', patch: '+OPENAI_API_KEY=sk-test' },
+        { filename: 'image.png' },
+      ],
+    });
+
+    await expect(getPRFiles(mockOctokit as never, 'owner', 'repo', 1)).resolves.toEqual({
+      files: ['src/index.ts', 'image.png'],
+      diffContent: '+OPENAI_API_KEY=sk-test',
+      patchesComplete: false,
+    });
+  });
+});
+
 describe('getPRMetadata', () => {
   it('maps PR API response to PRMetadata', async () => {
     const { getPRMetadata } = await import('../src/github.js');
@@ -352,7 +373,7 @@ describe('getPRMetadata', () => {
         additions: 30,
         deletions: 10,
         changed_files: 3,
-        base: { ref: 'main' },
+        base: { ref: 'main', sha: 'base-sha' },
         head: { ref: 'feature' },
       },
     });
@@ -362,6 +383,7 @@ describe('getPRMetadata', () => {
     expect(meta.actor).toBe('bot-user');
     expect(meta.labels).toEqual(['ai-agent']);
     expect(meta.commits).toBe(2);
+    expect(meta.baseSha).toBe('base-sha');
   });
 });
 

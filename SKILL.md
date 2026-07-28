@@ -21,4 +21,6 @@ description: Implement or review deterministic AI-agent governance changes in AG
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
-input reach a shell.
+input reach a shell. For GitHub pull requests, load policy from the immutable
+base commit. For CLI Git operations, treat refs as hostile options and use
+`--end-of-options`.
