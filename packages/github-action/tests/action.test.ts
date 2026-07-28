@@ -417,19 +417,25 @@ describe('GitHub Action — integration via mocks', () => {
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
   });
 
-  it('rejects an invalid mode before creating a GitHub client or reading the PR', async () => {
-    setupInputs({ mode: 'silent' });
+  it.each([
+    ['mode', 'silent', 'Invalid mode'],
+    ['fail-on-block', 'yes', 'Invalid fail-on-block'],
+    ['fail-on-require-approval', 'yes', 'Invalid fail-on-require-approval'],
+    ['add-labels', 'yes', 'Invalid add-labels'],
+  ])(
+    'rejects invalid %s before creating a GitHub client or reading the PR',
+    async (input, value, expectedMessage) => {
+      setupInputs({ [input]: value });
 
-    const { run } = await import('../src/index.js');
-    await run();
-    const github = await import('@actions/github');
+      const { run } = await import('../src/index.js');
+      await run();
+      const github = await import('@actions/github');
 
-    await vi.waitFor(() => {
-      expect(mockCore.setFailed).toHaveBeenCalledWith(expect.stringContaining('Invalid mode'));
-    });
-    expect(github.getOctokit).not.toHaveBeenCalled();
-    expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
-  });
+      expect(mockCore.setFailed).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
+      expect(github.getOctokit).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
+    },
+  );
 });
 
 // --- Unit tests for comment.ts ---
