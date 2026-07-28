@@ -21510,6 +21510,8 @@ var require_picomatch2 = __commonJS({
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  ACTION_MODES: () => ACTION_MODES,
+  normalizeActionMode: () => normalizeActionMode,
   run: () => run
 });
 module.exports = __toCommonJS(index_exports);
@@ -34310,10 +34312,17 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
 }
 
 // src/index.ts
+var ACTION_MODES = ["comment", "check", "both", "dry-run"];
+function normalizeActionMode(value) {
+  if (ACTION_MODES.includes(value)) {
+    return value;
+  }
+  throw new Error("Mode must be one of: comment, check, both, dry-run.");
+}
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
-    const mode = getInput("mode") || "comment";
+    const mode = normalizeActionMode(getInput("mode") || "comment");
     const failOnBlock = getInput("fail-on-block") !== "false";
     const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
     const addLabels = getInput("add-labels") !== "false";
@@ -34551,6 +34560,8 @@ async function applyLabels(octokit, owner, repo, issueNumber, labels) {
 run();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  ACTION_MODES,
+  normalizeActionMode,
   run
 });
 /*! Bundled license information:

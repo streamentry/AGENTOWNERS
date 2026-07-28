@@ -538,6 +538,35 @@ describe('getIssueMetadata', () => {
 
 // --- Action logic unit tests (pure logic, no async) ---
 describe('Action logic — pure unit tests', () => {
+  it.each(['comment', 'check', 'both', 'dry-run'] as const)(
+    'accepts declared mode %s', async (mode) => {
+      const { normalizeActionMode } = await import('../src/index.js');
+
+      expect(normalizeActionMode(mode)).toBe(mode);
+    },
+  );
+
+  it('rejects an undeclared mode instead of silently changing behavior', async () => {
+    const { normalizeActionMode } = await import('../src/index.js');
+
+    expect(() => normalizeActionMode('observe')).toThrow(
+      'Mode must be one of: comment, check, both, dry-run.',
+    );
+  });
+
+  it('fails before token or API access when the Action mode is invalid', async () => {
+    setupInputs({ mode: 'observe' });
+    const { run } = await import('../src/index.js');
+    const github = await import('@actions/github');
+
+    await run();
+
+    expect(mockCore.setFailed).toHaveBeenCalledWith(
+      'Mode must be one of: comment, check, both, dry-run.',
+    );
+    expect(github.getOctokit).not.toHaveBeenCalled();
+  });
+
   it('fails closed when no GitHub token is configured', async () => {
     const { requireGitHubToken } = await import('../src/config.js');
 

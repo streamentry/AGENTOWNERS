@@ -64,6 +64,10 @@ runs:
   main: dist/index.js
 ```
 
+The `mode` input is a closed set: `comment`, `check`, `both`, or `dry-run`.
+Any other value is an input error and must fail the Action before it reads the
+token or repository state.
+
 ## Required GitHub Permissions
 - `contents: read`
 - `pull-requests: write` (for comments and labels)
@@ -114,6 +118,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Block decision → fails action when fail-on-block is true
 - Block decision → does not fail when fail-on-block is false
 - Dry-run mode → no comment posted, no labels
+- Invalid mode → Action fails before external API access
 - Sticky comment updated on re-run
 - Audit JSON written correctly
 - Labels applied to PR

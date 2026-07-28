@@ -39,6 +39,8 @@ semantic versioning.
 
 ### Fixed
 
+- GitHub Action mode inputs now fail closed when they are outside the declared
+  `comment`, `check`, `both`, and `dry-run` contract.
 - The copyable `.github/AGENTOWNERS.yml.example` now uses the current strict
   policy schema instead of retired default and audit keys, and a repository
   test prevents the template from drifting invalid again.
