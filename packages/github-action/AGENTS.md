@@ -68,6 +68,10 @@ remain untouched.
 Unsupported webhook actions must warn and stop before repository metadata is
 read; never coerce an unknown action into `opened` or another decision-bearing
 event.
+For pull-request and pull-request-review events, the trusted policy ref must
+come from `payload.pull_request.base.sha` captured by that webhook. Never
+replace it with a later PR metadata response, because a force-push can create a
+time-of-check/time-of-use policy change.
 Sticky verdict reconciliation must require the complete opening and closing
 markers in the expected positions; never overwrite a comment that merely quotes
 or partially contains the marker.

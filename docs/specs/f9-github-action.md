@@ -74,7 +74,10 @@ runs:
 ```
 1. Get inputs
 2. Get GitHub context (event, payload)
-3. Load policy file
+3. Load policy file from the immutable `pull_request.base.sha` in the webhook
+   payload for pull-request and review events; use the default branch only for
+   issue and issue-comment events. Refreshed PR metadata must not replace the
+   event-captured base SHA.
 4. Branch on event type:
    - pull_request → fetchPRFiles, fetchPRMetadata
    - issues → inspect actor/title/body/labels
@@ -135,3 +138,5 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
   comments, labels, or enforcement behavior.
 - Reject invalid boolean inputs instead of silently disabling an enforcement
   flag such as `fail-on-require-approval`.
+- Bind pull-request policy evaluation to the event-captured base SHA so a
+  force-push after delivery cannot change the policy judging that event.

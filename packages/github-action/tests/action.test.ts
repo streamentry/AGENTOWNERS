@@ -346,6 +346,26 @@ describe('GitHub Action — integration via mocks', () => {
     expect(mockCore.setFailed).not.toHaveBeenCalled();
   });
 
+  it('uses the webhook base SHA when refreshed PR metadata has moved', async () => {
+    setupInputs({ mode: 'dry-run' });
+    setupOctokitPR(['src/index.ts']);
+    mockContext.payload = {
+      action: 'opened',
+      pull_request: { number: 1, base: { sha: 'event-base-sha' } },
+      repository: { default_branch: 'main' },
+    };
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledWith(
+      expect.objectContaining({ ref: 'event-base-sha' }),
+    );
+    expect(mockOctokit.rest.repos.getContent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ ref: 'base-sha' }),
+    );
+  });
+
   it('block with fail-on-block=true → setFailed called', async () => {
     // Test the fail logic directly
     const effect = mockDecisionBlock.effect;

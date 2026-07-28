@@ -17,7 +17,7 @@ import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
 import { parseActionMode, parseBooleanInput, requireGitHubToken } from './config.js';
-import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import { extractPullRequestBaseSha, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
 const SUPPORTED_EVENT_ACTIONS: Readonly<Record<string, readonly string[]>> = {
   pull_request: ['opened', 'synchronize', 'reopened', 'ready_for_review'],
@@ -98,12 +98,14 @@ export async function run(): Promise<void> {
         return;
       }
 
+      const eventBaseSha = extractPullRequestBaseSha(payload);
+
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
       commitEmails = metadata.commitEmails;
       commitNames = metadata.commitNames;
       actor = metadata.actor || actor;
@@ -165,6 +167,8 @@ export async function run(): Promise<void> {
         return;
       }
 
+      const eventBaseSha = extractPullRequestBaseSha(payload);
+
       const review = payload.review;
       reviewState = review?.state as 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;
       actor = (review?.user?.login as string) || actor;
@@ -174,7 +178,7 @@ export async function run(): Promise<void> {
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
       commitEmails = metadata.commitEmails;
       commitNames = metadata.commitNames;
       prTitle = metadata.title;

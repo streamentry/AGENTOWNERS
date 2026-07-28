@@ -74,6 +74,8 @@ semantic versioning.
   and their bodies participate in agent detection.
 - Unsupported GitHub webhook actions now stop before metadata reads instead of
   being misclassified as new pull requests.
+- Pull-request policy reads now stay bound to the webhook-captured base commit,
+  even if refreshed PR metadata observes a later force-push.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 

@@ -34464,6 +34464,18 @@ function selectTrustedPolicyRef(eventName, pullRequestBaseSha, defaultBranch) {
   if (!ref) throw new Error("Missing trusted repository ref for policy load.");
   return ref;
 }
+function asRecord(value) {
+  return typeof value === "object" && value !== null ? value : void 0;
+}
+function extractPullRequestBaseSha(payload) {
+  const pullRequest = asRecord(asRecord(payload)?.pull_request);
+  const base = asRecord(pullRequest?.base);
+  const sha = base?.sha;
+  if (typeof sha !== "string" || sha.trim() === "") {
+    throw new Error("Missing pull_request.base.sha in trusted webhook payload.");
+  }
+  return sha.trim();
+}
 function normalizeRepositoryPolicyPath(policyPath) {
   if (import_node_path.default.posix.isAbsolute(policyPath) || import_node_path.default.win32.isAbsolute(policyPath)) {
     throw new Error("Policy path must be a repository-relative policy path.");
@@ -34543,12 +34555,13 @@ async function run() {
         warning(`Unsupported pull_request action: ${prAction}. Skipping AGENTOWNERS check.`);
         return;
       }
+      const eventBaseSha = extractPullRequestBaseSha(payload);
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
       commitEmails = metadata.commitEmails;
       commitNames = metadata.commitNames;
       actor = metadata.actor || actor;
@@ -34604,6 +34617,7 @@ async function run() {
         );
         return;
       }
+      const eventBaseSha = extractPullRequestBaseSha(payload);
       const review = payload.review;
       reviewState = review?.state;
       actor = review?.user?.login || actor;
@@ -34612,7 +34626,7 @@ async function run() {
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
-      pullRequestBaseSha = metadata.baseSha;
+      pullRequestBaseSha = eventBaseSha;
       commitEmails = metadata.commitEmails;
       commitNames = metadata.commitNames;
       prTitle = metadata.title;
