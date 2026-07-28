@@ -41,6 +41,24 @@ rules:
       - "security-review"
     reason: "Automation and release entry points are privileged execution surfaces."
 
+  - name: "Require security review for privileged implementation changes"
+    when:
+      files:
+        - "packages/github-action/src/**"
+        - "packages/github-action/dist/**"
+        - "scripts/publish-packages.mjs"
+        - "scripts/release-automation.mjs"
+        - "scripts/update-major-tag.mjs"
+        - "scripts/verify-release.mjs"
+        - "scripts/verify-packed-packages.mjs"
+        - "scripts/marketplace-metadata.mjs"
+    effect: require_approval
+    reviewers:
+      - "@streamentry"
+    labels:
+      - "security-review"
+    reason: "Privileged Action and release implementations can change execution, publication, or supply-chain behavior and require explicit maintainer security review."
+
   - name: "Require approval for policy-engine changes"
     when:
       files:
