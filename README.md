@@ -255,6 +255,10 @@ code scanning is available.
 | `security-sensitive` | `block` for unknown | Security-critical repositories     |
 | `monorepo`           | Per-package rules   | Large monorepos                    |
 
+Use the [policy-example chooser](examples/README.md) to compare the checked-in
+profiles, validate them locally, and understand the trade-offs before copying
+one into `.github/AGENTOWNERS.yml`.
+
 ```bash
 agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
