@@ -39,6 +39,9 @@ PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`
 
 ### 6. Configured body patterns (from policy)
 Body matches `agents[name].match.bodyPatterns` or `prTitlePatterns`.
+Malformed configured regular expressions are ignored individually. Detection
+continues with remaining patterns and falls through conservatively if nothing
+valid matches.
 
 ## Types
 
@@ -79,3 +82,5 @@ Return matched agent name from policy configuration or null.
 - Unknown actor, no signals → `unknown`
 - Policy match takes priority over built-in signals
 - Multiple signals reported in `signals` array
+- Malformed configured pattern does not abort detection
+- Valid sibling pattern still matches after a malformed pattern

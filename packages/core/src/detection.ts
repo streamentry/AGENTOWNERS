@@ -53,6 +53,15 @@ export function matchesAgentPolicy(
   return null;
 }
 
+function matchesConfiguredPattern(value: string | undefined, pattern: string): boolean {
+  if (!value) return false;
+  try {
+    return new RegExp(pattern, 'i').test(value);
+  } catch {
+    return false;
+  }
+}
+
 export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   const { actor, commitMessages = [], prTitle, prBody, labels = [], policy } = input;
   const signals: string[] = [];
@@ -71,15 +80,13 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
         const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
         const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
         for (const pattern of bodyPatterns) {
-          const re = new RegExp(pattern, 'i');
-          if (prBody && re.test(prBody)) {
+          if (matchesConfiguredPattern(prBody, pattern)) {
             signals.push(`policy body pattern match: agents.${name}`);
             return { agentName: name, confidence: 'confirmed', signals };
           }
         }
         for (const pattern of titlePatterns) {
-          const re = new RegExp(pattern, 'i');
-          if (prTitle && re.test(prTitle)) {
+          if (matchesConfiguredPattern(prTitle, pattern)) {
             signals.push(`policy title pattern match: agents.${name}`);
             return { agentName: name, confidence: 'confirmed', signals };
           }
