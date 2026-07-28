@@ -17,6 +17,7 @@ network calls, clocks, randomness, or persistent state.
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
+- `fixtures.ts`: strict portable suites and assertion comparison
 
 ## Diagrams
 
@@ -44,6 +45,10 @@ flowchart TB
   Inference --> Evaluator
   Evaluator --> Scoring
   Evaluator --> Renderer
+  Fixtures[Portable fixtures] --> Detection
+  Fixtures --> Classification
+  Fixtures --> Inference
+  Fixtures --> Evaluator
   Corpus[Adversarial corpus] -. probes .-> Zod
   Corpus -. probes .-> Detection
   Corpus -. probes .-> Classification
@@ -58,6 +63,20 @@ sequenceDiagram
   Adapter->>Core: normalized input
   Core->>Core: pure evaluation
   Core-->>Adapter: immutable decision
+```
+
+```mermaid
+sequenceDiagram
+  participant Suite
+  participant FixtureRunner
+  participant Core
+  Suite->>FixtureRunner: validated cases
+  loop each case
+    FixtureRunner->>Core: event, actor, files, signals
+    Core-->>FixtureRunner: decision
+    FixtureRunner->>FixtureRunner: compare requested assertions
+  end
+  FixtureRunner-->>Suite: stable case results
 ```
 
 ## Verification

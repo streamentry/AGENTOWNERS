@@ -17,11 +17,13 @@ description: Implement or review deterministic AI-agent governance changes in AG
    mutation, then restore production code exactly.
 8. Regenerate distributions with `pnpm build`; never hand-edit them.
 9. If policy validation changed, run `pnpm generate:schema`.
-10. Run `pnpm verify`.
-11. Run the explicit `agentowners self-check` contract before opening a pull
+10. If decision behavior changed, update a portable fixture that proves the
+   repository-facing contract.
+11. Run `pnpm verify`.
+12. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-12. For release-facing changes, run `pnpm verify:packages`.
-13. In the pull request, disclose agent use, overlap, exact evidence, risks,
+13. For release-facing changes, run `pnpm verify:packages`.
+14. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

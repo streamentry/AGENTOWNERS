@@ -55,7 +55,7 @@ try {
     process.execPath,
     [
       '-e',
-      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function') process.exit(1)",
+      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -64,7 +64,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "import { evaluatePolicy } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function') process.exit(1)",
+      "import { evaluatePolicy,parsePolicyFixtureSuite,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -113,6 +113,43 @@ try {
     selfCheck.decision !== 'allow'
   ) {
     throw new Error('Packed CLI self-check returned an unexpected contract');
+  }
+
+  await writeFile(
+    resolve(fixtureDirectory, 'AGENTOWNERS.fixtures.yml'),
+    [
+      'version: 1',
+      'cases:',
+      '  - name: documentation is allowed',
+      '    input:',
+      '      event: pull_request.opened',
+      '      actor: package-verifier',
+      '      changed_files: [README.md]',
+      '    expect:',
+      '      decision: allow',
+    ].join('\n'),
+  );
+  const fixtureResult = JSON.parse(
+    run(
+      cliPath,
+      [
+        'test',
+        '--policy',
+        '.github/AGENTOWNERS.yml',
+        '--fixtures',
+        'AGENTOWNERS.fixtures.yml',
+        '--output',
+        'json',
+      ],
+      fixtureDirectory,
+    ),
+  );
+  if (
+    fixtureResult.schemaVersion !== 1 ||
+    fixtureResult.status !== 'complete' ||
+    fixtureResult.result?.passed !== true
+  ) {
+    throw new Error('Packed CLI fixture test returned an unexpected contract');
   }
 
   process.stdout.write('Packed packages install and execute successfully.\n');

@@ -213,6 +213,11 @@ agentowners self-check \
   --head HEAD \
   --actor coding-agent[bot]
 
+# Execute portable policy expectations
+agentowners test \
+  --policy .github/AGENTOWNERS.yml \
+  --fixtures .agentowners/fixtures.yml
+
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
 ```
@@ -221,6 +226,11 @@ agentowners fingerprint --commit HEAD
 stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
 and a bounded next action. It makes no model or GitHub API calls and never
 modifies the repository.
+
+`test` executes a strict, versioned fixture suite through the same detection,
+classification, action-inference, and evaluation pipeline used in production.
+It rejects unsafe paths and unknown fields, reports every failed assertion,
+and returns nonzero when expectations drift.
 
 ---
 

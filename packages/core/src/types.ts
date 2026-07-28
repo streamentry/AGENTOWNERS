@@ -21,6 +21,19 @@ export type AgentAction =
   | 'change_permissions'
   | 'merge_pr';
 
+export type GitHubEventType =
+  | 'pull_request.opened'
+  | 'pull_request.synchronize'
+  | 'pull_request.reopened'
+  | 'pull_request.ready_for_review'
+  | 'issue_comment.created'
+  | 'issue_comment.edited'
+  | 'pull_request_review.submitted'
+  | 'issues.labeled'
+  | 'issues.closed'
+  | 'issues.reopened'
+  | 'issues.opened';
+
 export type AgentDetectionConfidence = 'confirmed' | 'likely' | 'possible' | 'unknown';
 
 export type AgentPolicy = {
@@ -117,4 +130,59 @@ export type AgentDetectionResult = {
   agentName?: string;
   confidence: AgentDetectionConfidence;
   signals: string[];
+};
+
+export type PolicyFixtureInput = {
+  event: GitHubEventType;
+  actor: string;
+  changed_files: string[];
+  commit_messages: string[];
+  labels: string[];
+  pr_title?: string;
+  pr_body?: string;
+  review_state?: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED';
+  diff_lines_count?: number;
+  commits_count?: number;
+};
+
+export type PolicyFixtureExpectation = {
+  decision: Decision['effect'];
+  matched_rules?: string[];
+  matched_agent?: string | null;
+  detected_actions?: AgentAction[];
+  required_reviewers?: string[];
+  labels?: string[];
+  risk_level?: RiskLevel;
+  risk_score?: number;
+};
+
+export type PolicyFixtureCase = {
+  name: string;
+  input: PolicyFixtureInput;
+  expect: PolicyFixtureExpectation;
+};
+
+export type PolicyFixtureSuite = {
+  version: 1;
+  cases: PolicyFixtureCase[];
+};
+
+export type PolicyFixtureAssertionFailure = {
+  field: keyof PolicyFixtureExpectation;
+  expected: unknown;
+  actual: unknown;
+};
+
+export type PolicyFixtureCaseResult = {
+  name: string;
+  passed: boolean;
+  failures: PolicyFixtureAssertionFailure[];
+};
+
+export type PolicyFixtureSuiteResult = {
+  passed: boolean;
+  total: number;
+  passedCount: number;
+  failedCount: number;
+  cases: PolicyFixtureCaseResult[];
 };
