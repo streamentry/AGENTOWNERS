@@ -453,6 +453,8 @@ The repository is designed for both human and agent contributors:
   identifies deeper work with explicit acceptance criteria.
 - [AGENTS.md](AGENTS.md) maps the codebase and immutable invariants.
 - [SKILL.md](SKILL.md) gives compatible agents a compact execution workflow.
+- [Policy examples](examples/README.md) compare the copyable profiles and show
+  how to execute the portable contract.
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
 - [Ecosystem boundaries](docs/ecosystem.md) distinguishes guidance, runtime
   controls, repository governance, and audit evidence.
