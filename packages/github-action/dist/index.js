@@ -34251,13 +34251,22 @@ async function getIssueMetadata(octokit, owner, repo, issueNumber) {
 // src/comment.ts
 var MARKER = "<!-- agentowners-verdict -->";
 async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
-  const comments = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    per_page: 100
-  });
-  const existing = comments.data.find((c) => c.body?.includes(MARKER));
+  let page = 1;
+  let existing;
+  while (!existing) {
+    const comments = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      per_page: 100,
+      page
+    });
+    existing = comments.data.find(
+      (c) => c.body?.includes(MARKER)
+    );
+    if (existing || comments.data.length < 100) break;
+    page += 1;
+  }
   if (existing) {
     await octokit.rest.issues.updateComment({
       owner,

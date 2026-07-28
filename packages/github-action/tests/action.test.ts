@@ -443,6 +443,40 @@ describe('upsertVerdictComment', () => {
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
   });
+
+  it('paginates comment history before creating a duplicate verdict', async () => {
+    const { upsertVerdictComment } = await import('../src/comment.js');
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      id: index + 1,
+      body: `ordinary comment ${index + 1}`,
+    }));
+    mockOctokit.rest.issues.listComments
+      .mockResolvedValueOnce({ data: firstPage })
+      .mockResolvedValueOnce({
+        data: [{ id: 201, body: '<!-- agentowners-verdict -->\nOld content' }],
+      });
+
+    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+
+    expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(1, {
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      per_page: 100,
+      page: 1,
+    });
+    expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(2, {
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      per_page: 100,
+      page: 2,
+    });
+    expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
+      expect.objectContaining({ comment_id: 201, body: 'new body' }),
+    );
+    expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+  });
 });
 
 // --- Unit tests for github.ts helpers ---
