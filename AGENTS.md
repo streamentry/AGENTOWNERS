@@ -65,6 +65,7 @@ packages/core/tests/
   profiles.test.ts   — built-in profiles parse correctly
   integration.test.ts — end-to-end pipeline with fixtures
   fixtures-runner.test.ts — public fixture schema, runner, and loader contract
+  repository-policies.test.ts — repository-owned policy templates parse strictly
   fixtures/           — policies, events, exact outcomes, and corpus guidance
 
 packages/cli/src/

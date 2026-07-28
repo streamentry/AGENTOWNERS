@@ -17,6 +17,7 @@ network calls, clocks, randomness, or persistent state.
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
+- `tests/repository-policies.test.ts`: repository policy templates stay schema-valid
 - `fixtures.ts`: strict portable suites and assertion comparison
 - `sarif.ts`: deterministic SARIF 2.1.0 output
 

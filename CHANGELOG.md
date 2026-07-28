@@ -39,6 +39,9 @@ semantic versioning.
 
 ### Fixed
 
+- The copyable `.github/AGENTOWNERS.yml.example` now uses the current strict
+  policy schema instead of retired default and audit keys, and a repository
+  test prevents the template from drifting invalid again.
 - Documentation classification now recognizes Markdown, reStructuredText, and
   AsciiDoc files at any repository depth, keeping monorepo docs-only policies
   deterministic.
