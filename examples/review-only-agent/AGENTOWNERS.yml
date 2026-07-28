@@ -1,0 +1,74 @@
+version: 1
+
+agents:
+  review-agent:
+    match:
+      actors:
+        - 'review-agent[bot]'
+    allowed:
+      - comment
+      - review_comment
+      - request_changes
+    requires_approval:
+      - approve_pr
+    blocked:
+      - merge_pr
+      - label_issue
+      - close_issue
+      - reopen_issue
+      - assign_issue
+      - edit_workflows
+      - touch_secrets
+      - change_permissions
+
+defaults:
+  known_agent: require_approval
+  unknown_agent: require_approval
+  docs_only: require_approval
+  workflows: block
+  secrets: block
+
+rules:
+  - name: 'Allow review-only discussion'
+    when:
+      actors:
+        - 'review-agent[bot]'
+      actions:
+        - comment
+        - review_comment
+        - request_changes
+    effect: allow
+    reason: 'The review agent may discuss a change and request revisions, but cannot approve, merge, manage issues, or alter protected files.'
+
+  - name: 'Require human approval for approval decisions'
+    when:
+      actors:
+        - 'review-agent[bot]'
+      actions:
+        - approve_pr
+    effect: require_approval
+    reviewers:
+      - '@streamentry'
+    labels:
+      - 'needs-human-review'
+    reason: 'A review comment is advisory; only a human maintainer may grant pull-request approval.'
+
+  - name: 'Block review-agent authority escalation'
+    when:
+      actors:
+        - 'review-agent[bot]'
+      actions:
+        - merge_pr
+        - label_issue
+        - close_issue
+        - reopen_issue
+        - assign_issue
+        - edit_workflows
+        - touch_secrets
+        - change_permissions
+    effect: block
+    reviewers:
+      - '@streamentry'
+    labels:
+      - 'security-review'
+    reason: 'The review agent has no authority to merge, manage issues, or change workflow, secret, or permission surfaces.'

@@ -1,0 +1,65 @@
+version: 1
+
+cases:
+  - name: review comment is allowed
+    input:
+      event: pull_request_review.submitted
+      actor: 'review-agent[bot]'
+      review_state: COMMENTED
+    expect:
+      decision: allow
+      detected_actions:
+        - review_comment
+
+  - name: requested changes are allowed
+    input:
+      event: pull_request_review.submitted
+      actor: 'review-agent[bot]'
+      review_state: CHANGES_REQUESTED
+    expect:
+      decision: allow
+      detected_actions:
+        - review_comment
+        - request_changes
+
+  - name: approval requires a human
+    input:
+      event: pull_request_review.submitted
+      actor: 'review-agent[bot]'
+      review_state: APPROVED
+    expect:
+      decision: require_approval
+      detected_actions:
+        - review_comment
+        - approve_pr
+      required_reviewers:
+        - '@streamentry'
+
+  - name: ordinary issue comment is allowed
+    input:
+      event: issue_comment.created
+      actor: 'review-agent[bot]'
+      issue_body: 'Please consider the requested change.'
+    expect:
+      decision: allow
+      detected_actions:
+        - comment
+
+  - name: issue labels are blocked
+    input:
+      event: issues.labeled
+      actor: 'review-agent[bot]'
+    expect:
+      decision: block
+      detected_actions:
+        - label_issue
+
+  - name: unknown actor requires approval
+    input:
+      event: issue_comment.created
+      actor: 'unrecognized-agent[bot]'
+      issue_body: 'A comment from an unverified actor.'
+    expect:
+      decision: require_approval
+      detected_actions:
+        - comment

@@ -265,6 +265,21 @@ Using Dependabot or Renovate? Copy the
 human approval for dependency updates while blocking workflow, authentication,
 permission, and secret-file changes.
 
+Need a narrower agent boundary? The
+[review-only-agent example](examples/review-only-agent/AGENTOWNERS.yml) allows
+discussion and change requests while requiring human approval for `approve_pr`
+and blocking merge, issue-management, workflow, secret, and permission actions.
+It is executable rather than prose-only:
+
+```bash
+agentowners test \
+  --policy examples/review-only-agent/AGENTOWNERS.yml \
+  --fixtures examples/review-only-agent/AGENTOWNERS.fixtures.yml
+```
+
+The `review-agent[bot]` actor is fictional and vendor-neutral. Replace it only
+with an actor identity you can verify in your own repository.
+
 ---
 
 ## Policy format
