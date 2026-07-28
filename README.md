@@ -34,9 +34,10 @@ repository. It uses no model, hosted service, database, or external policy API.
 The same inputs produce the same decision.
 
 See [Where AGENTOWNERS fits](docs/ecosystem.md) for a dated comparison with
-instructions, custom agents, Copilot hooks, branch protection, and native audit
-records. The comparison states both the defensible boundary and what this
-project does not claim.
+instructions, custom agents, Copilot hooks, GitHub rulesets, general policy
+engines, and native audit records. The comparison states when to choose
+AGENTOWNERS, when to choose another control, and what this project does not
+claim.
 
 ---
 
