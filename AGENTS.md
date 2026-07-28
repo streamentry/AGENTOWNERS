@@ -110,10 +110,14 @@ docs/ecosystem.md     — dated control-surface comparison and product boundarie
 
 scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema
+  release-automation.mjs     — fail-closed package and Action tag primitives
+  publish-packages.mjs       — idempotent OIDC publication entry point
+  update-major-tag.mjs       — stable GitHub Action major-tag update
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
 
 CHANGELOG.md          — release history and security-relevant changes
+docs/releasing.md     — maintainer release and recovery runbook
 ```
 
 ## Architecture diagrams
@@ -157,6 +161,15 @@ sequenceDiagram
 ```
 
 See `docs/architecture.md` for trust boundaries and expanded diagrams.
+
+### Release data flow
+
+```mermaid
+flowchart LR
+  ExactTag --> Verification --> RegistryPreflight
+  RegistryPreflight --> PackedTarballs --> npm
+  npm --> GitHubRelease --> StableMajorTag
+```
 
 ## Decision to code: key invariants
 
@@ -273,6 +286,10 @@ bundle whenever Action source changes.
 `packages/core/agentowners.schema.json` is also generated. Never edit it by
 hand. After changing `schema.ts` or `json-schema.ts`, run
 `pnpm generate:schema`; `pnpm verify:schema` fails on drift.
+
+Release automation is documented in `docs/releasing.md`. It must query all
+exact package versions before publishing any tarball, treat only npm `E404` as
+absence, and never move a stable Action major tag for a prerelease.
 
 ## What NOT to build (v1 non-goals)
 
