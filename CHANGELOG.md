@@ -36,6 +36,9 @@ semantic versioning.
 
 ### Fixed
 
+- GitHub Action file enumeration now binds paginated results to the pull
+  request's declared file count and fails closed beyond GitHub's 3,000-file
+  endpoint limit or on inconsistent results.
 - Pull request renames now preserve both source and destination paths so moving
   a sensitive file cannot erase its original classification boundary.
 - Malformed configured detection regex patterns no longer abort policy

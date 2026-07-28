@@ -33,6 +33,9 @@ export type IssueMetadata = {
   state: string;
 };
 
+const MAX_PULL_REQUEST_FILES = 3000;
+const FILES_PER_PAGE = 100;
+
 export async function getRepositoryFileContent(
   octokit: Octokit,
   owner: string,
@@ -73,10 +76,27 @@ export async function getPRFiles(
   owner: string,
   repo: string,
   pullNumber: number,
+  expectedFileCount?: number,
 ): Promise<PRFiles> {
+  if (
+    expectedFileCount !== undefined &&
+    (!Number.isSafeInteger(expectedFileCount) || expectedFileCount < 0)
+  ) {
+    throw new Error('Pull request changed-file count must be a non-negative safe integer.');
+  }
+  if (expectedFileCount !== undefined && expectedFileCount > MAX_PULL_REQUEST_FILES) {
+    throw new Error(
+      `Pull request reports ${expectedFileCount} changed files, exceeding GitHub's 3,000-file API limit.`,
+    );
+  }
+  if (expectedFileCount === 0) {
+    return { files: [], diffContent: '', patchesComplete: true };
+  }
+
   const files = new Set<string>();
   const patches: string[] = [];
   let patchesComplete = true;
+  let listedFileCount = 0;
   let page = 1;
 
   while (true) {
@@ -84,9 +104,15 @@ export async function getPRFiles(
       owner,
       repo,
       pull_number: pullNumber,
-      per_page: 100,
+      per_page: FILES_PER_PAGE,
       page,
     });
+    listedFileCount += response.data.length;
+    if (expectedFileCount !== undefined && listedFileCount > expectedFileCount) {
+      throw new Error(
+        `Pull request reported ${expectedFileCount} files but returned more than that count.`,
+      );
+    }
 
     for (const file of response.data) {
       files.add(file.filename);
@@ -105,10 +131,22 @@ export async function getPRFiles(
       }
     }
 
-    if (response.data.length < 100) {
+    if (expectedFileCount !== undefined && listedFileCount === expectedFileCount) {
       break;
     }
+    if (response.data.length < FILES_PER_PAGE) break;
+    if (listedFileCount >= MAX_PULL_REQUEST_FILES) {
+      throw new Error(
+        "Pull request file enumeration reached GitHub's ambiguous 3,000-file API limit.",
+      );
+    }
     page++;
+  }
+
+  if (expectedFileCount !== undefined && listedFileCount !== expectedFileCount) {
+    throw new Error(
+      `Pull request reported ${expectedFileCount} files but returned ${listedFileCount}.`,
+    );
   }
 
   return {

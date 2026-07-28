@@ -9,7 +9,8 @@ artifact and must be regenerated, never hand-edited.
 ## Key components
 
 - `src/index.ts`: orchestration and outputs
-- `src/github.ts`: event metadata adapter, including rename source-path retention
+- `src/github.ts`: event metadata adapter, including rename source-path
+  retention and declared-count pagination
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
@@ -43,7 +44,8 @@ sequenceDiagram
   Runner->>Action: event and token
   Action->>GitHub: read distinct PR or issue metadata
   Action->>GitHub: fetch policy at base SHA
-  Action->>GitHub: read file paths, rename sources, and available patches
+  Action->>GitHub: read bounded file pages, rename sources, and available patches
+  Action->>Action: verify listed count against PR metadata
   Action->>Core: distinct PR and issue fields
   Action->>Core: comment body as detection evidence
   Core-->>Action: decision
@@ -55,3 +57,5 @@ sequenceDiagram
 
 Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 `pnpm verify:release`.
+File-ingestion changes must prove behavior below, at, and above GitHub's
+3,000-file ceiling, plus metadata/list disagreement.

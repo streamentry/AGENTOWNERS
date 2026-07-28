@@ -25,6 +25,12 @@ For renamed files, the Action retains both GitHub's destination `filename` and
 the source `previous_filename`. This prevents a rename from erasing a sensitive
 source-path classification when patch content is unavailable.
 
+GitHub limits the pull-request files endpoint to 3,000 files. The Action binds
+pagination to the pull request's declared `changed_files` count, rejects
+declared counts above that ceiling, and rejects list/metadata mismatches.
+Exactly 3,000 files are accepted only when the declared count proves the final
+full page is complete.
+
 ### 5. Impersonation of non-agent actors
 **Threat**: An agent claims to be a human contributor to bypass policy.  
 **Protection**: Configured actor matches produce confirmed identity. Spoofable

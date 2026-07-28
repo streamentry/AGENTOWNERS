@@ -76,8 +76,9 @@ runs:
 2. Get GitHub context (event, payload)
 3. Load policy file
 4. Branch on event type:
-   - pull_request → fetchPRFiles, retaining rename source and destination paths,
-     then fetchPRMetadata
+   - pull_request → fetchPRMetadata, then fetchPRFiles while retaining rename
+     source and destination paths and binding pagination to the declared
+     changed-file count
    - issues → inspect actor/title/body/labels
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
@@ -113,6 +114,9 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 ## Tests (`packages/github-action/tests/`)
 - PR opened event → fetches files, evaluates, posts comment
 - Renamed sensitive source → source and destination paths both reach evaluation
+- Declared file count above 3,000 → fail before partial evaluation
+- Listed file count differs from PR metadata → fail before evaluation
+- Exactly 3,000 declared files → accept only after all 30 full pages arrive
 - Block decision → fails action when fail-on-block is true
 - Block decision → does not fail when fail-on-block is false
 - Dry-run mode → no comment posted, no labels

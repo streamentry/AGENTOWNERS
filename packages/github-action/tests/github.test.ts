@@ -19,6 +19,14 @@ function createOctokit(pages: unknown[][]) {
   };
 }
 
+function filePage(page: number, size = 100) {
+  return Array.from({ length: size }, (_, index) => ({
+    filename: `src/page-${page}-file-${index}.ts`,
+    status: 'modified',
+    patch: '+safe change',
+  }));
+}
+
 describe('getPRFiles rename boundaries', () => {
   it('retains renamed source and destination paths exactly once across pages', async () => {
     const firstPage = [
@@ -114,5 +122,64 @@ describe('getPRFiles rename boundaries', () => {
         actor: 'rename-agent[bot]',
       }).effect,
     ).toBe('block');
+  });
+});
+
+describe('getPRFiles completeness boundaries', () => {
+  it('rejects a declared file count above GitHub API limits before listing files', async () => {
+    const { octokit, listFiles } = createOctokit([]);
+
+    await expect(getPRFiles(octokit as never, 'owner', 'repo', 10, 3001)).rejects.toThrow(
+      '3,000',
+    );
+    expect(listFiles).not.toHaveBeenCalled();
+  });
+
+  it('stops on an exact declared count even when the final page is full', async () => {
+    const { octokit, listFiles } = createOctokit([filePage(1), filePage(2)]);
+
+    const result = await getPRFiles(octokit as never, 'owner', 'repo', 11, 200);
+
+    expect(result.files).toHaveLength(200);
+    expect(listFiles).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects an API result that finishes below the declared count', async () => {
+    const { octokit } = createOctokit([[{ filename: 'src/only.ts', status: 'modified' }]]);
+
+    await expect(getPRFiles(octokit as never, 'owner', 'repo', 12, 2)).rejects.toThrow(
+      'reported 2 files but returned 1',
+    );
+  });
+
+  it('rejects an API result that exceeds the declared count', async () => {
+    const { octokit } = createOctokit([
+      [
+        { filename: 'src/first.ts', status: 'modified' },
+        { filename: 'src/unexpected.ts', status: 'modified' },
+      ],
+    ]);
+
+    await expect(getPRFiles(octokit as never, 'owner', 'repo', 13, 1)).rejects.toThrow(
+      'returned more than',
+    );
+  });
+
+  it('accepts exactly 3,000 files when the declared count proves completeness', async () => {
+    const pages = Array.from({ length: 30 }, (_, index) => filePage(index + 1));
+    const { octokit, listFiles } = createOctokit(pages);
+
+    const result = await getPRFiles(octokit as never, 'owner', 'repo', 14, 3000);
+
+    expect(result.files).toHaveLength(3000);
+    expect(listFiles).toHaveBeenCalledTimes(30);
+  });
+
+  it('rejects an ambiguous full 3,000-file result without a declared count', async () => {
+    const pages = Array.from({ length: 30 }, (_, index) => filePage(index + 1));
+    const { octokit, listFiles } = createOctokit(pages);
+
+    await expect(getPRFiles(octokit as never, 'owner', 'repo', 15)).rejects.toThrow('3,000');
+    expect(listFiles).toHaveBeenCalledTimes(30);
   });
 });

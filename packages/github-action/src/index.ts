@@ -80,7 +80,13 @@ export async function run(): Promise<void> {
       eventType = validPrActions.includes(inferredEvent) ? inferredEvent : 'pull_request.opened';
 
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
-      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        metadata.changedFiles,
+      );
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
@@ -135,7 +141,13 @@ export async function run(): Promise<void> {
       actor = (review?.user?.login as string) || actor;
 
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
-      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        metadata.changedFiles,
+      );
       changedFiles = prFiles.files;
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
