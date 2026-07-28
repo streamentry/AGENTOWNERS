@@ -86,6 +86,26 @@ describe('init command', () => {
     )
   })
 
+  it('prints the profile without touching the filesystem in dry-run mode', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+
+    const program = makeProgram()
+    await program.parseAsync([
+      'node',
+      'agentowners',
+      'init',
+      '--profile',
+      'strict-oss',
+      '--dry-run',
+    ])
+
+    expect(stdoutSpy).toHaveBeenCalledWith(getProfile('strict-oss'))
+    expect(vi.mocked(fs.existsSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(fs.writeFileSync)).not.toHaveBeenCalled()
+    expect(exitSpy).not.toHaveBeenCalled()
+  })
+
   it('errors when file exists without --force', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
 

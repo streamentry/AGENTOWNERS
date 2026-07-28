@@ -24,9 +24,11 @@ Options:
 - `--profile <name>` — `minimal` (default), `strict-oss`, `security-sensitive`
 - `--output <path>` — output path (default: `.github/AGENTOWNERS.yml`)
 - `--force` — overwrite if exists
+- `--dry-run` — print the profile without reading or writing the output path
 
 Behavior:
 
+- In `--dry-run` mode, print the profile and perform no filesystem checks or writes.
 - Create output directory if needed
 - Write profile content from `packages/core/src/profiles.ts`
 - Print success message with path
@@ -144,6 +146,7 @@ Agent detection result:
 
 - `init` creates file with correct profile content
 - `init` with `--force` overwrites existing file
+- `init` with `--dry-run` prints the profile without filesystem side effects
 - `validate` exits 0 on valid policy
 - `validate` exits 1 with error messages on invalid policy
 - `check` returns correct exit code by mode

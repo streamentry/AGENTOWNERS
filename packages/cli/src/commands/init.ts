@@ -14,8 +14,9 @@ export function registerInit(program: Command): void {
     )
     .option('--output <path>', 'Output path', '.github/AGENTOWNERS.yml')
     .option('--force', 'Overwrite existing file', false)
-    .action((options: { profile: string; output: string; force: boolean }) => {
-      const { profile, output, force } = options
+    .option('--dry-run', 'Print the profile without writing a file', false)
+    .action((options: { profile: string; output: string; force: boolean; dryRun: boolean }) => {
+      const { profile, output, force, dryRun } = options
 
       const content = getProfile(profile)
       if (content === null) {
@@ -23,6 +24,11 @@ export function registerInit(program: Command): void {
           `Error: unknown profile "${profile}". Valid profiles: minimal, strict-oss, security-sensitive\n`,
         )
         process.exit(1)
+      }
+
+      if (dryRun) {
+        process.stdout.write(content)
+        return
       }
 
       const outputPath = path.resolve(process.cwd(), output)
