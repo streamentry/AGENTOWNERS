@@ -46,7 +46,11 @@ export function classifyRegistryLookup(result, expectedVersion) {
     }
     return 'existing';
   }
-  if (/\bE404\b/.test(`${result.stderr}\n${result.stdout}`)) return 'missing';
+  const output = `${result.stderr}\n${result.stdout}`;
+  const errorCodes = [...output.matchAll(/\bnpm\s+(?:error|ERR!)\s+code\s+(E[A-Z0-9_]+)/gi)].map(
+    (match) => match[1].toUpperCase(),
+  );
+  if (errorCodes.length > 0 && errorCodes.every((code) => code === 'E404')) return 'missing';
   throw new Error(
     `Registry lookup failed for ${expectedVersion}: ${
       result.error?.message ?? result.stderr.trim() ?? `status ${String(result.status)}`

@@ -48,6 +48,18 @@ test('rejects authentication and network failures instead of publishing', () => 
       ),
     /registry lookup failed.*EAI_AGAIN/i,
   );
+  assert.throws(
+    () =>
+      classifyRegistryLookup(
+        {
+          status: 1,
+          stdout: '',
+          stderr: 'npm error code E401\nupstream detail: npm error code E404',
+        },
+        '0.1.0',
+      ),
+    /registry lookup failed.*E401/i,
+  );
 });
 
 test('rejects a successful lookup that returns a different version', () => {
