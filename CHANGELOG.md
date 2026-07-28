@@ -36,6 +36,9 @@ semantic versioning.
 
 ### Fixed
 
+- Public package engine floors now require maintained Node 22+, and
+  packed-package verification can assert the runtime major before testing
+  consumer artifacts.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
