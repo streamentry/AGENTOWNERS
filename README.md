@@ -81,6 +81,27 @@ node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
 artifact smoke tests.
 
+### Prove the product in one command
+
+After dependencies are installed, run:
+
+```bash
+pnpm demo
+```
+
+This builds the production CLI and executes the shipped strict-OSS policy
+fixtures locally. The proof intentionally covers three repository decisions:
+
+| Fixture | Expected result | What it demonstrates |
+| --- | --- | --- |
+| Documentation change | `require_approval` | conservative review routing |
+| Workflow change | `block` | sensitive automation protection |
+| `package.json` change | `require_approval` | dependency review routing |
+
+The command is deterministic and network-free after `pnpm install`; it exercises
+the same policy loader, classifier, action inference, and evaluator used by the
+CLI rather than a documentation-only example.
+
 ## Configure a policy
 
 Add `.github/AGENTOWNERS.yml`:

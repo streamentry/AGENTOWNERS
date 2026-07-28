@@ -54,6 +54,10 @@ Node.js 22+ and pnpm 9+ required.
 4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
 5. **Open a PR:** use a conventional-commit title and complete the evidence template
 
+For a fast first proof that the repository is working, run `pnpm demo` after
+installing dependencies. It builds the production CLI and executes the
+strict-OSS fixtures for approval, block, and dependency-review decisions.
+
 ### Contribution evidence matrix
 
 Every pull request must run `pnpm verify` and the explicit `self-check` command

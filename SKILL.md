@@ -12,6 +12,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 4. From a fresh checkout, run `pnpm install --frozen-lockfile` and
    `pnpm --filter @agent-owners/cli build` before invoking the CLI self-check;
    `packages/*/dist/` is generated and intentionally ignored.
+   For a fast product proof, `pnpm demo` builds the production CLI and runs the
+   strict-OSS approval, block, and dependency-review fixtures.
 5. Use the contribution evidence matrix in `CONTRIBUTING.md` to select the
    focused proof required for every touched surface.
 6. For ecosystem or positioning claims, use dated official sources and state

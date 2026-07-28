@@ -18,13 +18,16 @@ AGENTOWNERS is a TypeScript monorepo that ships a governance layer for AI agents
 corepack enable
 pnpm install --frozen-lockfile
 
-# 2. Build all packages (dist/ is generated and ignored)
+# 2. Prove the product path from the production CLI
+pnpm demo
+
+# 3. Build all packages (dist/ is generated and ignored)
 pnpm build
 
-# 3. Run all tests (must pass before any commit)
+# 4. Run all tests (must pass before any commit)
 pnpm test
 
-# 4. Type check
+# 5. Type check
 pnpm typecheck
 
 # Complete gate, including release-artifact smoke tests

@@ -28,6 +28,8 @@ semantic versioning.
   `agentowners test` runner.
 - Deterministic SARIF 2.1.0 rendering and CLI output for code-scanning
   interoperability.
+- One-command executable product proof covering approval, block, and dependency
+  review outcomes through the production CLI.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.
