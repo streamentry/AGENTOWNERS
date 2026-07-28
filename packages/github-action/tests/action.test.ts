@@ -15,7 +15,13 @@ vi.mock('@actions/core', () => mockCore);
 const mockOctokit = {
   rest: {
     repos: {
-      getContent: vi.fn(),
+      getContent: vi.fn().mockResolvedValue({
+        data: {
+          type: 'file',
+          encoding: 'base64',
+          content: Buffer.from('version: 1\nrules: []\n').toString('base64'),
+        },
+      }),
     },
     pulls: {
       listFiles: vi.fn(),
@@ -81,7 +87,7 @@ const mockDecisionBlock = {
 };
 
 vi.mock('@agent-owners/core', () => ({
-  loadPolicyFile: vi.fn().mockResolvedValue({ version: 1, rules: [], defaults: {} }),
+  loadPolicyText: vi.fn().mockReturnValue({ version: 1, rules: [], defaults: {} }),
   classifyFiles: vi.fn().mockReturnValue({
     docsOnly: false,
     testsOnly: false,
@@ -92,6 +98,7 @@ vi.mock('@agent-owners/core', () => ({
     secretFilesDetected: false,
     files: {},
   }),
+  detectSecretPatterns: vi.fn().mockReturnValue([]),
   inferActions: vi.fn().mockReturnValue(['open_pr']),
   detectAgent: vi.fn().mockReturnValue({
     agentName: 'copilot',
@@ -148,7 +155,7 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
       additions: 10,
       deletions: 5,
       changed_files: 1,
-      base: { ref: 'main' },
+      base: { ref: 'main', sha: 'base-sha' },
       head: { ref: 'feature-branch' },
     },
   });
@@ -177,7 +184,11 @@ describe('GitHub Action — integration via mocks', () => {
     setupInputs({ mode: 'dry-run' });
     mockContext.eventName = 'issues';
     mockContext.actor = 'issue-agent[bot]';
-    mockContext.payload = { action: 'opened', issue: { number: 22 } };
+    mockContext.payload = {
+      action: 'opened',
+      issue: { number: 22 },
+      repository: { default_branch: 'main' },
+    };
     mockOctokit.rest.issues.get.mockResolvedValue({
       data: {
         title: 'Security report: exposed credential',
@@ -227,6 +238,7 @@ describe('GitHub Action — integration via mocks', () => {
         body: '🤖 Generated with Codex',
         user: { login: 'comment-agent[bot]' },
       },
+      repository: { default_branch: 'main' },
     };
 
     const core = await import('@agent-owners/core');
@@ -266,6 +278,7 @@ describe('GitHub Action — integration via mocks', () => {
         body: 'Updated review response',
         user: { login: 'comment-agent[bot]' },
       },
+      repository: { default_branch: 'main' },
     };
 
     const core = await import('@agent-owners/core');
