@@ -7,6 +7,8 @@ semantic versioning.
 
 ### Added
 
+- A one-command, network-free source demo that exercises executable policy
+  approval and block contracts through the production CLI and core evaluator.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a

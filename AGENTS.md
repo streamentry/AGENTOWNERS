@@ -20,10 +20,13 @@ pnpm install
 # 2. Build all packages
 pnpm build
 
-# 3. Run all tests (must pass before any commit)
+# 3. Exercise the executable product proof
+pnpm demo
+
+# 4. Run all tests (must pass before any commit)
 pnpm test
 
-# 4. Type check
+# 5. Type check
 pnpm typecheck
 
 # Complete gate, including release-artifact smoke tests
@@ -118,6 +121,7 @@ scripts/
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
 
 CHANGELOG.md          — release history and security-relevant changes
+package.json          — root commands, including the executable source demo
 ```
 
 ## Architecture diagrams
