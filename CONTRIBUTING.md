@@ -82,6 +82,20 @@ If an issue lacks a bounded contract, use
 writing code. Comment on an issue before starting substantial work when
 parallel implementation is likely.
 
+### Find a review lane
+
+The open pull-request queue is routed by the same labels used in this section:
+
+- [Core and policy review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Acore-review)
+- [Security review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Asecurity-review)
+- [Release and dependency review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Adependency-review)
+- [Governance review](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Agovernance)
+- [Documentation and newcomer work](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen+label%3Adocumentation)
+
+Choose the narrowest queue that matches the changed files, then read the
+[maintainer review contract](#maintainer-review-contract). Labels route
+attention; they never replace required checks or independent human approval.
+
 ### Maintainer review contract
 
 Every reviewed contribution should receive one explicit disposition:

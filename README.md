@@ -456,6 +456,8 @@ The repository is designed for both human and agent contributors:
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
 - [Ecosystem boundaries](docs/ecosystem.md) distinguishes guidance, runtime
   controls, repository governance, and audit evidence.
+- [Review lanes](CONTRIBUTING.md#find-a-review-lane) route open PRs to core,
+  security, release, governance, or documentation reviewers.
 - [Roadmap](docs/roadmap.md) names what is next and what will remain out of scope.
 
 High-value contributions are adversarial fixtures, policy ambiguity reports,
