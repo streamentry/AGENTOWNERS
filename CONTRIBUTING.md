@@ -146,6 +146,11 @@ Before opening a PR:
 5. Keep distinct counterexamples, mutation-sensitive tests, and compatibility
    findings.
 
+For release-facing changes, read the [release runbook](docs/releasing.md).
+Preparing a tarball or opening a Marketplace draft is not publication; the
+runbook names the human approval, provenance, and clean-consumer evidence that
+must exist before a stable release is documented.
+
 ### Commit format
 
 ```
