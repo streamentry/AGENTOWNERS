@@ -45,7 +45,8 @@ const AUTH_PATTERNS = [
 ];
 
 const SECRET_FILE_PATTERNS = [
-  '.env', '.env.*', '*.pem', '*.key', 'id_rsa', 'id_ed25519', 'secrets.*',
+  '**/.env', '**/.env.*', '**/*.pem', '**/*.key',
+  '**/id_rsa', '**/id_ed25519', '**/secrets.*',
 ];
 
 const SECRET_DIFF_PATTERNS = [

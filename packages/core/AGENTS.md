@@ -90,5 +90,7 @@ After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
+Secret basename patterns must match both repository-root and nested paths;
+removing their recursive prefix reintroduces an allow/approval false negative.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.

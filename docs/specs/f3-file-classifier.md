@@ -32,7 +32,11 @@ Deterministic classification of changed files into categories used for action in
 `**/policy/**`, `**/rbac/**`
 
 ### Secrets file names
-`.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa`, `id_ed25519`, `secrets.*`
+`**/.env`, `**/.env.*`, `**/*.pem`, `**/*.key`, `**/id_rsa`,
+`**/id_ed25519`, `**/secrets.*`
+
+The recursive prefix is load-bearing: protected basenames remain sensitive at
+the repository root and at every nested directory depth.
 
 ### Secrets diff patterns (strings to detect in diff content)
 `AWS_SECRET_ACCESS_KEY`, `AWS_ACCESS_KEY_ID`, `GITHUB_TOKEN`,
@@ -96,4 +100,5 @@ Returns true if any pattern matches.
 - `docsOnly: false` when mixed
 - Secret pattern detection in diff content
 - Secret file detection for `.env`
+- Secret file detection below the repository root
 - `matchGlob` handles `**` patterns correctly
