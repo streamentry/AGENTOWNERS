@@ -67,7 +67,7 @@ export type FilesClassification = {
 ## Functions
 
 ### `classifyFile(filePath: string): FileClassification`
-Classify a single file path against all category patterns using `minimatch`.
+Classify a single file path against all category patterns using `picomatch`.
 
 ### `classifyFiles(filePaths: string[]): FilesClassification`
 Classify a list of changed files. Compute aggregate properties:
@@ -79,7 +79,8 @@ Classify a list of changed files. Compute aggregate properties:
 Scan diff content for secret-like patterns. Return list of matched pattern names (NOT the values). Never include the actual secret value in output — redact with `[REDACTED]`.
 
 ### `matchGlob(pattern: string, filePath: string): boolean`
-Wrapper around `minimatch` with consistent options (`{ dot: true, matchBase: false }`).
+Wrapper around `picomatch` with the consistent `{ dot: true }` option. Patterns
+remain repository-relative; basename matching is not enabled implicitly.
 
 ### `matchGlobs(patterns: string[], filePath: string): boolean`
 Returns true if any pattern matches.
