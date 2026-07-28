@@ -3,7 +3,17 @@
 ## For AI agents
 
 Read [AGENTS.md](AGENTS.md) first. It has everything you need: repo map,
-invariants, commands, and common mistakes. Before opening a pull request, run:
+invariants, commands, and common mistakes. From a clean checkout, bootstrap
+the generated CLI bundle before invoking the self-check command:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm --filter @agent-owners/cli build
+```
+
+The `dist/` directory is intentionally ignored, so this build step is
+required after every fresh clone. Before opening a pull request, run:
 
 ```bash
 node packages/cli/dist/index.js self-check \
@@ -12,6 +22,10 @@ node packages/cli/dist/index.js self-check \
   --head HEAD \
   --actor <your-agent-name>
 ```
+
+Then run `pnpm verify` for the repository-wide gate. If the self-check returns
+`10`, open the pull request but do not merge it without human approval. A
+return code of `20` means revise the change before requesting review.
 
 Exit `0` may proceed, exit `10` requires human approval, and exit `20` requires
 revising the change. Input and environment failures use exits `64` through
@@ -25,7 +39,8 @@ revising the change. Input and environment failures use exits `64` through
 ```bash
 git clone https://github.com/streamentry/AGENTOWNERS.git
 cd AGENTOWNERS
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 pnpm verify
 ```
 

@@ -9,27 +9,30 @@ description: Implement or review deterministic AI-agent governance changes in AG
 2. Refresh `origin/main`; inspect open and recently merged work for overlap.
 3. State the invariant, expected behavior, and any distinct value retained from
    related contributions.
-4. Use the contribution evidence matrix in `CONTRIBUTING.md` to select the
+4. From a fresh checkout, run `pnpm install --frozen-lockfile` and
+   `pnpm --filter @agent-owners/cli build` before invoking the CLI self-check;
+   `packages/*/dist/` is generated and intentionally ignored.
+5. Use the contribution evidence matrix in `CONTRIBUTING.md` to select the
    focused proof required for every touched surface.
-5. For ecosystem or positioning claims, use dated official sources and state
+6. For ecosystem or positioning claims, use dated official sources and state
    what AGENTOWNERS does not control.
-6. Keep pull request and issue metadata in distinct evaluator fields so
+7. Keep pull request and issue metadata in distinct evaluator fields so
    event-specific conditions cannot match the wrong event type.
-7. Add the cheapest disconfirming test first.
-8. Implement the smallest complete change.
-9. For a safety invariant, prove the new test fails under a temporary relevant
+8. Add the cheapest disconfirming test first.
+9. Implement the smallest complete change.
+10. For a safety invariant, prove the new test fails under a temporary relevant
    mutation, then restore production code exactly.
-10. Regenerate distributions with `pnpm build`; never hand-edit them.
-11. If policy validation changed, run `pnpm generate:schema`.
-12. If decision behavior changed, update a portable fixture that proves the
+11. Regenerate distributions with `pnpm build`; never hand-edit them.
+12. If policy validation changed, run `pnpm generate:schema`.
+13. If decision behavior changed, update a portable fixture that proves the
    repository-facing contract.
-13. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
-14. Run `pnpm verify`.
-15. Run the explicit `agentowners self-check` contract before opening a pull
+14. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
+15. Run `pnpm verify`.
+16. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-16. For release-facing changes, run `pnpm verify:packages`.
-17. In the pull request, disclose agent use, overlap, exact evidence, risks,
-    attribution, and rollback.
+17. For release-facing changes, run `pnpm verify:packages`.
+18. In the pull request, disclose agent use, overlap, exact evidence, risks,
+   attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
