@@ -12,9 +12,16 @@ async function makeRepository(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'agentowners-git-security-'));
   temporaryDirectories.push(directory);
   execFileSync('git', ['init', '--quiet'], { cwd: directory });
-  execFileSync('git', ['config', 'user.name', 'Security Test'], { cwd: directory });
-  execFileSync('git', ['config', 'user.email', 'security@example.test'], { cwd: directory });
-  execFileSync('git', ['commit', '--allow-empty', '--message', 'initial'], { cwd: directory });
+  execFileSync('git', ['commit', '--allow-empty', '--message', 'initial'], {
+    cwd: directory,
+    env: {
+      ...process.env,
+      GIT_AUTHOR_EMAIL: 'security@example.test',
+      GIT_AUTHOR_NAME: 'Security Test',
+      GIT_COMMITTER_EMAIL: 'security@example.test',
+      GIT_COMMITTER_NAME: 'Security Test',
+    },
+  });
   return directory;
 }
 

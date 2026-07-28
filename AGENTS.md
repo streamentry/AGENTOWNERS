@@ -280,6 +280,8 @@ These are roadmap items for v2+ (see spec section 27).
 4. **Printing secret values** — always redact with `[REDACTED]`
 5. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
 6. **Skipping barrel export** — always add new exports to `src/index.ts`
+7. **Writing Git config in tests** — pass fixture identity through the commit
+   subprocess environment; never mutate contributor repository configuration
 
 ## Roadmap hooks (design for these, don't build yet)
 
