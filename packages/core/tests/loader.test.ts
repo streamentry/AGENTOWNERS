@@ -5,6 +5,7 @@ import * as os from 'os'
 import {
   findPolicyFile,
   loadPolicyFile,
+  loadPolicyText,
   loadPolicy,
   PolicyNotFoundError,
   PolicyLoadError,
@@ -86,6 +87,22 @@ describe('findPolicyFile', () => {
 })
 
 describe('loadPolicyFile', () => {
+  it('parses trusted policy text without requiring a workspace file', () => {
+    expect(
+      loadPolicyText(
+        `
+version: 1
+defaults:
+  unknown_agent: block
+`,
+        'base revision policy',
+      ),
+    ).toMatchObject({
+      version: 1,
+      defaults: { unknown_agent: 'block' },
+    });
+  });
+
   it('loads valid minimal policy', async () => {
     const filePath = path.join(FIXTURES, 'valid-minimal.yml')
     const policy = await loadPolicyFile(filePath)

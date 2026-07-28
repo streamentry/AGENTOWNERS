@@ -15,7 +15,14 @@ export type PRMetadata = {
   deletions: number;
   changedFiles: number;
   base: string;
+  baseSha: string;
   head: string;
+};
+
+export type PRFiles = {
+  files: string[];
+  diffContent: string;
+  patchesComplete: boolean;
 };
 
 export type IssueMetadata = {
@@ -26,13 +33,50 @@ export type IssueMetadata = {
   state: string;
 };
 
+export async function getRepositoryFileContent(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  filePath: string,
+  ref: string,
+): Promise<string> {
+  const { data } = await octokit.rest.repos.getContent({
+    owner,
+    repo,
+    path: filePath,
+    ref,
+  });
+
+  if (
+    Array.isArray(data) ||
+    data.type !== 'file' ||
+    data.encoding !== 'base64' ||
+    typeof data.content !== 'string'
+  ) {
+    throw new Error('Policy path must resolve to a regular base-revision file.');
+  }
+
+  return Buffer.from(data.content.replaceAll('\n', ''), 'base64').toString('utf8');
+}
+
 export async function getPRChangedFiles(
   octokit: Octokit,
   owner: string,
   repo: string,
   pullNumber: number,
 ): Promise<string[]> {
+  return (await getPRFiles(octokit, owner, repo, pullNumber)).files;
+}
+
+export async function getPRFiles(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+): Promise<PRFiles> {
   const files: string[] = [];
+  const patches: string[] = [];
+  let patchesComplete = true;
   let page = 1;
 
   while (true) {
@@ -46,6 +90,11 @@ export async function getPRChangedFiles(
 
     for (const file of response.data) {
       files.push(file.filename);
+      if (typeof file.patch === 'string') {
+        patches.push(file.patch);
+      } else {
+        patchesComplete = false;
+      }
     }
 
     if (response.data.length < 100) {
@@ -54,7 +103,11 @@ export async function getPRChangedFiles(
     page++;
   }
 
-  return files;
+  return {
+    files,
+    diffContent: patches.join('\n'),
+    patchesComplete,
+  };
 }
 
 export async function getPRMetadata(
@@ -80,6 +133,7 @@ export async function getPRMetadata(
     deletions: data.deletions,
     changedFiles: data.changed_files,
     base: data.base.ref,
+    baseSha: data.base.sha,
     head: data.head.ref,
   };
 }

@@ -21,12 +21,19 @@ semantic versioning.
 - Replaced the vulnerable `minimatch` dependency chain with dependency-free
   `picomatch`.
 - Updated the GitHub Actions toolkit dependencies.
+- Updated the test and build dependency graph and pinned patched transitive
+  versions so the npm advisory audit is clean.
 
 ### Fixed
 
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
+- Pull requests now use policy from the immutable base commit rather than the
+  untrusted pull request workspace.
+- Spoofable agent markers no longer receive known-agent defaults.
+- CLI Git refs can no longer inject options into diff or log commands.
+- Available pull request patch content now participates in secret detection.
 
 ## [0.1.0] - 2026-07-28
 

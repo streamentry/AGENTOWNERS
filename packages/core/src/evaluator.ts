@@ -231,8 +231,8 @@ function computeDefaultEffect(input: EvaluationInput): 'allow' | 'require_approv
     return defaults?.docs_only ?? 'allow';
   }
 
-  // Unknown agent default: require_approval
-  if (agentDetection.confidence === 'unknown') {
+  // Only non-spoofable confirmation may use the known-agent default.
+  if (agentDetection.confidence !== 'confirmed') {
     return defaults?.unknown_agent ?? 'require_approval';
   }
 

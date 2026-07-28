@@ -179,6 +179,31 @@ describe('evaluateRule', () => {
 });
 
 describe('evaluatePolicy', () => {
+  it.each(['likely', 'possible'] as const)(
+    'uses unknown-agent defaults for spoofable %s detection confidence',
+    (confidence) => {
+      const policy: AgentOwnersPolicy = {
+        version: 1,
+        defaults: {
+          unknown_agent: 'block',
+          known_agent: 'allow',
+        },
+      };
+
+      const decision = evaluatePolicy(
+        baseInput({
+          policy,
+          agentDetection: {
+            confidence,
+            signals: ['self-asserted PR body marker'],
+          },
+        }),
+      );
+
+      expect(decision.effect).toBe('block');
+    },
+  );
+
   it('enforces blocked actions from the matched agent policy', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

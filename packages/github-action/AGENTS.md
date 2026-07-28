@@ -10,6 +10,7 @@ artifact and must be regenerated, never hand-edited.
 
 - `src/index.ts`: orchestration and outputs
 - `src/github.ts`: event metadata adapter
+- `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
 - `action.yml`: package-local metadata
@@ -19,7 +20,11 @@ artifact and must be regenerated, never hand-edited.
 
 ```mermaid
 flowchart LR
-  Event --> Adapter --> Core
+  Event --> Adapter
+  BaseCommit --> TrustedPolicy
+  Adapter --> Core
+  TrustedPolicy --> Core
+  PatchContent --> SecretDetection --> Core
   Core --> Decision
   Decision --> Comment
   Decision --> Labels
@@ -35,6 +40,8 @@ sequenceDiagram
   participant GitHub
   Runner->>Action: event and token
   Action->>GitHub: read metadata
+  Action->>GitHub: fetch policy at base SHA
+  Action->>GitHub: read available file patches
   Action->>Core: normalized input
   Core-->>Action: decision
   Action->>GitHub: verdict and labels

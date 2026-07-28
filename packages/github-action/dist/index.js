@@ -6,7 +6,11 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __export = (target, all) => {
   for (var name in all)
@@ -1070,14 +1074,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol || ""}//${url.hostname || ""}:${port}`;
-        let path2 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path3 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin[origin.length - 1] === "/") {
           origin = origin.slice(0, origin.length - 1);
         }
-        if (path2 && path2[0] !== "/") {
-          path2 = `/${path2}`;
+        if (path3 && path3[0] !== "/") {
+          path3 = `/${path3}`;
         }
-        return new URL(`${origin}${path2}`);
+        return new URL(`${origin}${path3}`);
       }
       if (!isHttpOrHttpsPrefixed(url.origin || url.protocol)) {
         throw new InvalidArgumentError("Invalid URL protocol: the URL must start with `http:` or `https:`.");
@@ -1528,39 +1532,39 @@ var require_diagnostics = __commonJS({
       });
       diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin }
+          request: { method, path: path3, origin }
         } = evt;
-        debuglog("sending request to %s %s/%s", method, origin, path2);
+        debuglog("sending request to %s %s/%s", method, origin, path3);
       });
       diagnosticsChannel.channel("undici:request:headers").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin },
+          request: { method, path: path3, origin },
           response: { statusCode }
         } = evt;
         debuglog(
           "received response to %s %s/%s - HTTP %d",
           method,
           origin,
-          path2,
+          path3,
           statusCode
         );
       });
       diagnosticsChannel.channel("undici:request:trailers").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin }
+          request: { method, path: path3, origin }
         } = evt;
-        debuglog("trailers received from %s %s/%s", method, origin, path2);
+        debuglog("trailers received from %s %s/%s", method, origin, path3);
       });
       diagnosticsChannel.channel("undici:request:error").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin },
+          request: { method, path: path3, origin },
           error: error2
         } = evt;
         debuglog(
           "request to %s %s/%s errored - %s",
           method,
           origin,
-          path2,
+          path3,
           error2.message
         );
       });
@@ -1609,9 +1613,9 @@ var require_diagnostics = __commonJS({
         });
         diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
           const {
-            request: { method, path: path2, origin }
+            request: { method, path: path3, origin }
           } = evt;
-          debuglog("sending request to %s %s/%s", method, origin, path2);
+          debuglog("sending request to %s %s/%s", method, origin, path3);
         });
       }
       diagnosticsChannel.channel("undici:websocket:open").subscribe((evt) => {
@@ -1674,7 +1678,7 @@ var require_request = __commonJS({
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request = class {
       constructor(origin, {
-        path: path2,
+        path: path3,
         method,
         body,
         headers,
@@ -1689,11 +1693,11 @@ var require_request = __commonJS({
         expectContinue,
         servername
       }, handler2) {
-        if (typeof path2 !== "string") {
+        if (typeof path3 !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path2[0] !== "/" && !(path2.startsWith("http://") || path2.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path3[0] !== "/" && !(path3.startsWith("http://") || path3.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.test(path2)) {
+        } else if (invalidPathRegex.test(path3)) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -1759,7 +1763,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? buildURL(path2, query) : path2;
+        this.path = query ? buildURL(path3, query) : path3;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6389,7 +6393,7 @@ var require_client_h1 = __commonJS({
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
     function writeH1(client, request2) {
-      const { method, path: path2, host, upgrade, blocking, reset } = request2;
+      const { method, path: path3, host, upgrade, blocking, reset } = request2;
       let { body, headers, contentLength } = request2;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
       if (util2.isFormDataLike(body)) {
@@ -6464,7 +6468,7 @@ var require_client_h1 = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path2} HTTP/1.1\r
+      let header = `${method} ${path3} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -6990,7 +6994,7 @@ var require_client_h2 = __commonJS({
     }
     function writeH2(client, request2) {
       const session = client[kHTTP2Session];
-      const { method, path: path2, host, upgrade, expectContinue, signal, headers: reqHeaders } = request2;
+      const { method, path: path3, host, upgrade, expectContinue, signal, headers: reqHeaders } = request2;
       let { body } = request2;
       if (upgrade) {
         util2.errorRequest(client, request2, new Error("Upgrade not supported for H2"));
@@ -7057,7 +7061,7 @@ var require_client_h2 = __commonJS({
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path2;
+      headers[HTTP2_HEADER_PATH] = path3;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -7410,9 +7414,9 @@ var require_redirect_handler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util2.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path2 = search ? `${pathname}${search}` : pathname;
+        const path3 = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path2;
+        this.opts.path = path3;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -8648,10 +8652,10 @@ var require_proxy_agent = __commonJS({
         };
         const {
           origin,
-          path: path2 = "/",
+          path: path3 = "/",
           headers = {}
         } = opts;
-        opts.path = origin + path2;
+        opts.path = origin + path3;
         if (!("host" in headers) && !("Host" in headers)) {
           const { host } = new URL2(origin);
           headers.host = host;
@@ -10602,20 +10606,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path2) {
-      if (typeof path2 !== "string") {
-        return path2;
+    function safeUrl(path3) {
+      if (typeof path3 !== "string") {
+        return path3;
       }
-      const pathSegments = path2.split("?");
+      const pathSegments = path3.split("?");
       if (pathSegments.length !== 2) {
-        return path2;
+        return path3;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path2, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path2);
+    function matchKey(mockDispatch2, { path: path3, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path3);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10637,7 +10641,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path2 }) => matchValue(safeUrl(path2), resolvedPath));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path3 }) => matchValue(safeUrl(path3), resolvedPath));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath}'`);
       }
@@ -10675,9 +10679,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path2, method, body, headers, query } = opts;
+      const { path: path3, method, body, headers, query } = opts;
       return {
-        path: path2,
+        path: path3,
         method,
         body,
         headers,
@@ -11140,10 +11144,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path2, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path: path3, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path2,
+            Path: path3,
             "Status code": statusCode,
             Persistent: persist ? PERSISTENT : NOT_PERSISTENT,
             Invocations: timesInvoked,
@@ -16024,9 +16028,9 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path2) {
-      for (let i = 0; i < path2.length; ++i) {
-        const code = path2.charCodeAt(i);
+    function validateCookiePath(path3) {
+      for (let i = 0; i < path3.length; ++i) {
+        const code = path3.charCodeAt(i);
         if (code < 32 || // exclude CTLs (0-31)
         code > 126 || // exclude DEL and non-ascii
         code === 59) {
@@ -18757,11 +18761,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path2 = opts.path;
+          let path3 = opts.path;
           if (!opts.path.startsWith("/")) {
-            path2 = `/${path2}`;
+            path3 = `/${path3}`;
           }
-          url = new URL(util2.parseOrigin(url).origin + path2);
+          url = new URL(util2.parseOrigin(url).origin + path3);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -19990,8 +19994,8 @@ var require_utils2 = __commonJS({
       }
       return output;
     };
-    exports2.basename = (path2, { windows } = {}) => {
-      const segs = path2.split(windows ? /[\\/]/ : "/");
+    exports2.basename = (path3, { windows } = {}) => {
+      const segs = path3.split(windows ? /[\\/]/ : "/");
       const last = segs[segs.length - 1];
       if (last === "") {
         return segs[segs.length - 2];
@@ -22011,8 +22015,8 @@ var Context = class {
       if ((0, import_fs2.existsSync)(process.env.GITHUB_EVENT_PATH)) {
         this.payload = JSON.parse((0, import_fs2.readFileSync)(process.env.GITHUB_EVENT_PATH, { encoding: "utf8" }));
       } else {
-        const path2 = process.env.GITHUB_EVENT_PATH;
-        process.stdout.write(`GITHUB_EVENT_PATH ${path2} does not exist${import_os3.EOL}`);
+        const path3 = process.env.GITHUB_EVENT_PATH;
+        process.stdout.write(`GITHUB_EVENT_PATH ${path3} does not exist${import_os3.EOL}`);
       }
     }
     this.eventName = process.env.GITHUB_EVENT_NAME;
@@ -25976,8 +25980,8 @@ function getOctokit(token, options, ...additionalPlugins) {
 }
 
 // src/index.ts
-var fs4 = __toESM(require("fs/promises"));
-var path = __toESM(require("path"));
+var fs3 = __toESM(require("fs/promises"));
+var path2 = __toESM(require("path"));
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
 var external_exports = {};
@@ -26457,8 +26461,8 @@ function getErrorMap() {
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path2, errorMaps, issueData } = params;
-  const fullPath = [...path2, ...issueData.path || []];
+  const { data, path: path3, errorMaps, issueData } = params;
+  const fullPath = [...path3, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -26574,11 +26578,11 @@ var errorUtil;
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path2, key) {
+  constructor(parent, value, path3, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path2;
+    this._path = path3;
     this._key = key;
   }
   get path() {
@@ -30020,9 +30024,6 @@ var coerce = {
 };
 var NEVER = INVALID;
 
-// ../core/dist/index.mjs
-var fs3 = __toESM(require("fs/promises"), 1);
-
 // ../../node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/dist/js-yaml.mjs
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
@@ -33210,23 +33211,17 @@ var PolicyLoadError = class extends Error {
   filePath;
   cause;
 };
-async function loadPolicyFile(filePath) {
-  let raw;
-  try {
-    raw = await fs3.readFile(filePath, "utf8");
-  } catch (err) {
-    throw new PolicyLoadError(filePath, err);
-  }
+function loadPolicyText(raw, source = "policy text") {
   let parsed;
   try {
     parsed = load(raw);
   } catch (err) {
-    throw new PolicyLoadError(filePath, err);
+    throw new PolicyLoadError(source, err);
   }
   try {
     return parsePolicy(parsed);
   } catch (err) {
-    throw new PolicyLoadError(filePath, err);
+    throw new PolicyLoadError(source, err);
   }
 }
 var DOCS_PATTERNS = ["*.md", "docs/**", "*.rst", "*.adoc"];
@@ -33282,6 +33277,17 @@ var SECRET_FILE_PATTERNS = [
   "id_ed25519",
   "secrets.*"
 ];
+var SECRET_DIFF_PATTERNS = [
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_ACCESS_KEY_ID",
+  "GITHUB_TOKEN",
+  "OPENAI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "PRIVATE_KEY",
+  "SECRET_KEY",
+  "PASSWORD=",
+  "TOKEN="
+];
 function matchGlob(pattern, filePath) {
   return import_picomatch.default.isMatch(filePath, pattern, { dot: true });
 }
@@ -33316,6 +33322,16 @@ function classifyFiles(filePaths) {
     secretFilesDetected: classifications.some((c) => c.isSecret),
     files
   };
+}
+function detectSecretPatterns(diffContent) {
+  const matched = [];
+  for (const pattern of SECRET_DIFF_PATTERNS) {
+    const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+    if (regex.test(diffContent)) {
+      matched.push(pattern);
+    }
+  }
+  return matched;
 }
 var KNOWN_BOT_ACTORS = [
   "github-copilot[bot]",
@@ -33575,7 +33591,7 @@ function computeRiskScore(input) {
       score += 30;
     }
   }
-  if (agentConfidence === "unknown") {
+  if (agentConfidence !== "confirmed") {
     score += 20;
   }
   const blockedActions = [
@@ -33914,7 +33930,7 @@ function computeDefaultEffect(input) {
   if (filesClassification.docsOnly) {
     return defaults2?.docs_only ?? "allow";
   }
-  if (agentDetection.confidence === "unknown") {
+  if (agentDetection.confidence !== "confirmed") {
     return defaults2?.unknown_agent ?? "require_approval";
   }
   return defaults2?.known_agent ?? "require_approval";
@@ -33997,8 +34013,22 @@ Risk level: ${level}`);
 }
 
 // src/github.ts
-async function getPRChangedFiles(octokit, owner, repo, pullNumber) {
+async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {
+  const { data } = await octokit.rest.repos.getContent({
+    owner,
+    repo,
+    path: filePath,
+    ref
+  });
+  if (Array.isArray(data) || data.type !== "file" || data.encoding !== "base64" || typeof data.content !== "string") {
+    throw new Error("Policy path must resolve to a regular base-revision file.");
+  }
+  return Buffer.from(data.content.replaceAll("\n", ""), "base64").toString("utf8");
+}
+async function getPRFiles(octokit, owner, repo, pullNumber) {
   const files = [];
+  const patches = [];
+  let patchesComplete = true;
   let page = 1;
   while (true) {
     const response = await octokit.rest.pulls.listFiles({
@@ -34010,13 +34040,22 @@ async function getPRChangedFiles(octokit, owner, repo, pullNumber) {
     });
     for (const file of response.data) {
       files.push(file.filename);
+      if (typeof file.patch === "string") {
+        patches.push(file.patch);
+      } else {
+        patchesComplete = false;
+      }
     }
     if (response.data.length < 100) {
       break;
     }
     page++;
   }
-  return files;
+  return {
+    files,
+    diffContent: patches.join("\n"),
+    patchesComplete
+  };
 }
 async function getPRMetadata(octokit, owner, repo, pullNumber) {
   const { data } = await octokit.rest.pulls.get({
@@ -34035,6 +34074,7 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     deletions: data.deletions,
     changedFiles: data.changed_files,
     base: data.base.ref,
+    baseSha: data.base.sha,
     head: data.head.ref
   };
 }
@@ -34089,6 +34129,31 @@ function requireGitHubToken(environmentToken, inputToken) {
   return token;
 }
 
+// src/policy.ts
+var import_node_path = __toESM(require("path"));
+function selectTrustedPolicyRef(eventName, pullRequestBaseSha, defaultBranch) {
+  const isPullRequestEvent = eventName === "pull_request" || eventName === "pull_request_review";
+  const ref = isPullRequestEvent ? pullRequestBaseSha : defaultBranch;
+  if (!ref) throw new Error("Missing trusted repository ref for policy load.");
+  return ref;
+}
+function normalizeRepositoryPolicyPath(policyPath) {
+  if (import_node_path.default.posix.isAbsolute(policyPath) || import_node_path.default.win32.isAbsolute(policyPath)) {
+    throw new Error("Policy path must be a repository-relative policy path.");
+  }
+  const normalized = import_node_path.default.posix.normalize(policyPath.replaceAll("\\", "/"));
+  if (normalized === ".." || normalized.startsWith("../") || normalized === ".") {
+    throw new Error("Policy path must be a repository-relative policy path.");
+  }
+  return normalized;
+}
+async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
+  if (!ref) throw new Error("Missing trusted repository ref for policy load.");
+  const repositoryPath = normalizeRepositoryPolicyPath(policyPath);
+  const policyText = await getRepositoryFileContent(octokit, owner, repo, repositoryPath, ref);
+  return loadPolicyText(policyText, `${repositoryPath} at trusted ref ${ref}`);
+}
+
 // src/index.ts
 async function run() {
   try {
@@ -34107,9 +34172,10 @@ async function run() {
     info(`Policy: ${policyPath}`);
     info(`Mode: ${mode}`);
     const workspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-    const resolvedPolicyPath = path.isAbsolute(policyPath) ? policyPath : path.join(workspace, policyPath);
-    const policy = await loadPolicyFile(resolvedPolicyPath);
     let changedFiles = [];
+    let diffContent = "";
+    let patchesComplete = true;
+    let pullRequestBaseSha;
     let actor = ctx.actor;
     let prTitle;
     let prBody;
@@ -34133,7 +34199,11 @@ async function run() {
       const inferredEvent = `pull_request.${prAction}`;
       eventType = validPrActions.includes(inferredEvent) ? inferredEvent : "pull_request.opened";
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
-      changedFiles = await getPRChangedFiles(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      changedFiles = prFiles.files;
+      diffContent = prFiles.diffContent;
+      patchesComplete = prFiles.patchesComplete;
+      pullRequestBaseSha = metadata.baseSha;
       actor = metadata.actor || actor;
       prTitle = metadata.title;
       prBody = metadata.body;
@@ -34166,8 +34236,12 @@ async function run() {
       const review = payload.review;
       reviewState = review?.state;
       actor = review?.user?.login || actor;
-      changedFiles = await getPRChangedFiles(octokit, owner, repo, issueNumber);
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      changedFiles = prFiles.files;
+      diffContent = prFiles.diffContent;
+      patchesComplete = prFiles.patchesComplete;
+      pullRequestBaseSha = metadata.baseSha;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -34175,11 +34249,30 @@ async function run() {
       warning(`Unsupported event: ${eventName}. Skipping AGENTOWNERS check.`);
       return;
     }
+    const trustedPolicyRef = selectTrustedPolicyRef(
+      eventName,
+      pullRequestBaseSha,
+      payload.repository?.default_branch
+    );
+    const policy = await loadTrustedPolicy(
+      octokit,
+      owner,
+      repo,
+      policyPath,
+      trustedPolicyRef
+    );
     if (!eventType) {
       warning("Could not determine event type. Skipping.");
       return;
     }
-    const filesClassification = classifyFiles(changedFiles);
+    if (!patchesComplete) {
+      warning("Some pull request patches were unavailable; secret-content scanning was partial.");
+    }
+    const baseClassification = classifyFiles(changedFiles);
+    const filesClassification = {
+      ...baseClassification,
+      secretFilesDetected: baseClassification.secretFilesDetected || detectSecretPatterns(diffContent).length > 0
+    };
     const detectedActions = inferActions({
       eventType,
       changedFiles,
@@ -34241,8 +34334,8 @@ async function run() {
       decision,
       changedFiles
     });
-    const artifactPath = path.join(workspace, "agentowners-decision.json");
-    await fs4.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), "utf8");
+    const artifactPath = path2.join(workspace, "agentowners-decision.json");
+    await fs3.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), "utf8");
     info(`Audit artifact written to ${artifactPath}`);
     if (decision.effect === "block" && failOnBlock) {
       setFailed("AGENTOWNERS: action blocked by policy.");

@@ -4,6 +4,8 @@
 
 The CLI adapts local Git state to the pure core engine. Git refs are untrusted
 input and must be passed as argv through `execFileSync`, never through a shell.
+Place refs after `--end-of-options`; argv separation alone does not stop Git
+from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
@@ -33,7 +35,7 @@ sequenceDiagram
   participant Git
   participant Core
   User->>CLI: check --base --head
-  CLI->>Git: argv without shell
+  CLI->>Git: argv with option boundary
   Git-->>CLI: files and commits
   CLI->>Core: evaluation input
   Core-->>CLI: decision

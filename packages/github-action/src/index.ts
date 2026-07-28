@@ -5,8 +5,8 @@ import * as github from '@actions/github';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
-  loadPolicyFile,
   classifyFiles,
+  detectSecretPatterns,
   inferActions,
   detectAgent,
   evaluatePolicy,
@@ -14,9 +14,10 @@ import {
   renderAuditJson,
 } from '@agent-owners/core';
 import type { GitHubEventType } from '@agent-owners/core';
-import { getPRChangedFiles, getPRMetadata, getIssueMetadata } from './github.js';
+import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
+import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
 async function run(): Promise<void> {
   try {
@@ -44,16 +45,11 @@ async function run(): Promise<void> {
     core.info(`Policy: ${policyPath}`);
     core.info(`Mode: ${mode}`);
 
-    // 3. Load policy
     const workspace = process.env['GITHUB_WORKSPACE'] ?? process.cwd();
-    const resolvedPolicyPath = path.isAbsolute(policyPath)
-      ? policyPath
-      : path.join(workspace, policyPath);
-
-    const policy = await loadPolicyFile(resolvedPolicyPath);
-
-    // 4. Branch on event type
     let changedFiles: string[] = [];
+    let diffContent = '';
+    let patchesComplete = true;
+    let pullRequestBaseSha: string | undefined;
     let actor = ctx.actor;
     let prTitle: string | undefined;
     let prBody: string | undefined;
@@ -81,7 +77,11 @@ async function run(): Promise<void> {
       eventType = validPrActions.includes(inferredEvent) ? inferredEvent : 'pull_request.opened';
 
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
-      changedFiles = await getPRChangedFiles(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      changedFiles = prFiles.files;
+      diffContent = prFiles.diffContent;
+      patchesComplete = prFiles.patchesComplete;
+      pullRequestBaseSha = metadata.baseSha;
       actor = metadata.actor || actor;
       prTitle = metadata.title;
       prBody = metadata.body;
@@ -120,8 +120,12 @@ async function run(): Promise<void> {
       reviewState = review?.state as 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;
       actor = (review?.user?.login as string) || actor;
 
-      changedFiles = await getPRChangedFiles(octokit, owner, repo, issueNumber);
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
+      const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
+      changedFiles = prFiles.files;
+      diffContent = prFiles.diffContent;
+      patchesComplete = prFiles.patchesComplete;
+      pullRequestBaseSha = metadata.baseSha;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -130,13 +134,36 @@ async function run(): Promise<void> {
       return;
     }
 
+    const trustedPolicyRef = selectTrustedPolicyRef(
+      eventName,
+      pullRequestBaseSha,
+      payload.repository?.default_branch,
+    );
+
+    const policy = await loadTrustedPolicy(
+      octokit,
+      owner,
+      repo,
+      policyPath,
+      trustedPolicyRef,
+    );
+
     if (!eventType) {
       core.warning('Could not determine event type. Skipping.');
       return;
     }
 
     // 5. Classify files
-    const filesClassification = classifyFiles(changedFiles);
+    if (!patchesComplete) {
+      core.warning('Some pull request patches were unavailable; secret-content scanning was partial.');
+    }
+
+    const baseClassification = classifyFiles(changedFiles);
+    const filesClassification = {
+      ...baseClassification,
+      secretFilesDetected:
+        baseClassification.secretFilesDetected || detectSecretPatterns(diffContent).length > 0,
+    };
 
     // 6. Infer actions
     const detectedActions = inferActions({
