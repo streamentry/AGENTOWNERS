@@ -828,6 +828,31 @@ agentowners fingerprint --pr 123
 agentowners fingerprint --commit HEAD
 ```
 
+### 17.6 `agentowners self-check`
+
+Runs an explicit pre-PR contract against a Git range and returns versioned
+JSON. Policy, base, head, and actor are mandatory; identity is never inferred.
+
+### 17.7 `agentowners test`
+
+Executes repository-owned policy fixtures without GitHub or network access.
+
+```text
+agentowners test \
+  --policy .github/AGENTOWNERS.yml \
+  --fixtures .agentowners/fixtures.yml
+```
+
+Each strict YAML case supplies event context and requires an expected
+decision. Optional assertions cover matched rules, matched agent, inferred
+actions, reviewers, labels, risk level, and risk score. Assertion arrays are
+compared as semantic sets. Unknown fields, duplicate case names, unsafe paths,
+and context-incompatible inputs fail validation.
+
+Exit `0` means every case passed, `1` means an assertion failed, `64` means
+invalid command input, `65` means invalid policy data, `66` means invalid
+fixture data, and `70` means an unexpected internal failure.
+
 ## 18. Policy profiles
 
 Ship example profiles.
@@ -1173,6 +1198,7 @@ The MVP is complete when all of these work:
 13. Examples include minimal, strict OSS, monorepo, and security-sensitive policies.
 14. No broad GitHub permissions are requested.
 15. Secret-like values are redacted in logs.
+16. Portable policy fixtures detect decision drift without network access.
 
 ## 23. Testing plan
 

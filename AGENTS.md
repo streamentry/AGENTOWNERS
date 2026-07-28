@@ -44,6 +44,7 @@ packages/core/src/
   evaluator.ts   — rule evaluation, decision logic, default policy
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
+  fixtures.ts    — strict portable fixture parsing and deterministic execution
   profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
   index.ts       — barrel export (all public API)
 
@@ -61,6 +62,7 @@ packages/core/tests/
   renderer.test.ts   — verdict rendering
   profiles.test.ts   — built-in profiles parse correctly
   integration.test.ts — end-to-end pipeline with fixtures
+  fixtures-runner.test.ts — public fixture schema, runner, and loader contract
   fixtures/           — policies, events, exact outcomes, and corpus guidance
 
 packages/cli/src/
@@ -72,9 +74,11 @@ packages/cli/src/
   commands/explain.ts — agentowners explain
   commands/fingerprint.ts — agentowners fingerprint
   commands/self-check.ts — versioned pre-PR machine contract
+  commands/test.ts  — portable policy fixture runner
 
 packages/cli/tests/
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
+  test-command.test.ts — fixture diagnostics, JSON output, and exit codes
 
 packages/github-action/src/
   index.ts    — main action entry
@@ -94,6 +98,7 @@ examples/
 docs/specs/
   readme.md           — full product specification (canonical requirements)
   f1-policy-schema.md through f11-agent-self-check.md — per-feature specs
+  f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
 

@@ -1,18 +1,7 @@
-import type { AgentAction } from './types.js';
+import type { AgentAction, GitHubEventType } from './types.js';
 import type { FilesClassification } from './classifier.js';
 
-export type GitHubEventType =
-  | 'pull_request.opened'
-  | 'pull_request.synchronize'
-  | 'pull_request.reopened'
-  | 'pull_request.ready_for_review'
-  | 'issue_comment.created'
-  | 'issue_comment.edited'
-  | 'pull_request_review.submitted'
-  | 'issues.labeled'
-  | 'issues.closed'
-  | 'issues.reopened'
-  | 'issues.opened';
+export type { GitHubEventType } from './types.js';
 
 type LocalFilesClassification = {
   docsOnly?: boolean;

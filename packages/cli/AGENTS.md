@@ -16,6 +16,7 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/explain.ts`: decision explanation
 - `src/commands/fingerprint.ts`: agent-signal inspection
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
+- `src/commands/test.ts`: portable policy fixture execution
 
 ## Diagrams
 
@@ -41,6 +42,29 @@ sequenceDiagram
   CLI->>Core: evaluation input
   Core-->>CLI: decision
   CLI-->>User: verdict and exit code
+```
+
+`test` reads explicit policy and fixture paths. It does not inspect Git state
+or infer missing inputs.
+
+```mermaid
+stateDiagram-v2
+  [*] --> ValidateFixtureArgs
+  ValidateFixtureArgs --> InputError: missing path or output format
+  ValidateFixtureArgs --> LoadPolicy: valid
+  LoadPolicy --> PolicyError: invalid
+  LoadPolicy --> LoadFixtures: valid
+  LoadFixtures --> FixtureError: invalid
+  LoadFixtures --> ExecuteCases: valid
+  ExecuteCases --> Pass: all assertions match
+  ExecuteCases --> Fail: assertion mismatch
+  ExecuteCases --> InternalError: unexpected failure
+  Pass --> [*]: exit 0
+  Fail --> [*]: exit 1
+  InputError --> [*]: exit 64
+  PolicyError --> [*]: exit 65
+  FixtureError --> [*]: exit 66
+  InternalError --> [*]: exit 70
 ```
 
 `self-check` follows the same sequence but requires explicit policy, base,

@@ -34011,6 +34011,92 @@ Risk level: ${level}`);
   }
   return lines.join("\n");
 }
+var eventSchema = external_exports.enum([
+  "pull_request.opened",
+  "pull_request.synchronize",
+  "pull_request.reopened",
+  "pull_request.ready_for_review",
+  "issue_comment.created",
+  "issue_comment.edited",
+  "pull_request_review.submitted",
+  "issues.labeled",
+  "issues.closed",
+  "issues.reopened",
+  "issues.opened"
+]);
+var repositoryPathSchema = external_exports.string().refine(isRepositoryPath, {
+  message: "Expected a repository-relative Git path"
+});
+var uniqueStrings = external_exports.array(external_exports.string()).refine((values) => new Set(values).size === values.length, {
+  message: "Expected unique values"
+});
+var fixtureInputSchema = external_exports.object({
+  event: eventSchema,
+  actor: external_exports.string().trim().min(1),
+  changed_files: external_exports.array(repositoryPathSchema).refine(uniqueValues, { message: "Expected unique values" }).default([]),
+  commit_messages: external_exports.array(external_exports.string()).default([]),
+  labels: external_exports.array(external_exports.string()).default([]),
+  pr_title: external_exports.string().optional(),
+  pr_body: external_exports.string().optional(),
+  review_state: external_exports.enum(["APPROVED", "CHANGES_REQUESTED", "COMMENTED"]).optional(),
+  diff_lines_count: external_exports.number().int().nonnegative().optional(),
+  commits_count: external_exports.number().int().nonnegative().optional()
+}).strict().superRefine((input, context3) => {
+  if (input.review_state && input.event !== "pull_request_review.submitted") {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: ["review_state"],
+      message: "review_state requires pull_request_review.submitted"
+    });
+  }
+  const hasPullRequestFiles = input.event.startsWith("pull_request.") || input.event === "pull_request_review.submitted";
+  if (!hasPullRequestFiles && input.changed_files.length > 0) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: ["changed_files"],
+      message: "changed_files requires a pull request event"
+    });
+  }
+});
+var fixtureExpectationSchema = external_exports.object({
+  decision: external_exports.enum(["allow", "require_approval", "block"]),
+  matched_rules: uniqueStrings.optional(),
+  matched_agent: external_exports.string().min(1).nullable().optional(),
+  detected_actions: external_exports.array(agentActionSchema).refine(uniqueValues, {
+    message: "Expected unique values"
+  }).optional(),
+  required_reviewers: uniqueStrings.optional(),
+  labels: uniqueStrings.optional(),
+  risk_level: external_exports.enum(["low", "medium", "high", "critical"]).optional(),
+  risk_score: external_exports.number().int().min(0).max(100).optional()
+}).strict();
+var fixtureCaseSchema = external_exports.object({
+  name: external_exports.string().trim().min(1),
+  input: fixtureInputSchema,
+  expect: fixtureExpectationSchema
+}).strict();
+var policyFixtureSuiteSchema = external_exports.object({
+  version: external_exports.literal(1),
+  cases: external_exports.array(fixtureCaseSchema).min(1)
+}).strict().superRefine((suite, context3) => {
+  const names = suite.cases.map((fixture) => fixture.name);
+  if (new Set(names).size !== names.length) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: ["cases"],
+      message: "Fixture case names must be unique"
+    });
+  }
+});
+function uniqueValues(values) {
+  return new Set(values).size === values.length;
+}
+function isRepositoryPath(value) {
+  if (value.length === 0 || value.includes("\0") || value.includes("\\")) return false;
+  if (value.startsWith("/") || /^[a-z]:\//i.test(value)) return false;
+  const segments = value.split("/");
+  return segments.every((segment) => segment.length > 0 && segment !== "." && segment !== "..");
+}
 
 // src/github.ts
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {

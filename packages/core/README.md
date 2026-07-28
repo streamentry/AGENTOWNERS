@@ -18,6 +18,10 @@ The package exports its generated authoring schema as
 [schema artifact](./agentowners.schema.json) is generated from the runtime Zod
 validator and verified for drift in CI.
 
+Portable policy suites use `parsePolicyFixtureSuite()` and
+`runPolicyFixtureSuite()`. They exercise detection, classification, inference,
+and evaluation without Git, GitHub, network access, or hidden state.
+
 ## Contract
 
 - Same input produces the same decision.
