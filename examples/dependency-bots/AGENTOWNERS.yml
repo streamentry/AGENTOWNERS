@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/streamentry/AGENTOWNERS/main/packages/core/agentowners.schema.json
+
+version: 1
+
+agents:
+  dependabot:
+    match:
+      actors:
+        - "dependabot[bot]"
+    allowed:
+      - open_pr
+      - update_pr
+    requires_approval:
+      - modify_dependencies
+    blocked:
+      - edit_workflows
+      - modify_auth
+      - change_permissions
+      - touch_secrets
+
+  renovate:
+    match:
+      actors:
+        - "renovate[bot]"
+    allowed:
+      - open_pr
+      - update_pr
+    requires_approval:
+      - modify_dependencies
+    blocked:
+      - edit_workflows
+      - modify_auth
+      - change_permissions
+      - touch_secrets
+
+defaults:
+  known_agent: require_approval
+  unknown_agent: block
+  docs_only: require_approval
+  workflows: block
+  secrets: block

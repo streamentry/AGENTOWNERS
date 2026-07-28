@@ -163,6 +163,59 @@ describe('detectAgent', () => {
     expect(result.agentName).toBe('code-agent');
   });
 
+  it('policy body pattern matches an issue comment body', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'comment-agent': {
+          match: {
+            bodyPatterns: ['generated review response'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      commentBody: 'This is a generated review response.',
+      policy,
+    });
+
+    expect(result.confidence).toBe('confirmed');
+    expect(result.agentName).toBe('comment-agent');
+  });
+
+  it('policy body pattern matches an issue body without treating it as a PR body', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'issue-agent': {
+          match: {
+            bodyPatterns: ['generated issue report'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      issueBody: 'This is a generated issue report.',
+      policy,
+    });
+
+    expect(result.confidence).toBe('confirmed');
+    expect(result.agentName).toBe('issue-agent');
+  });
+
+  it('agent signature in an issue comment body is likely evidence', () => {
+    const result = detectAgent({
+      actor: 'human-user',
+      commentBody: '🤖 Generated with Codex',
+    });
+
+    expect(result.confidence).toBe('likely');
+  });
+
   it('malformed configured patterns fail closed without aborting detection', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

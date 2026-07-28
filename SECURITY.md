@@ -13,6 +13,8 @@ issue.
 ### Policy evaluation
 
 - Policy YAML is treated as untrusted data and validated strictly with Zod
+- Pull requests and reviews are evaluated against policy fetched from the
+  immutable base commit, never policy from the pull request workspace
 - No `eval`, `new Function`, or `require()` from policy content
 - No shell execution from policy content
 - No remote code loading
@@ -41,7 +43,10 @@ The action never requests:
 
 ### Input handling
 
-All PR content (title, body, labels, commit messages) is treated as untrusted input. It is used for pattern matching only, never executed or interpolated into shell commands.
+All PR content (title, body, labels, commit messages, file names, and Git refs)
+is treated as untrusted input. It is used for matching only, never executed or
+interpolated into shell commands. CLI Git ranges use Git's explicit
+`--end-of-options` boundary.
 
 ### Audit artifacts
 

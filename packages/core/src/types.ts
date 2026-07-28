@@ -21,6 +21,19 @@ export type AgentAction =
   | 'change_permissions'
   | 'merge_pr';
 
+export type GitHubEventType =
+  | 'pull_request.opened'
+  | 'pull_request.synchronize'
+  | 'pull_request.reopened'
+  | 'pull_request.ready_for_review'
+  | 'issue_comment.created'
+  | 'issue_comment.edited'
+  | 'pull_request_review.submitted'
+  | 'issues.labeled'
+  | 'issues.closed'
+  | 'issues.reopened'
+  | 'issues.opened';
+
 export type AgentDetectionConfidence = 'confirmed' | 'likely' | 'possible' | 'unknown';
 
 export type AgentPolicy = {
@@ -117,4 +130,114 @@ export type AgentDetectionResult = {
   agentName?: string;
   confidence: AgentDetectionConfidence;
   signals: string[];
+};
+
+export type PolicyFixtureInput = {
+  event: GitHubEventType;
+  actor: string;
+  changed_files: string[];
+  commit_messages: string[];
+  labels: string[];
+  pr_title?: string;
+  pr_body?: string;
+  issue_title?: string;
+  issue_body?: string;
+  review_state?: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED';
+  diff_lines_count?: number;
+  commits_count?: number;
+};
+
+export type PolicyFixtureExpectation = {
+  decision: Decision['effect'];
+  matched_rules?: string[];
+  matched_agent?: string | null;
+  detected_actions?: AgentAction[];
+  required_reviewers?: string[];
+  labels?: string[];
+  risk_level?: RiskLevel;
+  risk_score?: number;
+};
+
+export type PolicyFixtureCase = {
+  name: string;
+  input: PolicyFixtureInput;
+  expect: PolicyFixtureExpectation;
+};
+
+export type PolicyFixtureSuite = {
+  version: 1;
+  cases: PolicyFixtureCase[];
+};
+
+export type PolicyFixtureAssertionFailure = {
+  field: keyof PolicyFixtureExpectation;
+  expected: unknown;
+  actual: unknown;
+};
+
+export type PolicyFixtureCaseResult = {
+  name: string;
+  passed: boolean;
+  failures: PolicyFixtureAssertionFailure[];
+};
+
+export type PolicyFixtureSuiteResult = {
+  passed: boolean;
+  total: number;
+  passedCount: number;
+  failedCount: number;
+  cases: PolicyFixtureCaseResult[];
+};
+
+export type SarifLevel = 'warning' | 'error';
+
+export type SarifLocation = {
+  physicalLocation: {
+    artifactLocation: {
+      uri: string;
+    };
+  };
+};
+
+export type SarifResult = {
+  ruleId: string;
+  level: SarifLevel;
+  message: { text: string };
+  locations?: SarifLocation[];
+  partialFingerprints: { 'agentowners/v1': string };
+  properties: {
+    decision: Decision['effect'];
+    riskScore: number;
+    riskLevel: RiskLevel;
+    requiredReviewers: string[];
+  };
+};
+
+export type SarifRule = {
+  id: string;
+  name: string;
+  shortDescription: { text: string };
+  fullDescription: { text: string };
+  properties: { tags: ['governance', 'ai-agent'] };
+};
+
+export type SarifLog = {
+  $schema: 'https://json.schemastore.org/sarif-2.1.0.json';
+  version: '2.1.0';
+  runs: Array<{
+    tool: {
+      driver: {
+        name: 'AGENTOWNERS';
+        informationUri: 'https://github.com/streamentry/AGENTOWNERS';
+        rules: SarifRule[];
+      };
+    };
+    results: SarifResult[];
+    properties: {
+      decision: Decision['effect'];
+      riskScore: number;
+      riskLevel: RiskLevel;
+      detectedActions: AgentAction[];
+    };
+  }>;
 };

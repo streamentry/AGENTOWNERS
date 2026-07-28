@@ -14,6 +14,8 @@ export type EventContext = {
   actor: string;
   prTitle?: string;
   prBody?: string;
+  issueTitle?: string;
+  issueBody?: string;
   labels?: string[];
 };
 
@@ -35,6 +37,7 @@ export function evaluatePolicy(input: EvaluatePolicyInput): Decision {
     policy,
     prTitle: event.prTitle,
     prBody: event.prBody,
+    issueBody: event.issueBody,
     labels: event.labels,
   });
 
@@ -47,6 +50,8 @@ export function evaluatePolicy(input: EvaluatePolicyInput): Decision {
     actor: event.actor,
     prTitle: event.prTitle,
     prBody: event.prBody,
+    issueTitle: event.issueTitle,
+    issueBody: event.issueBody,
     labels: event.labels,
   });
 }

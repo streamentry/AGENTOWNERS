@@ -16,15 +16,29 @@
 
 ### 4. Secret exfiltration via diff
 **Threat**: A PR diff contains secrets in added lines.  
-**Protection**: Secret pattern detection in diff content. Patterns redacted from output. File names like `.env` flagged.
+**Protection**: Secret pattern detection in available GitHub patch content.
+Patterns are never emitted. File names like `.env` are also flagged. GitHub
+may omit patches for binary or oversized changes, so this is a guardrail, not
+a substitute for dedicated secret scanning.
 
 ### 5. Impersonation of non-agent actors
 **Threat**: An agent claims to be a human contributor to bypass policy.  
-**Protection**: Multi-signal detection (actor name, commit signatures, body patterns). Conservative default: unknown confidence → `require_approval`.
+**Protection**: Configured actor matches produce confirmed identity. Spoofable
+body and commit markers remain unconfirmed and receive the unknown-agent
+default.
 
 ### 6. Policy injection via PR content
 **Threat**: A malicious PR body contains instructions that change how AGENTOWNERS evaluates the policy.  
-**Protection**: PR content is used for pattern matching only — it is never executed, evaluated, or interpreted as policy. The policy file is loaded from the repo, not from PR content.
+**Protection**: PR content is used for pattern matching only. It is never
+executed, evaluated, or interpreted as policy. For pull requests and reviews,
+the policy is fetched from the immutable base commit, so a pull request cannot
+rewrite the policy that judges itself.
+
+### 8. Git option injection
+**Threat**: An attacker-controlled ref beginning with `-` is interpreted as a
+Git option even though the CLI uses an argv subprocess API.
+**Protection**: Git ranges are placed after `--end-of-options`, and pathspec
+arguments use the explicit `--` separator.
 
 ### 7. Privilege escalation via GitHub Action
 **Threat**: The AGENTOWNERS action itself is used to perform unauthorized operations.  

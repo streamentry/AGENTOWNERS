@@ -1,0 +1,85 @@
+title: "[Proposal] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Propose one falsifiable improvement to AGENTOWNERS. Evidence beats feature volume. Do not include secrets, private repository content, or unsupported claims.
+
+  - type: dropdown
+    id: control-layer
+    attributes:
+      label: Control layer
+      description: Which boundary does this proposal change?
+      options:
+        - Policy schema
+        - Agent detection
+        - Action inference
+        - Rule evaluation
+        - Risk scoring
+        - CLI or local preflight
+        - GitHub Action adapter
+        - Audit or output format
+        - Contributor or release process
+        - Ecosystem integration
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-evidence
+    attributes:
+      label: Problem and evidence
+      description: State the observed failure, affected users, and reproducible evidence.
+      placeholder: |
+        Current behavior:
+        Expected behavior:
+        Minimal policy and event:
+        Evidence source:
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-contract
+    attributes:
+      label: Proposed contract
+      description: Define exact inputs, outputs, invariants, and compatibility behavior.
+      placeholder: "Given X, the deterministic result must be Y because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: disconfirming-test
+    attributes:
+      label: Cheapest disconfirming test
+      description: Name the smallest test or observation that would prove this proposal unnecessary or wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Tradeoffs and failure modes
+      description: Include false positives, false negatives, migration cost, and the strongest counterargument.
+    validations:
+      required: true
+
+  - type: input
+    id: overlap
+    attributes:
+      label: Related issue, pull request, or discussion
+      description: Link existing work, or write "none found" after searching.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues, pull requests, discussions, and the roadmap.
+          required: true
+        - label: I separated confirmed facts from inference and speculation.
+          required: true
+        - label: I did not include secrets or private repository content.
+          required: true

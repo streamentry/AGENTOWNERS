@@ -6,21 +6,41 @@ description: Implement or review deterministic AI-agent governance changes in AG
 # Contribute to AGENTOWNERS
 
 1. Read `AGENTS.md`, the nearest package `AGENTS.md`, and the relevant spec.
-2. State the invariant and expected input-to-decision behavior.
-3. Add the cheapest disconfirming test first.
-4. Implement the smallest complete change.
-5. For a safety invariant, prove the new test fails under a temporary relevant
+2. Refresh `origin/main`; inspect open and recently merged work for overlap.
+3. State the invariant, expected behavior, and any distinct value retained from
+   related contributions.
+4. Use the contribution evidence matrix in `CONTRIBUTING.md` to select the
+   focused proof required for every touched surface.
+5. For ecosystem or positioning claims, use dated official sources and state
+   what AGENTOWNERS does not control.
+6. Keep pull request and issue metadata in distinct evaluator fields so
+   event-specific conditions cannot match the wrong event type.
+7. Add the cheapest disconfirming test first.
+8. Implement the smallest complete change.
+9. For a safety invariant, prove the new test fails under a temporary relevant
    mutation, then restore production code exactly.
-6. Regenerate distributions with `pnpm build`; never hand-edit them.
-7. If policy validation changed, run `pnpm generate:schema`.
-8. Run `pnpm verify`.
-9. Run the explicit `agentowners self-check` contract before opening a pull
+10. Regenerate distributions with `pnpm build`; never hand-edit them.
+11. If policy validation changed, run `pnpm generate:schema`.
+12. If decision behavior changed, update a portable fixture that proves the
+   repository-facing contract.
+13. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
+14. Run `pnpm verify`.
+15. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-10. For Action governance changes, test notification idempotency and preserve
+16. For Action governance changes, test notification idempotency and preserve
     user-owned labels before regenerating the bundle.
-11. For release-facing changes, run `pnpm verify:packages`.
-12. In the pull request, disclose agent use, exact evidence, risks, and rollback.
+17. For release-facing changes, run `pnpm verify:packages`.
+18. In the pull request, disclose agent use, overlap, exact evidence, risks,
+    attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
-input reach a shell.
+input reach a shell. For GitHub pull requests, load policy from the immutable
+base commit. For CLI Git operations, treat refs as hostile options and use
+`--end-of-options`.
+Tests must not mutate contributor Git configuration; scope fixture identity to
+the exact subprocess that needs it.
+
+During review, report only findings that identify the violated invariant, exact
+mechanism, and cheapest disconfirming test. AI-assisted review prepares evidence
+for a human; it never satisfies independent approval.

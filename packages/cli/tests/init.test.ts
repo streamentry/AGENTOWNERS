@@ -28,6 +28,7 @@ describe('init command', () => {
   let stderrSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
+    vi.clearAllMocks()
     exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)

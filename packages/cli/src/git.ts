@@ -13,13 +13,17 @@ function exec(cmd: string, args: string[], cwd?: string): string {
 }
 
 export function getChangedFiles(base: string, head: string, cwd?: string): string[] {
-  const output = exec('git', ['diff', '--name-only', base, head], cwd);
+  const output = exec('git', ['diff', '--name-only', '--end-of-options', base, head, '--'], cwd);
   if (!output) return [];
   return output.split('\n').filter(Boolean);
 }
 
 export function getCommitMessages(base: string, head: string, cwd?: string): string[] {
-  const output = exec('git', ['log', `${base}..${head}`, '--format=%s%n%b'], cwd);
+  const output = exec(
+    'git',
+    ['log', '--format=%s%n%b', '--end-of-options', `${base}..${head}`],
+    cwd,
+  );
   if (!output) return [];
   return output.split('\n').filter(Boolean);
 }

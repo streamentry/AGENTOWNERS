@@ -32,6 +32,73 @@ function baseInput(overrides: Partial<EvaluationInput> = {}): EvaluationInput {
 }
 
 describe('evaluateRule', () => {
+  it.each([
+    {
+      field: 'issue_title' as const,
+      input: { issueTitle: 'Security report: exposed credential' },
+      pattern: '^Security report:',
+    },
+    {
+      field: 'issue_body' as const,
+      input: { issueBody: 'The reproduction includes a leaked token.' },
+      pattern: 'leaked token',
+    },
+  ])('matches $field against issue metadata', ({ field, input, pattern }) => {
+    const rule: Rule = {
+      name: `Block matching ${field}`,
+      when: { [field]: [pattern] },
+      effect: 'block',
+      reason: 'Sensitive issue content requires intervention.',
+    };
+
+    const result = evaluateRule(rule, baseInput(input));
+
+    expect(result?.effect).toBe('block');
+    expect(result?.matchedConditions).toContain(field);
+  });
+
+  it.each([
+    {
+      field: 'issue_title' as const,
+      input: { issueTitle: 'Routine documentation request' },
+      pattern: '^Security report:',
+    },
+    {
+      field: 'issue_body' as const,
+      input: {},
+      pattern: 'leaked token',
+    },
+  ])('does not match $field when issue metadata is absent or different', ({ field, input, pattern }) => {
+    const rule: Rule = {
+      name: `Block matching ${field}`,
+      when: { [field]: [pattern] },
+      effect: 'block',
+      reason: 'Sensitive issue content requires intervention.',
+    };
+
+    expect(evaluateRule(rule, baseInput(input))).toBeNull();
+  });
+
+  it.each([
+    {
+      field: 'issue_title' as const,
+      input: { prTitle: 'Security report: exposed credential' },
+    },
+    {
+      field: 'issue_body' as const,
+      input: { prBody: 'The reproduction includes a leaked token.' },
+    },
+  ])('does not satisfy $field with pull request metadata', ({ field, input }) => {
+    const rule: Rule = {
+      name: `Block matching ${field}`,
+      when: { [field]: ['Security report|leaked token'] },
+      effect: 'block',
+      reason: 'Issue conditions must be event-specific.',
+    };
+
+    expect(evaluateRule(rule, baseInput(input))).toBeNull();
+  });
+
   it('returns null when files condition does not match', () => {
     const rule: Rule = {
       name: 'Block workflows',
@@ -179,6 +246,31 @@ describe('evaluateRule', () => {
 });
 
 describe('evaluatePolicy', () => {
+  it.each(['likely', 'possible'] as const)(
+    'uses unknown-agent defaults for spoofable %s detection confidence',
+    (confidence) => {
+      const policy: AgentOwnersPolicy = {
+        version: 1,
+        defaults: {
+          unknown_agent: 'block',
+          known_agent: 'allow',
+        },
+      };
+
+      const decision = evaluatePolicy(
+        baseInput({
+          policy,
+          agentDetection: {
+            confidence,
+            signals: ['self-asserted PR body marker'],
+          },
+        }),
+      );
+
+      expect(decision.effect).toBe('block');
+    },
+  );
+
   it('enforces blocked actions from the matched agent policy', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

@@ -11,11 +11,14 @@ network calls, clocks, randomness, or persistent state.
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
 - `classifier.ts`: path and secret classification
-- `detection.ts`: agent evidence
+- `detection.ts`: actor, commit, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
-- `evaluator.ts`: precedence and decision construction
+- `evaluator.ts`: event-specific rule matching, precedence, and decision construction
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
+- `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
+- `fixtures.ts`: strict portable suites and assertion comparison
+- `sarif.ts`: deterministic SARIF 2.1.0 output
 
 ## Diagrams
 
@@ -43,6 +46,11 @@ flowchart TB
   Inference --> Evaluator
   Evaluator --> Scoring
   Evaluator --> Renderer
+  Fixtures[Portable fixtures] --> Detection
+  Fixtures --> Classification
+  Fixtures --> Inference
+  Fixtures --> Evaluator
+  Evaluator --> SARIF
   Corpus[Adversarial corpus] -. probes .-> Zod
   Corpus -. probes .-> Detection
   Corpus -. probes .-> Classification
@@ -54,15 +62,33 @@ flowchart TB
 sequenceDiagram
   participant Adapter
   participant Core
-  Adapter->>Core: normalized input
+  Adapter->>Core: normalized PR, issue, or comment input
+  Core->>Core: match event-specific metadata
   Core->>Core: pure evaluation
   Core-->>Adapter: immutable decision
+```
+
+```mermaid
+sequenceDiagram
+  participant Suite
+  participant FixtureRunner
+  participant Core
+  Suite->>FixtureRunner: validated cases
+  loop each case
+    FixtureRunner->>Core: event, actor, files, signals
+    Core-->>FixtureRunner: decision
+    FixtureRunner->>FixtureRunner: compare requested assertions
+  end
+  FixtureRunner-->>Suite: stable case results
 ```
 
 ## Verification
 
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
+SARIF output must never contain timestamps, absolute paths, or unstable rule
+identifiers.

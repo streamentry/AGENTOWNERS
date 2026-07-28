@@ -21,8 +21,21 @@ export type EvaluationInput = {
   actor: string;
   prTitle?: string;
   prBody?: string;
+  issueTitle?: string;
+  issueBody?: string;
   labels?: string[];
 };
+
+function matchesTextPattern(value: string | undefined, patterns: string[]): boolean {
+  if (!value) return false;
+  return patterns.some((pattern) => {
+    try {
+      return new RegExp(pattern, 'i').test(value);
+    } catch {
+      return value.includes(pattern);
+    }
+  });
+}
 
 /**
  * Evaluate a single rule against the input.
@@ -40,6 +53,8 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
     actor,
     prTitle,
     prBody,
+    issueTitle,
+    issueBody,
     labels,
   } = input;
 
@@ -95,30 +110,26 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
 
   // pr_title condition
   if (when.pr_title !== undefined) {
-    if (!prTitle) return null;
-    const matches = when.pr_title.some((pattern) => {
-      try {
-        return new RegExp(pattern, 'i').test(prTitle);
-      } catch {
-        return prTitle.includes(pattern);
-      }
-    });
-    if (!matches) return null;
+    if (!matchesTextPattern(prTitle, when.pr_title)) return null;
     matchedConditions.push('pr_title');
   }
 
   // pr_body condition
   if (when.pr_body !== undefined) {
-    if (!prBody) return null;
-    const matches = when.pr_body.some((pattern) => {
-      try {
-        return new RegExp(pattern, 'i').test(prBody);
-      } catch {
-        return prBody.includes(pattern);
-      }
-    });
-    if (!matches) return null;
+    if (!matchesTextPattern(prBody, when.pr_body)) return null;
     matchedConditions.push('pr_body');
+  }
+
+  // issue_title condition
+  if (when.issue_title !== undefined) {
+    if (!matchesTextPattern(issueTitle, when.issue_title)) return null;
+    matchedConditions.push('issue_title');
+  }
+
+  // issue_body condition
+  if (when.issue_body !== undefined) {
+    if (!matchesTextPattern(issueBody, when.issue_body)) return null;
+    matchedConditions.push('issue_body');
   }
 
   // diff_lines_over condition
@@ -231,8 +242,8 @@ function computeDefaultEffect(input: EvaluationInput): 'allow' | 'require_approv
     return defaults?.docs_only ?? 'allow';
   }
 
-  // Unknown agent default: require_approval
-  if (agentDetection.confidence === 'unknown') {
+  // Only non-spoofable confirmation may use the known-agent default.
+  if (agentDetection.confidence !== 'confirmed') {
     return defaults?.unknown_agent ?? 'require_approval';
   }
 

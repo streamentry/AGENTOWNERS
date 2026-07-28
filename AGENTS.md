@@ -8,7 +8,7 @@
 AGENTOWNERS is a TypeScript monorepo that ships a governance layer for AI agents in GitHub repositories:
 
 - `@agent-owners/core` — deterministic policy engine (schema, evaluation, detection, scoring, rendering)
-- `@agent-owners/cli` — `agentowners` CLI tool  
+- `@agent-owners/cli` — `agentowners` CLI tool
 - `@agent-owners/github-action` — GitHub Action for CI enforcement
 
 ## Quickstart for agents
@@ -41,14 +41,17 @@ packages/core/src/
   classifier.ts  — file classification, glob matching, secret detection
   detection.ts   — AI agent detection from actor/commit/body signals
   actions.ts     — action inference from GitHub event types
-  evaluator.ts   — rule evaluation, decision logic, default policy
+  evaluator.ts   — event-specific rule evaluation, decision logic, default policy
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
+  fixtures.ts    — strict portable fixture parsing and deterministic execution
+  sarif.ts       — deterministic SARIF 2.1.0 rendering
   profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
   index.ts       — barrel export (all public API)
 
 packages/core/tests/
   adversarial-corpus.test.ts — table-driven safety regression corpus
+  custom-agents.test.ts — custom-agent frontmatter and privilege contracts
   schema.test.ts     — Zod schema validation
   json-schema.test.ts — generated-schema parity and drift protection
   loader.test.ts     — YAML loading and file resolution
@@ -58,8 +61,10 @@ packages/core/tests/
   evaluator.test.ts  — rule evaluation
   scoring.test.ts    — risk scoring
   renderer.test.ts   — verdict rendering
+  sarif.test.ts      — SARIF stability, severity, and safe locations
   profiles.test.ts   — built-in profiles parse correctly
   integration.test.ts — end-to-end pipeline with fixtures
+  fixtures-runner.test.ts — public fixture schema, runner, and loader contract
   fixtures/           — policies, events, exact outcomes, and corpus guidance
 
 packages/cli/src/
@@ -71,15 +76,22 @@ packages/cli/src/
   commands/explain.ts — agentowners explain
   commands/fingerprint.ts — agentowners fingerprint
   commands/self-check.ts — versioned pre-PR machine contract
+  commands/test.ts  — portable policy fixture runner
 
 packages/cli/tests/
+  check.test.ts      — SARIF output and invalid-format boundaries
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
+  test-command.test.ts — fixture diagnostics, JSON output, and exit codes
 
 packages/github-action/src/
   index.ts    — main action entry
   github.ts   — GitHub API helpers (PR files, PR metadata)
   comment.ts  — sticky comment upsert (VERDICT_MARKER)
   governance.ts — reviewer request and managed-label lifecycle boundaries
+
+.github/agents/
+  policy-engineer.agent.md — tests-first implementation specialist
+  adversarial-reviewer.agent.md — read-only falsification specialist
 
 examples/
   minimal/            — permissive starting point for new projects
@@ -90,6 +102,16 @@ examples/
 docs/specs/
   readme.md           — full product specification (canonical requirements)
   f1-policy-schema.md through f11-agent-self-check.md — per-feature specs
+  f13-policy-fixtures.md — portable executable policy-suite contract
+
+docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/assets/          — maintained documentation and social-preview media
+
+.github/DISCUSSION_TEMPLATE/
+  ideas.yml           — evidence-first feature proposal intake
+
+CONTRIBUTING.md       — contribution lanes, review contract, and required evidence matrix
+SKILL.md              — compact execution workflow for compatible coding agents
 
 scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema
@@ -111,6 +133,7 @@ flowchart LR
   Core --> Decision
   Decision --> Verdict
   Decision --> Audit
+  Decision --> SARIF
   Decision --> ExitStatus
 ```
 
@@ -135,7 +158,7 @@ sequenceDiagram
   Adapter->>Core: normalized untrusted input
   Core->>Core: detect, classify, infer, evaluate
   Core-->>Adapter: deterministic decision
-  Adapter->>Effect: render, label, audit, or exit
+  Adapter->>Effect: render, label, audit, SARIF, or exit
 ```
 
 See `docs/architecture.md` for trust boundaries and expanded diagrams.
@@ -154,14 +177,19 @@ These are immutable safety rules. Never change them:
 | No database | The core engine is stateless: policy file + event context → Decision |
 | Least privilege | GitHub Action never requests `repo:admin` or `secrets:read` permissions |
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
+| Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
+| Git option boundary | Untrusted refs must follow `--end-of-options` |
 
 ## How to add a new feature
 
 ### 1. Read the spec first
+
 Feature specs are in `docs/specs/f*.md`. The root spec is `docs/specs/readme.md`.
 
 ### 2. Follow the implementation order
+
 Per spec section 29 — always in this order:
+
 1. Add types to `packages/core/src/types.ts`
 2. Add Zod schema to `packages/core/src/schema.ts`
 3. Implement in the relevant module
@@ -169,11 +197,13 @@ Per spec section 29 — always in this order:
 5. Write tests BEFORE implementing (TDD)
 
 ### 3. Add tests
+
 - Unit test file: `packages/core/tests/<module>.test.ts`
 - Integration fixture if the feature changes the evaluation pipeline
 - All tests must pass: `pnpm test`
 
 ### 4. Export
+
 Add new public exports to `packages/core/src/index.ts`.
 
 ## Adding a new policy profile
@@ -213,6 +243,11 @@ git commit -m "fix(cli): handle Z edge case"
 git commit -m "test(core): add coverage for W"
 git commit -m "docs: update policy reference for V"
 ```
+
+Before implementation, refresh `origin/main` and inspect open or recently
+merged work for the same invariant. If another contribution overlaps, preserve
+distinct counterexamples and mutation evidence. Do not replace an external
+contribution silently; record the exact overlap and attribution in the PR.
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 
@@ -264,6 +299,8 @@ These are roadmap items for v2+ (see spec section 27).
 4. **Printing secret values** — always redact with `[REDACTED]`
 5. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
 6. **Skipping barrel export** — always add new exports to `src/index.ts`
+7. **Writing Git config in tests** — pass fixture identity through the commit
+   subprocess environment; never mutate contributor repository configuration
 
 ## Roadmap hooks (design for these, don't build yet)
 

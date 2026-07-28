@@ -17,6 +17,19 @@ function makeClassification(overrides: Partial<FilesClassification> = {}): Files
 }
 
 describe('computeRiskScore', () => {
+  it.each(['unknown', 'likely', 'possible'] as const)(
+    'adds conservative identity risk for %s confidence',
+    (agentConfidence) => {
+      const result = computeRiskScore({
+        filesClassification: makeClassification(),
+        detectedActions: [],
+        agentConfidence,
+      });
+
+      expect(result.score).toBe(20);
+    },
+  );
+
   it('caps compounded risk at 100', () => {
     const result = computeRiskScore({
       filesClassification: makeClassification({

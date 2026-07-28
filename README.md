@@ -4,6 +4,8 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node 22+](https://img.shields.io/badge/node-%3E%3D22-339933.svg)](package.json)
 
+![AGENTOWNERS policy boundary routing agent actions to repository decisions](docs/assets/agentowners-social-preview.png)
+
 **CODEOWNERS for AI agents.**
 
 `AGENTS.md` tells agents how to work. `AGENTOWNERS.yml` defines what they are
@@ -31,15 +33,21 @@ AGENTOWNERS answers all of these from a single YAML file checked into the
 repository. It uses no model, hosted service, database, or external policy API.
 The same inputs produce the same decision.
 
+See [Where AGENTOWNERS fits](docs/ecosystem.md) for a dated comparison with
+instructions, custom agents, Copilot hooks, GitHub rulesets, general policy
+engines, and native audit records. The comparison states when to choose
+AGENTOWNERS, when to choose another control, and what this project does not
+claim.
+
 ---
 
 ## What ships
 
-| Package | Responsibility | Trust boundary |
-|---------|----------------|----------------|
-| `@agent-owners/core` | Schema, detection, classification, evaluation, scoring, rendering | Pure and stateless; no shell, network, clock, or database |
-| `@agent-owners/cli` | Local policy creation, validation, fingerprinting, and Git-range checks | Git refs are passed as argv, never through a shell |
-| `@agent-owners/github-action` | Event ingestion, sticky verdicts, labels, audit output, CI status | Least-privilege GitHub token permissions |
+| Package                       | Responsibility                                                          | Trust boundary                                            |
+| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| `@agent-owners/core`          | Schema, detection, classification, evaluation, scoring, rendering       | Pure and stateless; no shell, network, clock, or database |
+| `@agent-owners/cli`           | Local policy creation, validation, fingerprinting, and Git-range checks | Git refs are passed as argv, never through a shell        |
+| `@agent-owners/github-action` | Event ingestion, sticky verdicts, labels, audit output, CI status       | Least-privilege GitHub token permissions                  |
 
 The engine detects agent signals, classifies changed paths, infers actions,
 applies agent-specific and repository-wide rules, and resolves conflicts with
@@ -90,24 +98,24 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Allow docs-only changes"
+  - name: 'Allow docs-only changes'
     when:
       docs_only: true
     effect: allow
-    reason: "Docs-only changes are low risk."
+    reason: 'Docs-only changes are low risk.'
 
-  - name: "Block workflow edits"
+  - name: 'Block workflow edits'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "Agents may not modify GitHub Actions workflows."
+    reason: 'Agents may not modify GitHub Actions workflows.'
 
-  - name: "Require approval for dependency changes"
+  - name: 'Require approval for dependency changes'
     when:
       changes_package_files: true
     effect: require_approval
-    reason: "Dependency changes require maintainer review."
+    reason: 'Dependency changes require maintainer review.'
 ```
 
 The first-line schema directive gives compatible YAML editors completion and
@@ -145,9 +153,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
-          policy-path: ".github/AGENTOWNERS.yml"
-          mode: "both"
-          fail-on-block: "true"
+          policy-path: '.github/AGENTOWNERS.yml'
+          mode: 'both'
+          fail-on-block: 'true'
 ```
 
 Open an agent-generated PR and inspect the verdict before switching from
@@ -208,12 +216,20 @@ agentowners validate .github/AGENTOWNERS.yml
 # Check local diff against policy
 agentowners check --base main --head HEAD
 
+# Produce deterministic SARIF 2.1.0 for code-scanning upload
+agentowners check --base main --head HEAD --output sarif > agentowners.sarif
+
 # Give an agent a versioned pre-PR decision contract
 agentowners self-check \
   --policy .github/AGENTOWNERS.yml \
   --base origin/main \
   --head HEAD \
   --actor coding-agent[bot]
+
+# Execute portable policy expectations
+agentowners test \
+  --policy .github/AGENTOWNERS.yml \
+  --fixtures .agentowners/fixtures.yml
 
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
@@ -224,21 +240,37 @@ stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
 and a bounded next action. It makes no model or GitHub API calls and never
 modifies the repository.
 
+`test` executes a strict, versioned fixture suite through the same detection,
+classification, action-inference, and evaluation pipeline used in production.
+It rejects unsafe paths and unknown fields, reports every failed assertion,
+and returns nonzero when expectations drift.
+
+`check --output sarif` emits no alert for an allowed decision, warnings for
+required approval, and errors for blocked changes. Rule identifiers, partial
+fingerprints, and repository-relative locations are stable across equivalent
+runs. Upload the file with `github/codeql-action/upload-sarif@v4` where GitHub
+code scanning is available.
+
 ---
 
 ## Policy profiles
 
-| Profile | Default behavior | Use case |
-|---------|-----------------|----------|
-| `minimal` | `require_approval` | New projects, getting started |
-| `strict-oss` | `require_approval` | Open-source with many contributors |
-| `security-sensitive` | `block` for unknown | Security-critical repositories |
-| `monorepo` | Per-package rules | Large monorepos |
+| Profile              | Default behavior    | Use case                           |
+| -------------------- | ------------------- | ---------------------------------- |
+| `minimal`            | `require_approval`  | New projects, getting started      |
+| `strict-oss`         | `require_approval`  | Open-source with many contributors |
+| `security-sensitive` | `block` for unknown | Security-critical repositories     |
+| `monorepo`           | Per-package rules   | Large monorepos                    |
 
 ```bash
 agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
 ```
+
+Using Dependabot or Renovate? Copy the
+[`dependency-bots` example](examples/dependency-bots/AGENTOWNERS.yml) to require
+human approval for dependency updates while blocking workflow, authentication,
+permission, and secret-file changes.
 
 ---
 
@@ -253,7 +285,7 @@ agents:
   github-copilot:
     match:
       actors:
-        - "github-copilot[bot]"
+        - 'github-copilot[bot]'
     allowed:
       - open_pr
       - comment
@@ -271,12 +303,12 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Block workflow edits"
+  - name: 'Block workflow edits'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "Agents may not modify CI/CD workflows."
+    reason: 'Agents may not modify CI/CD workflows.'
 ```
 
 ### Rule conditions
@@ -289,6 +321,10 @@ rules:
 | `actors` | `string[]` | GitHub actor usernames |
 | `actions` | `AgentAction[]` | Inferred actions |
 | `labels` | `string[]` | PR/issue labels |
+| `pr_title` | `string[]` | PR title substring or regular expression |
+| `pr_body` | `string[]` | PR body substring or regular expression |
+| `issue_title` | `string[]` | Issue title substring or regular expression |
+| `issue_body` | `string[]` | Issue body substring or regular expression |
 | `docs_only` | `boolean` | All changed files are docs |
 | `tests_only` | `boolean` | All changed files are tests |
 | `changes_package_files` | `boolean` | Any dependency file changed |
@@ -299,11 +335,11 @@ rules:
 
 ### Effects
 
-| Effect | Meaning |
-|--------|---------|
-| `allow` | No approval needed |
+| Effect             | Meaning                            |
+| ------------------ | ---------------------------------- |
+| `allow`            | No approval needed                 |
 | `require_approval` | Human review required before merge |
-| `block` | Action is forbidden |
+| `block`            | Action is forbidden                |
 
 Priority: `block > require_approval > allow`
 
@@ -336,19 +372,19 @@ AGENTOWNERS detects AI agents from:
 
 Each decision gets a risk score from 0–100:
 
-| Signal | Score |
-|--------|-------|
-| Docs only | +5 |
-| Small diff (< 50 lines) | +5 |
-| Tests changed | +10 |
-| Large diff (> 300 lines) | +30 |
-| Dependency files changed | +30 |
-| Infra paths changed | +40 |
-| Auth paths changed | +50 |
-| Workflow files changed | +50 |
-| Permission changes | +60 |
-| Secret patterns detected | +80 |
-| Block action detected | +100 |
+| Signal                   | Score |
+| ------------------------ | ----- |
+| Docs only                | +5    |
+| Small diff (< 50 lines)  | +5    |
+| Tests changed            | +10   |
+| Large diff (> 300 lines) | +30   |
+| Dependency files changed | +30   |
+| Infra paths changed      | +40   |
+| Auth paths changed       | +50   |
+| Workflow files changed   | +50   |
+| Permission changes       | +60   |
+| Secret patterns detected | +80   |
+| Block action detected    | +100  |
 
 Risk levels: `low` (0–20) · `medium` (21–49) · `high` (50–79) · `critical` (80+)
 
@@ -358,15 +394,15 @@ Risk levels: `low` (0–20) · `medium` (21–49) · `high` (50–79) · `critic
 
 The CLI and Action expose different adapters around the same decision:
 
-| Surface | Mode | Behavior |
-|---------|------|----------|
-| CLI | `advisory` | Print verdict; never fail for a blocked decision |
-| CLI | `enforcement` | Exit nonzero for a blocked decision |
-| CLI | `dry-run` | Print the deterministic decision without side effects |
-| Action | `comment` | Upsert a verdict comment |
-| Action | `check` | Set outputs and enforce configured failure behavior |
-| Action | `both` | Comment and enforce |
-| Action | `dry-run` | Set outputs without comments or labels |
+| Surface | Mode          | Behavior                                              |
+| ------- | ------------- | ----------------------------------------------------- |
+| CLI     | `advisory`    | Print verdict; never fail for a blocked decision      |
+| CLI     | `enforcement` | Exit nonzero for a blocked decision                   |
+| CLI     | `dry-run`     | Print the deterministic decision without side effects |
+| Action  | `comment`     | Upsert a verdict comment                              |
+| Action  | `check`       | Set outputs and enforce configured failure behavior   |
+| Action  | `both`        | Comment and enforce                                   |
+| Action  | `dry-run`     | Set outputs without comments or labels                |
 
 The CLI defaults to `advisory`; the Action defaults to `comment`.
 
@@ -378,13 +414,13 @@ AGENTOWNERS governs contributions at the repository boundary. Runtime agent
 control planes govern model calls, tools, networks, or data access. They are
 complements, not substitutes.
 
-| Question | AGENTOWNERS | Runtime guardrail | AI reviewer |
-|----------|-------------|-------------------|-------------|
-| May this agent change this repository surface? | Yes | Usually not | No |
-| Is the decision deterministic and reviewable as code? | Yes | Varies | No |
-| Does it inspect code quality or correctness? | No | No | Yes |
-| Does it intercept tool calls outside GitHub? | No | Yes | No |
-| Does it require a hosted control plane? | No | Often | Often |
+| Question                                              | AGENTOWNERS | Runtime guardrail | AI reviewer |
+| ----------------------------------------------------- | ----------- | ----------------- | ----------- |
+| May this agent change this repository surface?        | Yes         | Usually not       | No          |
+| Is the decision deterministic and reviewable as code? | Yes         | Varies            | No          |
+| Does it inspect code quality or correctness?          | No          | No                | Yes         |
+| Does it intercept tool calls outside GitHub?          | No          | Yes               | No          |
+| Does it require a hosted control plane?               | No          | Often             | Often       |
 
 This boundary is the product. Expanding into model hosting, code review, or a
 dashboard would weaken portability and auditability.
@@ -399,6 +435,7 @@ This is a permission layer for AI contributions.
 AGENTOWNERS is deterministic: the same policy and PR produce the same verdict. No LLM, external API, or ambiguity.
 
 Design principles:
+
 1. Policy over prompts
 2. Constraints over suggestions
 3. Deterministic first, AI optional later
@@ -417,13 +454,21 @@ Design principles:
 The repository is designed for both human and agent contributors:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) defines the evidence and PR contract.
+- [Good first issues](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22good+first+issue%22)
+  provide bounded entry work that does not change enforcement semantics.
+- [Help wanted](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22help+wanted%22)
+  identifies deeper work with explicit acceptance criteria.
 - [AGENTS.md](AGENTS.md) maps the codebase and immutable invariants.
 - [SKILL.md](SKILL.md) gives compatible agents a compact execution workflow.
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
+- [Ecosystem boundaries](docs/ecosystem.md) distinguishes guidance, runtime
+  controls, repository governance, and audit evidence.
 - [Roadmap](docs/roadmap.md) names what is next and what will remain out of scope.
 
 High-value contributions are adversarial fixtures, policy ambiguity reports,
 cross-platform Git edge cases, and small integrations backed by a failing test.
+Overlapping work receives an evidence-based disposition; distinct tests are
+not discarded merely because another implementation landed first.
 
 ---
 

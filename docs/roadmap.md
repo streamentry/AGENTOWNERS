@@ -9,14 +9,17 @@ The roadmap is ordered by user risk removed, not feature count.
 - Release smoke tests for ESM, CommonJS, CLI, and Action entry points
 - Machine-readable JSON Schema with editor completion and CI drift detection
 - Versioned agent self-check contract for pre-PR policy decisions
-- Policy-configured reviewer requests and reserved risk-label lifecycle controls
+ - Policy-configured reviewer requests and reserved risk-label lifecycle controls
+ - Portable executable policy fixtures for repository-owned regression tests
+ - Deterministic SARIF 2.1.0 output for code-scanning interoperability
 - Dogfooded policy, contribution templates, and private vulnerability reporting
 - Stable policy examples and migration notes
 
 ## Next: explainability and interoperability
 
-- SARIF output for code-scanning integration
-- Policy fixtures that can be shared across repositories
+ - Explicit reviewer requests and label lifecycle controls
+ - SARIF output for code-scanning integration
+ - Policy fixtures that can be shared across repositories
 
 ## Later: governed expansion
 

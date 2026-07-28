@@ -38,7 +38,9 @@ PR body contains known agent-specific footers or summaries:
 PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`
 
 ### 6. Configured body patterns (from policy)
-Body matches `agents[name].match.bodyPatterns` or `prTitlePatterns`.
+Pull request, issue, or comment body matches
+`agents[name].match.bodyPatterns`; pull request titles match
+`prTitlePatterns`.
 Malformed configured regular expressions are ignored individually. Detection
 continues with remaining patterns and falls through conservatively if nothing
 valid matches.

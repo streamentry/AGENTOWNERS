@@ -14,6 +14,15 @@ vi.mock('@actions/core', () => mockCore);
 // --- Mock @actions/github ---
 const mockOctokit = {
   rest: {
+    repos: {
+      getContent: vi.fn().mockResolvedValue({
+        data: {
+          type: 'file',
+          encoding: 'base64',
+          content: Buffer.from('version: 1\nrules: []\n').toString('base64'),
+        },
+      }),
+    },
     pulls: {
       listFiles: vi.fn(),
       get: vi.fn(),
@@ -30,7 +39,12 @@ const mockOctokit = {
   },
 };
 
-const mockContext = {
+const mockContext: {
+  eventName: string;
+  actor: string;
+  payload: Record<string, unknown>;
+  repo: { owner: string; repo: string };
+} = {
   eventName: 'pull_request',
   actor: 'github-copilot[bot]',
   payload: {
@@ -73,7 +87,7 @@ const mockDecisionBlock = {
 };
 
 vi.mock('@agent-owners/core', () => ({
-  loadPolicyFile: vi.fn().mockResolvedValue({ version: 1, rules: [], defaults: {} }),
+  loadPolicyText: vi.fn().mockReturnValue({ version: 1, rules: [], defaults: {} }),
   classifyFiles: vi.fn().mockReturnValue({
     docsOnly: false,
     testsOnly: false,
@@ -84,6 +98,7 @@ vi.mock('@agent-owners/core', () => ({
     secretFilesDetected: false,
     files: {},
   }),
+  detectSecretPatterns: vi.fn().mockReturnValue([]),
   inferActions: vi.fn().mockReturnValue(['open_pr']),
   detectAgent: vi.fn().mockReturnValue({
     agentName: 'copilot',
@@ -140,7 +155,7 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
       additions: 10,
       deletions: 5,
       changed_files: 1,
-      base: { ref: 'main' },
+      base: { ref: 'main', sha: 'base-sha' },
       head: { ref: 'feature-branch' },
     },
   });
@@ -163,6 +178,121 @@ describe('GitHub Action — integration via mocks', () => {
     mockContext.eventName = 'pull_request';
     mockContext.actor = 'github-copilot[bot]';
     mockContext.payload = { action: 'opened', pull_request: { number: 1 } };
+  });
+
+  it('passes issue title and body to issue-specific rule conditions', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = 'issues';
+    mockContext.actor = 'issue-agent[bot]';
+    mockContext.payload = {
+      action: 'opened',
+      issue: { number: 22 },
+      repository: { default_branch: 'main' },
+    };
+    mockOctokit.rest.issues.get.mockResolvedValue({
+      data: {
+        title: 'Security report: exposed credential',
+        body: 'The reproduction includes a leaked token.',
+        user: { login: 'issue-agent[bot]' },
+        labels: [{ name: 'security' }],
+        state: 'open',
+      },
+    });
+
+    const core = await import('@agent-owners/core');
+    await import('../src/index.js');
+
+    await vi.waitFor(() => {
+      expect(core.detectAgent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prTitle: undefined,
+          prBody: undefined,
+          issueBody: 'The reproduction includes a leaked token.',
+          commentBody: undefined,
+        }),
+      );
+      expect(core.evaluatePolicy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          issueTitle: 'Security report: exposed credential',
+          issueBody: 'The reproduction includes a leaked token.',
+          prTitle: undefined,
+          prBody: undefined,
+        }),
+      );
+    });
+  });
+
+  it('maps issue comments to issue metadata and inspects the comment body', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = 'issue_comment';
+    mockContext.actor = 'fallback-actor';
+    mockContext.payload = {
+      action: 'created',
+      issue: {
+        number: 23,
+        title: 'Dependency bot policy example',
+        body: 'The issue requests a new example policy.',
+        labels: [{ name: 'help wanted' }],
+      },
+      comment: {
+        body: '🤖 Generated with Codex',
+        user: { login: 'comment-agent[bot]' },
+      },
+      repository: { default_branch: 'main' },
+    };
+
+    const core = await import('@agent-owners/core');
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(core.detectAgent).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        actor: 'comment-agent[bot]',
+        commentBody: '🤖 Generated with Codex',
+      }),
+    );
+    expect(core.evaluatePolicy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        issueTitle: 'Dependency bot policy example',
+        issueBody: 'The issue requests a new example policy.',
+        prTitle: undefined,
+        prBody: undefined,
+      }),
+    );
+  });
+
+  it('maps pull request comments to PR metadata without leaking into issue conditions', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = 'issue_comment';
+    mockContext.actor = 'fallback-actor';
+    mockContext.payload = {
+      action: 'edited',
+      issue: {
+        number: 25,
+        title: 'fix(core): evaluate issue rule conditions',
+        body: 'Pull request description',
+        labels: [{ name: 'core-review' }],
+        pull_request: { url: 'https://api.github.test/pulls/25' },
+      },
+      comment: {
+        body: 'Updated review response',
+        user: { login: 'comment-agent[bot]' },
+      },
+      repository: { default_branch: 'main' },
+    };
+
+    const core = await import('@agent-owners/core');
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(core.evaluatePolicy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        prTitle: 'fix(core): evaluate issue rule conditions',
+        prBody: 'Pull request description',
+        issueTitle: undefined,
+        issueBody: undefined,
+      }),
+    );
   });
 
   it('PR opened → verdict posted, outputs set, no setFailed for allow', async () => {
@@ -337,6 +467,24 @@ describe('getPRChangedFiles', () => {
   });
 });
 
+describe('getPRFiles', () => {
+  it('collects filenames and available patch text without raw API objects', async () => {
+    const { getPRFiles } = await import('../src/github.js');
+    mockOctokit.rest.pulls.listFiles.mockResolvedValue({
+      data: [
+        { filename: 'src/index.ts', patch: '+OPENAI_API_KEY=sk-test' },
+        { filename: 'image.png' },
+      ],
+    });
+
+    await expect(getPRFiles(mockOctokit as never, 'owner', 'repo', 1)).resolves.toEqual({
+      files: ['src/index.ts', 'image.png'],
+      diffContent: '+OPENAI_API_KEY=sk-test',
+      patchesComplete: false,
+    });
+  });
+});
+
 describe('getPRMetadata', () => {
   it('maps PR API response to PRMetadata', async () => {
     const { getPRMetadata } = await import('../src/github.js');
@@ -352,7 +500,7 @@ describe('getPRMetadata', () => {
         additions: 30,
         deletions: 10,
         changed_files: 3,
-        base: { ref: 'main' },
+        base: { ref: 'main', sha: 'base-sha' },
         head: { ref: 'feature' },
       },
     });
@@ -362,6 +510,7 @@ describe('getPRMetadata', () => {
     expect(meta.actor).toBe('bot-user');
     expect(meta.labels).toEqual(['ai-agent']);
     expect(meta.commits).toBe(2);
+    expect(meta.baseSha).toBe('base-sha');
   });
 });
 

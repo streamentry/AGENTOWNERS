@@ -84,7 +84,8 @@ runs:
    - pull_request → fetchPRFiles, fetchPRMetadata
    - issues → inspect actor/title/body/labels
    - pull_request_review → inspect review state
-   - issue_comment → inspect comment actor/body
+   - issue_comment → inspect comment actor/body and map the target title/body to
+     PR or issue fields
 5. Classify files
 6. Infer actions
 7. Detect agent
