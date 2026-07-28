@@ -3,6 +3,11 @@
 ## Objective
 Generate human-readable markdown verdict from a Decision object.
 
+Values derived from actors, changed paths, policy names, reasons, reviewers,
+labels, and explanations are escaped before interpolation into Markdown so a
+verdict cannot create arbitrary links, headings, or list items. Audit JSON is a
+structured machine output and preserves its values without Markdown escaping.
+
 ## Package
 `packages/core/src/renderer.ts`
 
@@ -126,4 +131,5 @@ export type AuditRecord = {
 - Required reviewers listed
 - Sticky comment marker included by default
 - `compact: true` produces shorter output
+- Human-readable output escapes Markdown metacharacters and line breaks
 - `renderAuditJson` produces correct structure

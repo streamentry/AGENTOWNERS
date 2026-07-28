@@ -124,7 +124,7 @@ describe('renderVerdict', () => {
 
   it('actor shown in require_approval verdict when provided', () => {
     const result = renderVerdict(approvalDecision, { actor: 'github-copilot[bot]' });
-    expect(result).toContain('github-copilot[bot]');
+    expect(result).toContain('github-copilot\\[bot\\]');
   });
 
   it('matched files shown in require_approval verdict', () => {
@@ -236,5 +236,29 @@ describe('renderRequiresApproval', () => {
     const result = renderRequiresApproval(approvalDecision, {});
     expect(result).toContain('Risk level: high');
     expect(result).toContain('Risk score: 65/100');
+  });
+
+  it('escapes untrusted Markdown in human-readable verdicts', () => {
+    const result = renderRequiresApproval(
+      {
+        ...approvalDecision,
+        matchedRules: [
+          {
+            ...approvalDecision.matchedRules[0],
+            name: '`[spoofed](https://evil.example)`\n# forged heading',
+            reason: '- forged list item\n[spoofed](https://evil.example)',
+            matchedFiles: ['`[secret](https://evil.example)`\nforged-path.ts'],
+          },
+        ],
+        explanation: '## forged heading\n[spoofed](https://evil.example)',
+      },
+      { actor: '`[spoofed](https://evil.example)`\nforged-actor' },
+    );
+
+    expect(result).toContain('\\[spoofed\\]');
+    expect(result).not.toContain('[spoofed](https://evil.example)');
+    expect(result).not.toContain('\n# forged heading');
+    expect(result).not.toContain('\n- forged list item');
+    expect(result).not.toContain('\nforged-actor');
   });
 });

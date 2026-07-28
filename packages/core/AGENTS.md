@@ -110,3 +110,6 @@ For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.
+Markdown verdict output must escape untrusted actor, path, policy, reviewer,
+label, reason, and explanation text before interpolation. Audit JSON remains
+structured and unescaped.

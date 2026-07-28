@@ -33696,6 +33696,15 @@ function scoreToLevel(score) {
 }
 var MARKER_OPEN = "<!-- agentowners-verdict -->";
 var MARKER_CLOSE = "<!-- /agentowners-verdict -->";
+function escapeMarkdownInline(value) {
+  return value.replace(/[\u0000-\u001F\u007F]/g, "").replace(/\r?\n/g, " ").replace(/([\\`*_\[\]<>~])/g, "\\$1");
+}
+function escapeMarkdownBlock(value) {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").replace(/\r\n?/g, "\n").split("\n").map((line) => {
+    const escaped = escapeMarkdownInline(line);
+    return /^(?:#{1,6}\s|[-+*>]\s|\d+\.\s)/.test(escaped) ? `\\${escaped}` : escaped;
+  }).join("\n");
+}
 function wrapWithMarker(content) {
   return `${MARKER_OPEN}
 ${content}
@@ -33703,19 +33712,21 @@ ${MARKER_CLOSE}`;
 }
 function renderAllowed(decision, options) {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(", ");
+    const ruleNames = decision.matchedRules.map((r) => `\`${escapeMarkdownInline(r.name)}\``).join(", ");
     return `AGENTOWNERS: allowed${ruleNames ? ` \u2014 ${ruleNames}` : ""}`;
   }
   const lines = [];
   lines.push("## AGENTOWNERS verdict: allowed");
   lines.push("");
-  lines.push(decision.explanation || "This appears to be a low-risk AI contribution.");
+  lines.push(
+    escapeMarkdownBlock(decision.explanation || "This appears to be a low-risk AI contribution.")
+  );
   lines.push("");
   if (decision.matchedRules.length > 0) {
     lines.push("Matched rule:");
     lines.push("");
     for (const mr of decision.matchedRules) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- \`${escapeMarkdownInline(mr.name)}\``);
     }
     lines.push("");
   }
@@ -33730,7 +33741,7 @@ function renderRequiresApproval(decision, options) {
   lines.push("## AGENTOWNERS verdict: requires approval");
   lines.push("");
   if (options.actor) {
-    lines.push(`This PR appears to be created by \`${options.actor}\`.`);
+    lines.push(`This PR appears to be created by \`${escapeMarkdownInline(options.actor)}\`.`);
     lines.push("");
   }
   lines.push(`Risk level: ${decision.riskLevel}  `);
@@ -33740,13 +33751,15 @@ function renderRequiresApproval(decision, options) {
     lines.push("Matched rules:");
     lines.push("");
     decision.matchedRules.forEach((mr, idx) => {
-      lines.push(`${idx + 1}. \`${mr.name}\``);
+      lines.push(`${idx + 1}. \`${escapeMarkdownInline(mr.name)}\``);
       const fileConditions = (mr.matchedConditions ?? []).filter((c) => c.startsWith("files:"));
       const matchedFiles = mr.matchedFiles ?? fileConditions.flatMap((c) => c.replace("files: ", "").split(", "));
       if (matchedFiles.length > 0) {
-        lines.push(`   - matched files: ${matchedFiles.map((f) => `\`${f}\``).join(", ")}`);
+        lines.push(
+          `   - matched files: ${matchedFiles.map((f) => `\`${escapeMarkdownInline(f)}\``).join(", ")}`
+        );
       }
-      lines.push(`   - reason: ${mr.reason}`);
+      lines.push(`   - reason: ${escapeMarkdownInline(mr.reason)}`);
       lines.push("");
     });
   }
@@ -33754,7 +33767,7 @@ function renderRequiresApproval(decision, options) {
     lines.push("Required reviewers:");
     lines.push("");
     for (const reviewer of decision.requiredReviewers) {
-      lines.push(`- ${reviewer}`);
+      lines.push(`- ${escapeMarkdownInline(reviewer)}`);
     }
     lines.push("");
   }
@@ -33762,20 +33775,20 @@ function renderRequiresApproval(decision, options) {
     lines.push("Suggested labels:");
     lines.push("");
     for (const label of decision.labelsToApply) {
-      lines.push(`- ${label}`);
+      lines.push(`- ${escapeMarkdownInline(label)}`);
     }
     lines.push("");
   }
   if (decision.explanation) {
     lines.push("Decision:");
     lines.push("");
-    lines.push(decision.explanation);
+    lines.push(escapeMarkdownBlock(decision.explanation));
   }
   return lines.join("\n");
 }
 function renderBlocked(decision, options) {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(", ");
+    const ruleNames = decision.matchedRules.map((r) => `\`${escapeMarkdownInline(r.name)}\``).join(", ");
     return `AGENTOWNERS: blocked${ruleNames ? ` \u2014 ${ruleNames}` : ""}`;
   }
   const lines = [];
@@ -33789,7 +33802,7 @@ function renderBlocked(decision, options) {
     lines.push("Matched rule:");
     lines.push("");
     for (const mr of rulesToShow) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- \`${escapeMarkdownInline(mr.name)}\``);
     }
     lines.push("");
   }
@@ -33797,7 +33810,7 @@ function renderBlocked(decision, options) {
   if (firstRule) {
     lines.push("Reason:");
     lines.push("");
-    lines.push(firstRule.reason);
+    lines.push(escapeMarkdownBlock(firstRule.reason));
     lines.push("");
   }
   lines.push("Recommended next step:");

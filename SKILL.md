@@ -47,7 +47,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 21. When changing CLI audit rendering, validate saved decision shapes and strip
    terminal control sequences before printing untrusted text, including agent
    names and signals from `fingerprint`; keep JSON/SARIF machine output
-   structured.
+   structured. Core Markdown verdicts must escape untrusted interpolated text;
+   audit JSON remains structured.
 22. In the pull request, disclose agent use, overlap, exact evidence, risks,
    attribution, and rollback.
 

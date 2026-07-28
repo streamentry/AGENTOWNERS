@@ -20,6 +20,8 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 The evaluator specification must state that action-scoped allow rules cannot
 drop unlisted detected actions, while block and approval rules may match any
 listed action.
+The verdict-renderer specification must keep human-readable Markdown escaped
+while leaving audit JSON structured.
 
 ## Diagrams
 
