@@ -31,7 +31,8 @@ validator and verified for drift in CI.
 
 Portable policy suites use `parsePolicyFixtureSuite()` and
 `runPolicyFixtureSuite()`. They exercise detection, classification, inference,
-and evaluation without Git, GitHub, network access, or hidden state.
+diff-content secret scanning, and evaluation without Git, GitHub, network
+access, or hidden state.
 
 For a concise event adapter, use `evaluatePolicyFromEvent()`; it performs file
 classification and action inference before evaluating the policy:

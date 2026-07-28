@@ -82,6 +82,8 @@ semantic versioning.
   that could accidentally match every normal event.
 - Action inference now derives omitted file classifications through the
   canonical classifier and detects secret patterns supplied in diff content.
+- Portable policy fixtures can now exercise pull-request diff-content secret
+  scanning without exposing matched values in results.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 

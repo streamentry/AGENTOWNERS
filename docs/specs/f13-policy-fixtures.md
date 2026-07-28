@@ -66,13 +66,14 @@ Optional:
 - `issue_title`
 - `issue_body`
 - `review_state`
+- `diff_content`
 - `diff_lines_count`
 - `commits_count`
 
 `review_state` is valid only for `pull_request_review.submitted`.
 `changed_files` is valid only for pull-request and pull-request-review events.
 Non-empty `commit_messages`, `commit_emails`, `commit_names`,
-`diff_lines_count`, and `commits_count` are valid
+`diff_content`, `diff_lines_count`, and `commits_count` are valid
 only for pull-request and pull-request-review events. `pr_title` and `pr_body`
 are valid for pull-request, pull-request-review, and issue-comment events
 because an issue comment can target a pull request. `issue_title` and
@@ -103,15 +104,18 @@ does not affect the result, but duplicate values are invalid.
 Every case uses the same public production functions:
 
 1. validate the suite;
-2. classify changed files;
+2. classify changed files and scan supplied diff content for secret patterns;
 3. detect the agent;
-4. infer actions from the event;
+4. infer actions from the event and diff content;
 5. evaluate policy;
 6. compare requested expectations;
 7. emit all assertion failures in stable field order.
 
 Fixtures cannot inject inferred actions or precomputed classification. This
 prevents a suite from bypassing the behavior it claims to test.
+`diff_content` is passed through the same redacted secret-pattern detector used
+by the GitHub Action. Fixture results expose only the inferred `touch_secrets`
+action and decision; they never expose matched secret values.
 
 ## Exit Codes
 

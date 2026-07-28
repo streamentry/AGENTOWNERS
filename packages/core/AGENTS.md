@@ -109,6 +109,10 @@ not a second path-pattern implementation. The same changed paths must produce
 the same file actions whether classification is supplied or derived. If diff
 content is supplied, secret-pattern matches must add `touch_secrets` without
 returning the matched value.
+Portable fixture suites may include `diff_content` only for pull-request
+events. The runner must combine its redacted secret scan with file
+classification before inference and evaluation, so fixture behavior matches
+the GitHub Action boundary.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 Threshold conditions `diff_lines_over` and `commits_over` must remain

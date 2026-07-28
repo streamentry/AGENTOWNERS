@@ -34139,6 +34139,7 @@ var fixtureInputSchema = external_exports.object({
   issue_title: external_exports.string().optional(),
   issue_body: external_exports.string().optional(),
   review_state: external_exports.enum(["APPROVED", "CHANGES_REQUESTED", "COMMENTED"]).optional(),
+  diff_content: external_exports.string().optional(),
   diff_lines_count: external_exports.number().int().nonnegative().optional(),
   commits_count: external_exports.number().int().nonnegative().optional()
 }).strict().superRefine((input, context3) => {
@@ -34181,6 +34182,13 @@ var fixtureInputSchema = external_exports.object({
         message: `${field} requires a pull request event`
       });
     }
+  }
+  if (!isPullRequestEvent && input.diff_content !== void 0) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: ["diff_content"],
+      message: "diff_content requires a pull request event"
+    });
   }
   const hasPullRequestMetadata = isPullRequestEvent || input.event.startsWith("issue_comment.");
   for (const field of ["pr_title", "pr_body"]) {

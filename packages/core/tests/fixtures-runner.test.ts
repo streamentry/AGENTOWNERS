@@ -196,6 +196,17 @@ describe('parsePolicyFixtureSuite', () => {
     },
   );
 
+  it('rejects diff_content outside pull request events', () => {
+    const suite = validSuite();
+    suite.cases[0]!.input.event = 'issue_comment.created';
+    suite.cases[0]!.input.changed_files = [];
+    Object.assign(suite.cases[0]!.input, { diff_content: 'OPENAI_API_KEY=example' });
+
+    expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+      'diff_content requires a pull request event',
+    );
+  });
+
   it('rejects commit messages outside pull request events', () => {
     const suite = validSuite();
     suite.cases[0]!.input.event = 'issues.opened';
@@ -403,6 +414,45 @@ describe('runPolicyFixtureSuite', () => {
     });
 
     expect(runPolicyFixtureSuite(policy, suite).passed).toBe(true);
+  });
+
+  it('routes diff-content secret matches through the redacted production path', () => {
+    const secretPolicy = parsePolicy({
+      version: 1,
+      defaults: { unknown_agent: 'require_approval', secrets: 'block' },
+    });
+    const suite = parsePolicyFixtureSuite({
+      version: 1,
+      cases: [
+        {
+          name: 'secret content is blocked',
+          input: {
+            event: 'pull_request.opened',
+            actor: 'untrusted-human',
+            changed_files: ['src/index.ts'],
+            diff_content: 'const key = OPENAI_API_KEY=example;',
+          },
+          expect: {
+            decision: 'block',
+            detected_actions: ['open_pr', 'touch_secrets'],
+            risk_level: 'critical',
+            risk_score: 100,
+          },
+        },
+      ],
+    });
+
+    const result = runPolicyFixtureSuite(secretPolicy, suite);
+
+    expect(JSON.stringify(result)).not.toContain('OPENAI_API_KEY');
+    expect(JSON.stringify(result)).not.toContain('example');
+    expect(result).toEqual({
+      passed: true,
+      total: 1,
+      passedCount: 1,
+      failedCount: 0,
+      cases: [{ name: 'secret content is blocked', passed: true, failures: [] }],
+    });
   });
 
   it('evaluates issue-only rule fields on compatible issue events', () => {

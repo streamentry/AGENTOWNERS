@@ -27,6 +27,8 @@ inputs as nonnegative; negative thresholds are rejected by the runtime schema.
 The action-inference specification must keep omitted classification and
 canonical preclassification behavior equivalent, including diff-content secret
 signals that never expose matched values.
+The portable-fixture specification must keep `diff_content` restricted to
+pull-request events and route it through the same redacted scan as the Action.
 
 ## Diagrams
 
