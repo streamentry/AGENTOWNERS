@@ -2,6 +2,7 @@ import * as path from 'path';
 import { Command } from 'commander';
 import {
   classifyFiles,
+  detectSecretPatterns,
   detectAgent,
   evaluatePolicy,
   inferActions,
@@ -9,7 +10,13 @@ import {
   type AgentOwnersPolicy,
   type Decision,
 } from '@agent-owners/core';
-import { getChangedFiles, getCommitEmails, getCommitMessages, getCommitNames } from '../git.js';
+import {
+  getChangedFiles,
+  getCommitEmails,
+  getCommitMessages,
+  getCommitNames,
+  getDiffContent,
+} from '../git.js';
 
 type SelfCheckOptions = {
   policy?: string;
@@ -142,6 +149,7 @@ function loadGitRange(
   cwd: string,
 ): {
   changedFiles: string[];
+  diffContent: string;
   commitMessages: string[];
   commitEmails: string[];
   commitNames: string[];
@@ -149,6 +157,7 @@ function loadGitRange(
   try {
     return {
       changedFiles: getChangedFiles(options.base, options.head, cwd),
+      diffContent: getDiffContent(options.base, options.head, cwd),
       commitMessages: getCommitMessages(options.base, options.head, cwd),
       commitEmails: getCommitEmails(options.base, options.head, cwd),
       commitNames: getCommitNames(options.base, options.head, cwd),
@@ -163,14 +172,21 @@ function evaluateSelfCheck(
   options: ResolvedOptions,
   policy: AgentOwnersPolicy,
   changedFiles: string[],
+  diffContent: string,
   commitMessages: string[],
   commitEmails: string[],
   commitNames: string[],
 ): Decision {
-  const filesClassification = classifyFiles(changedFiles);
+  const baseClassification = classifyFiles(changedFiles);
+  const filesClassification = {
+    ...baseClassification,
+    secretFilesDetected:
+      baseClassification.secretFilesDetected || detectSecretPatterns(diffContent).length > 0,
+  };
   const detectedActions = inferActions({
     eventType: 'pull_request.opened',
     changedFiles,
+    diffContent,
   });
   const agentDetection = detectAgent({
     actor: options.actor,
@@ -224,6 +240,7 @@ async function runSelfCheck(rawOptions: SelfCheckOptions): Promise<void> {
       options,
       policy,
       gitRange.changedFiles,
+      gitRange.diffContent,
       gitRange.commitMessages,
       gitRange.commitEmails,
       gitRange.commitNames,

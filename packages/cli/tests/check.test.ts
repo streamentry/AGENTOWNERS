@@ -7,7 +7,7 @@ import {
   renderVerdict,
   type Decision,
 } from '@agent-owners/core';
-import { getChangedFiles, getCommitMessages } from '../src/git.js';
+import { getChangedFiles, getCommitMessages, getDiffContent } from '../src/git.js';
 import { registerCheck } from '../src/commands/check.js';
 
 vi.mock('@agent-owners/core', async () => {
@@ -23,6 +23,7 @@ vi.mock('@agent-owners/core', async () => {
 
 vi.mock('../src/git.js', () => ({
   getChangedFiles: vi.fn(),
+  getDiffContent: vi.fn(() => ''),
   getCommitEmails: vi.fn(() => []),
   getCommitMessages: vi.fn(),
   getCommitNames: vi.fn(() => []),
@@ -66,6 +67,7 @@ describe('check command SARIF output', () => {
     vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
     vi.mocked(loadPolicyFile).mockResolvedValue({ version: 1 });
     vi.mocked(getChangedFiles).mockReturnValue(['src/index.ts']);
+    vi.mocked(getDiffContent).mockReturnValue('');
     vi.mocked(getCommitMessages).mockReturnValue(['feat: change']);
     vi.mocked(evaluatePolicy).mockReturnValue(approval);
   });
@@ -98,6 +100,19 @@ describe('check command SARIF output', () => {
 
     expect(stdout).toBe('unsafe\nForged line\n');
     expect(stdout).not.toContain('\u001b[31m');
+  });
+
+  it('carries diff-content secret evidence into local evaluation', async () => {
+    vi.mocked(getDiffContent).mockReturnValue('+OPENAI_API_KEY=example');
+
+    await program().parseAsync(['node', 'agentowners', 'check', '--actor', 'agent']);
+
+    const evaluationInput = vi.mocked(evaluatePolicy).mock.calls.at(-1)?.[0] as {
+      detectedActions: string[];
+      filesClassification: { secretFilesDetected: boolean };
+    };
+    expect(evaluationInput.detectedActions).toContain('touch_secrets');
+    expect(evaluationInput.filesClassification.secretFilesDetected).toBe(true);
   });
 
   it('fails loudly for an unsupported output format before reading Git', async () => {

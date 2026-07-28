@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'child_process';
 import {
   getChangedFiles,
+  getDiffContent,
   getCommitEmails,
   getCommitMessages,
   getCommitNames,
@@ -38,6 +39,26 @@ describe('git helpers', () => {
       'git',
       ['log', '--format=%s%n%b', '--end-of-options', 'main..HEAD'],
       expect.any(Object),
+    );
+  });
+
+  it('reads a bounded diff without external diff drivers or shell interpretation', () => {
+    vi.mocked(execFileSync).mockReturnValue('+OPENAI_API_KEY=example\n');
+
+    expect(getDiffContent('main', 'HEAD', '/repo')).toBe('+OPENAI_API_KEY=example');
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'diff',
+        '--no-ext-diff',
+        '--no-textconv',
+        '--unified=0',
+        '--end-of-options',
+        'main',
+        'HEAD',
+        '--',
+      ],
+      expect.objectContaining({ cwd: '/repo' }),
     );
   });
 

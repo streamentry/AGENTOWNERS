@@ -73,6 +73,12 @@ Git refs are passed directly to Git as arguments, never interpolated into a
 shell command. Invalid refs fail closed instead of producing an empty,
 potentially misleading decision.
 
+`check` and `self-check` also read a zero-context patch with external diff
+drivers and text conversion disabled. The patch is scanned for secret patterns
+using the same redacted detector as the GitHub Action; only the
+`touch_secrets` action and resulting decision are exposed, never matched
+values.
+
 `self-check` emits a versioned JSON contract and distinct exit codes for allow
 (`0`), approval (`10`), block (`20`), invalid input (`64`), invalid policy
 (`65`), invalid Git range (`66`), and internal failure (`70`). See the

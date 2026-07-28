@@ -26,6 +26,9 @@ node packages/cli/dist/index.js self-check \
 Then run `pnpm verify` for the repository-wide gate. If the self-check returns
 `10`, open the pull request but do not merge it without human approval. A
 return code of `20` means revise the change before requesting review.
+The self-check reads the same bounded, zero-context diff-content secret scan as
+the Action, so a clean local result does not bypass content-based secret
+detection.
 
 Exit `0` may proceed, exit `10` requires human approval, and exit `20` requires
 revising the change. Input and environment failures use exits `64` through

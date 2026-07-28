@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
 import { evaluatePolicy, loadPolicyFile, type Decision } from '@agent-owners/core';
-import { getChangedFiles, getCommitMessages } from '../src/git.js';
+import { getChangedFiles, getCommitMessages, getDiffContent } from '../src/git.js';
 import { registerSelfCheck } from '../src/commands/self-check.js';
 
 vi.mock('@agent-owners/core', async () => {
@@ -15,6 +15,7 @@ vi.mock('@agent-owners/core', async () => {
 
 vi.mock('../src/git.js', () => ({
   getChangedFiles: vi.fn(),
+  getDiffContent: vi.fn(() => ''),
   getCommitEmails: vi.fn(() => []),
   getCommitMessages: vi.fn(),
   getCommitNames: vi.fn(() => []),
@@ -75,6 +76,7 @@ describe('self-check command', () => {
     });
     vi.mocked(loadPolicyFile).mockResolvedValue({ version: 1 });
     vi.mocked(getChangedFiles).mockReturnValue(['packages/core/src/schema.ts']);
+    vi.mocked(getDiffContent).mockReturnValue('');
     vi.mocked(getCommitMessages).mockReturnValue(['feat: update schema']);
   });
 
@@ -121,6 +123,20 @@ describe('self-check command', () => {
     });
     expect(output.blockedActions).toEqual(effect === 'block' ? ['modify_tests'] : []);
     expect(stderr).toBe('');
+  });
+
+  it('carries diff-content secret evidence into the pre-PR contract', async () => {
+    vi.mocked(getDiffContent).mockReturnValue('+OPENAI_API_KEY=example');
+    vi.mocked(evaluatePolicy).mockReturnValue(makeDecision('block'));
+
+    await makeProgram().parseAsync(['node', 'agentowners', 'self-check', ...requiredArguments]);
+
+    const evaluationInput = vi.mocked(evaluatePolicy).mock.calls.at(-1)?.[0] as {
+      detectedActions: string[];
+      filesClassification: { secretFilesDetected: boolean };
+    };
+    expect(evaluationInput.detectedActions).toContain('touch_secrets');
+    expect(evaluationInput.filesClassification.secretFilesDetected).toBe(true);
   });
 
   it('fails with 64 when a mandatory input is missing', async () => {

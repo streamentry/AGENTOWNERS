@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import {
   loadPolicyFile,
   classifyFiles,
+  detectSecretPatterns,
   inferActions,
   detectAgent,
   evaluatePolicy,
@@ -13,6 +14,7 @@ import {
 } from '@agent-owners/core';
 import {
   getChangedFiles,
+  getDiffContent,
   getCommitEmails,
   getCommitMessages,
   getCommitNames,
@@ -31,6 +33,7 @@ type CheckOptions = {
 
 type GitInputs = {
   changedFiles: string[];
+  diffContent: string;
   commitMessages: string[];
   commitEmails: string[];
   commitNames: string[];
@@ -68,6 +71,7 @@ function readGit(options: CheckOptions): GitInputs | undefined {
   try {
     return {
       changedFiles: getChangedFiles(options.base, options.head, process.cwd()),
+      diffContent: getDiffContent(options.base, options.head, process.cwd()),
       commitMessages: getCommitMessages(options.base, options.head, process.cwd()),
       commitEmails: getCommitEmails(options.base, options.head, process.cwd()),
       commitNames: getCommitNames(options.base, options.head, process.cwd()),
@@ -81,10 +85,16 @@ function readGit(options: CheckOptions): GitInputs | undefined {
 }
 
 function evaluate(policy: AgentOwnersPolicy, inputs: GitInputs, actor: string): Decision {
-  const filesClassification = classifyFiles(inputs.changedFiles);
+  const baseClassification = classifyFiles(inputs.changedFiles);
+  const filesClassification = {
+    ...baseClassification,
+    secretFilesDetected:
+      baseClassification.secretFilesDetected || detectSecretPatterns(inputs.diffContent).length > 0,
+  };
   const detectedActions = inferActions({
     eventType: 'pull_request.opened',
     changedFiles: inputs.changedFiles,
+    diffContent: inputs.diffContent,
   });
   const agentDetection = detectAgent({
     actor,

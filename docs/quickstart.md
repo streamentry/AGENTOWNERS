@@ -84,6 +84,11 @@ upload. Use `--mode enforcement` only when a blocked decision should return a
 nonzero status. Advisory mode is the safer first deployment because it exposes
 the verdict before it changes merge behavior.
 
+The local check reads a zero-context Git patch with external diff drivers and
+text conversion disabled. It scans that patch for secret patterns using the
+same redacted boundary as the GitHub Action; matched values never appear in
+the verdict.
+
 For an agent’s pre-PR contract, use explicit inputs and preserve the exit
 boundary:
 

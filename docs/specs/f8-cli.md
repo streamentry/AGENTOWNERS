@@ -69,9 +69,11 @@ Options:
 Behavior:
 
 1. Load policy
-2. Get changed files via `git diff --name-only <base> <head>`
-3. Classify files
-4. Infer actions
+2. Get changed files and a bounded patch through shell-free Git argv calls.
+   The patch disables external diff drivers and text conversion, uses zero
+   context, and keeps refs after `--end-of-options`.
+3. Classify files and scan patch content with the redacted secret detector
+4. Infer actions, including `touch_secrets` for matching diff content
 5. Detect agent (from actor flag + git log)
 6. Evaluate policy
 7. Render verdict
@@ -79,6 +81,9 @@ Behavior:
 SARIF output follows `f12-sarif-output.md`. Unsupported output formats and
 modes exit `64` before reading Git. Human-readable verdict output strips
 terminal control sequences; JSON and SARIF remain structured machine output.
+Secret values are never printed. `self-check` uses the same local diff-content
+scan, so an agent's pre-PR result cannot be weaker than `check` for the same
+Git range.
 
 Exit codes:
 

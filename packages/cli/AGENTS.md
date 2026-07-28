@@ -9,7 +9,7 @@ from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
-- `src/git.ts`: bounded Git subprocess adapter for files, messages, and commit authors
+- `src/git.ts`: bounded Git subprocess adapter for files, zero-context diff content, messages, and commit authors
 - `src/commands/init.ts`: profile installation
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
@@ -123,3 +123,7 @@ fail nonzero instead of crashing or spoofing the terminal. JSON and SARIF
 output must remain structured and unsanitized.
 Unknown output formats must fail before reading Git. Commit author metadata is
 read with the same `--end-of-options` boundary as commit messages.
+The `check` and `self-check` adapters must read diff content with external diff
+drivers and text conversion disabled, then combine the redacted secret scan with
+canonical file classification before inference and evaluation. Their local
+secret boundary must remain equivalent; matched values must never reach output.
