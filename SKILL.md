@@ -33,7 +33,10 @@ description: Implement or review deterministic AI-agent governance changes in AG
 17. For release-facing changes, run `pnpm verify:packages`.
 18. For documentation-only changes, run `pnpm verify:docs` and use the pull
    request template's focused-evidence fields.
-19. In the pull request, disclose agent use, overlap, exact evidence, risks,
+19. When agent detection uses commit metadata, labels, titles, or bodies, keep
+   `identityTrust: unverified` separate from `confirmed` detection confidence;
+   unverified evidence must not grant privileged allow decisions.
+20. In the pull request, disclose agent use, overlap, exact evidence, risks,
    attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

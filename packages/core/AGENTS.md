@@ -87,6 +87,11 @@ sequenceDiagram
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`. Configured
 actor, commit-author, and label matches must have focused detection or fixture
 coverage; a schema field that the detector ignores is a policy safety defect.
+Actor and known-bot matches are `identityTrust: verified`. Commit-author,
+label, title, and body matches remain detection evidence but are
+`identityTrust: unverified`; they must never grant an agent-specific allow
+decision or the `known_agent` default. Missing trust from a legacy adapter is
+also treated as unverified at the evaluator boundary.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.

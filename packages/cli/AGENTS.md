@@ -98,5 +98,8 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
+The fingerprint command must expose `identityTrust` separately from detection
+confidence so spoofable commit metadata and labels are not presented as
+authenticated agent identity.
 Unknown output formats must fail before reading Git. Commit author metadata is
 read with the same `--end-of-options` boundary as commit messages.

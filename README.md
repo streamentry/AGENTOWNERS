@@ -377,8 +377,10 @@ AGENTOWNERS infers these actions from GitHub events and changed files:
 
 AGENTOWNERS detects AI agents from:
 
-1. **Policy config:** explicit actor, commit-author, or label mapping (`confirmed`)
-2. **Known bots:** `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]` (`confirmed`)
+1. **Policy config:** explicit mappings (`confirmed` detection); actor matches
+   are `verified`, while commit-author, label, title, and body matches are
+   `unverified` metadata
+2. **Known bots:** `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]` (`confirmed`, verified actor)
 3. **Commit signatures:** `Co-Authored-By: Claude`, `Generated with`, `🤖`, `Claude Code` (`likely`)
 4. **PR body markers:** tool-specific footers (`likely`)
 5. **Labels:** `ai-generated`, `agent`, `claude`, `copilot` (`possible`)

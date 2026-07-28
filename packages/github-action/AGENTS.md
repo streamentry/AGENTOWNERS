@@ -55,4 +55,6 @@ sequenceDiagram
 
 Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 `pnpm verify:release`. Pull-request commit-author fields must remain paginated
-and distinct from issue/comment metadata.
+and distinct from issue/comment metadata. Pass the core detector's
+`identityTrust` into audit output so reviewers can distinguish authenticated
+actors from spoofable commit, label, title, and body evidence.

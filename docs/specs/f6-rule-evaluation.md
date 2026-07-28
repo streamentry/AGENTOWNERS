@@ -107,6 +107,7 @@ infra_path_changed: +40
 permissions_changed: +60
 secrets_pattern_detected: +80
 agent_unknown_confidence: +20
+agent_unverified_identity: +20
 agent_confirmed: +0
 blocked_action_detected: +100
 ```

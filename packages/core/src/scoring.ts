@@ -1,6 +1,11 @@
 // Risk scoring — spec section 14
 
-import type { AgentAction, AgentDetectionConfidence, RiskLevel } from './types.js';
+import type {
+  AgentAction,
+  AgentDetectionConfidence,
+  AgentIdentityTrust,
+  RiskLevel,
+} from './types.js';
 import type { FilesClassification } from './classifier.js';
 
 export type RiskScoringInput = {
@@ -8,10 +13,17 @@ export type RiskScoringInput = {
   diffLinesCount?: number;
   detectedActions: AgentAction[];
   agentConfidence: AgentDetectionConfidence;
+  agentIdentityTrust?: AgentIdentityTrust;
 };
 
 export function computeRiskScore(input: RiskScoringInput): { score: number; level: RiskLevel } {
-  const { filesClassification, diffLinesCount, detectedActions, agentConfidence } = input;
+  const {
+    filesClassification,
+    diffLinesCount,
+    detectedActions,
+    agentConfidence,
+    agentIdentityTrust,
+  } = input;
   let score = 0;
 
   // File-based scoring
@@ -56,7 +68,7 @@ export function computeRiskScore(input: RiskScoringInput): { score: number; leve
   }
 
   // Agent confidence
-  if (agentConfidence !== 'confirmed') {
+  if (agentConfidence !== 'confirmed' || agentIdentityTrust === 'unverified') {
     score += 20;
   }
   // agent_confirmed: +0

@@ -33358,29 +33358,26 @@ var AGENT_COMMIT_SIGNATURES = [
   "Cursor"
 ];
 var AGENT_LABELS = ["ai-generated", "agent", "copilot", "codex", "claude"];
-var PR_BODY_MARKERS = [
-  "\u{1F916} Generated with",
-  "<!-- agentowners"
-];
+var PR_BODY_MARKERS = ["\u{1F916} Generated with", "<!-- agentowners"];
 var BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
 function isKnownBotActor(actor) {
   return KNOWN_BOT_ACTORS.includes(actor);
 }
-function findPolicyAgent(input, policy) {
+function findPolicyAgent(input, policy, mode = "any") {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
     const match = agentPolicy.match;
-    if (match.actors?.includes(input.actor)) {
-      return { name, signal: "actors" };
+    if (mode !== "metadata" && match.actors?.includes(input.actor)) {
+      return { name, signal: "actors", identityTrust: "verified" };
     }
-    if (match.commitEmails?.some((email) => input.commitEmails?.includes(email))) {
-      return { name, signal: "commitEmails" };
+    if (mode !== "actor" && match.commitEmails?.some((email) => input.commitEmails?.includes(email))) {
+      return { name, signal: "commitEmails", identityTrust: "unverified" };
     }
-    if (match.commitNames?.some((commitName) => input.commitNames?.includes(commitName))) {
-      return { name, signal: "commitNames" };
+    if (mode !== "actor" && match.commitNames?.some((commitName) => input.commitNames?.includes(commitName))) {
+      return { name, signal: "commitNames", identityTrust: "unverified" };
     }
-    if (match.labels?.some((label) => input.labels?.includes(label))) {
-      return { name, signal: "labels" };
+    if (mode !== "actor" && match.labels?.some((label) => input.labels?.includes(label))) {
+      return { name, signal: "labels", identityTrust: "unverified" };
     }
   }
   return null;
@@ -33411,13 +33408,39 @@ function detectAgent(input) {
     (value) => value !== void 0
   );
   if (policy) {
-    const policyMatch = findPolicyAgent(
+    const actorPolicyMatch = findPolicyAgent({ actor }, policy, "actor");
+    if (actorPolicyMatch) {
+      signals.push(
+        `policy match: agents.${actorPolicyMatch.name}.match.${actorPolicyMatch.signal}`
+      );
+      return {
+        agentName: actorPolicyMatch.name,
+        confidence: "confirmed",
+        signals,
+        identityTrust: actorPolicyMatch.identityTrust
+      };
+    }
+  }
+  if (isKnownBotActor(actor)) {
+    signals.push(`known bot actor: ${actor}`);
+    return { confidence: "confirmed", signals, identityTrust: "verified" };
+  }
+  if (policy) {
+    const metadataPolicyMatch = findPolicyAgent(
       { actor, commitEmails, commitNames, labels },
-      policy
+      policy,
+      "metadata"
     );
-    if (policyMatch) {
-      signals.push(`policy match: agents.${policyMatch.name}.match.${policyMatch.signal}`);
-      return { agentName: policyMatch.name, confidence: "confirmed", signals };
+    if (metadataPolicyMatch) {
+      signals.push(
+        `policy match: agents.${metadataPolicyMatch.name}.match.${metadataPolicyMatch.signal}`
+      );
+      return {
+        agentName: metadataPolicyMatch.name,
+        confidence: "confirmed",
+        signals,
+        identityTrust: metadataPolicyMatch.identityTrust
+      };
     }
     if (policy.agents) {
       for (const [name, agentPolicy] of Object.entries(policy.agents)) {
@@ -33426,21 +33449,27 @@ function detectAgent(input) {
         for (const pattern of bodyPatterns) {
           if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
             signals.push(`policy body pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
+            return {
+              agentName: name,
+              confidence: "confirmed",
+              signals,
+              identityTrust: "unverified"
+            };
           }
         }
         for (const pattern of titlePatterns) {
           if (matchesConfiguredPattern(prTitle, pattern)) {
             signals.push(`policy title pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
+            return {
+              agentName: name,
+              confidence: "confirmed",
+              signals,
+              identityTrust: "unverified"
+            };
           }
         }
       }
     }
-  }
-  if (isKnownBotActor(actor)) {
-    signals.push(`known bot actor: ${actor}`);
-    return { confidence: "confirmed", signals };
   }
   const allText = [...commitMessages, ...bodyTexts].join("\n");
   for (const sig of AGENT_COMMIT_SIGNATURES) {
@@ -33457,16 +33486,16 @@ function detectAgent(input) {
     signals.push("body co-author [bot] pattern");
   }
   if (signals.length > 0) {
-    return { confidence: "likely", signals };
+    return { confidence: "likely", signals, identityTrust: "unverified" };
   }
   const matchedLabels = labels.filter((l) => AGENT_LABELS.includes(l));
   if (matchedLabels.length > 0) {
     for (const label of matchedLabels) {
       signals.push(`label: "${label}"`);
     }
-    return { confidence: "possible", signals };
+    return { confidence: "possible", signals, identityTrust: "unverified" };
   }
-  return { confidence: "unknown", signals };
+  return { confidence: "unknown", signals, identityTrust: "unverified" };
 }
 var DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
 var TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
@@ -33589,7 +33618,13 @@ function inferActions(input) {
   return Array.from(actions);
 }
 function computeRiskScore(input) {
-  const { filesClassification, diffLinesCount, detectedActions, agentConfidence } = input;
+  const {
+    filesClassification,
+    diffLinesCount,
+    detectedActions,
+    agentConfidence,
+    agentIdentityTrust
+  } = input;
   let score = 0;
   if (filesClassification.docsOnly) {
     score += 5;
@@ -33624,7 +33659,7 @@ function computeRiskScore(input) {
       score += 30;
     }
   }
-  if (agentConfidence !== "confirmed") {
+  if (agentConfidence !== "confirmed" || agentIdentityTrust === "unverified") {
     score += 20;
   }
   const blockedActions = [
@@ -33793,6 +33828,7 @@ function renderAuditJson(context3) {
     actor,
     matchedAgent: agentDetection.matchedAgent ?? decision.matchedAgent,
     confidence: agentDetection.confidence,
+    identityTrust: agentDetection.identityTrust ?? "unverified",
     decision: decision.effect,
     riskScore: decision.riskScore,
     riskLevel: decision.riskLevel,
@@ -33837,6 +33873,7 @@ function evaluateRule(rule, input) {
   if (when.agents !== void 0) {
     const agentName = agentDetection.agentName ?? "unknown";
     if (!when.agents.includes(agentName)) return null;
+    if (agentDetection.identityTrust !== "verified" && rule.effect === "allow") return null;
     matchedConditions.push("agents");
   }
   if (when.actors !== void 0) {
@@ -33944,7 +33981,7 @@ function evaluateAgentActions(input) {
   const approval = input.detectedActions.filter(
     (action) => agentPolicy.requires_approval?.includes(action)
   );
-  const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
+  const allowed = input.agentDetection.identityTrust !== "verified" ? [] : input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
   const effect = blocked.length > 0 ? "block" : approval.length > 0 ? "require_approval" : allowed.length === input.detectedActions.length ? "allow" : null;
   if (effect === null) return null;
   const matchedActions = effect === "block" ? blocked : effect === "require_approval" ? approval : allowed;
@@ -33967,7 +34004,7 @@ function computeDefaultEffect(input) {
   if (filesClassification.docsOnly) {
     return defaults2?.docs_only ?? "allow";
   }
-  if (agentDetection.confidence !== "confirmed") {
+  if (agentDetection.confidence !== "confirmed" || agentDetection.identityTrust !== "verified") {
     return defaults2?.unknown_agent ?? "require_approval";
   }
   return defaults2?.known_agent ?? "require_approval";
@@ -34005,7 +34042,8 @@ function evaluatePolicy(input) {
     filesClassification,
     diffLinesCount,
     detectedActions,
-    agentConfidence: agentDetection.confidence
+    agentConfidence: agentDetection.confidence,
+    agentIdentityTrust: agentDetection.identityTrust
   });
   ruleLabelSet.add("ai-agent");
   ruleLabelSet.add(`risk-${level}`);
@@ -34569,7 +34607,8 @@ async function run() {
       event: eventName,
       agentDetection: {
         matchedAgent: agentDetection.agentName,
-        confidence: agentDetection.confidence
+        confidence: agentDetection.confidence,
+        identityTrust: agentDetection.identityTrust
       },
       decision,
       changedFiles

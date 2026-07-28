@@ -107,6 +107,7 @@ export type AuditRecord = {
   actor: string;
   matchedAgent?: string;
   confidence: AgentDetectionConfidence;
+  identityTrust?: "verified" | "unverified";
   decision: Decision['effect'];
   riskScore: number;
   riskLevel: string;

@@ -388,6 +388,8 @@ Detection levels:
 
 ```ts
 export type AgentDetectionConfidence = 'confirmed' | 'likely' | 'possible' | 'unknown';
+
+export type AgentIdentityTrust = 'verified' | 'unverified';
 ```
 
 Detection signals:
@@ -436,7 +438,10 @@ Detection signals:
 
    - policy maps an actor, commit author, or label to an agent name
 
-Important: Do not claim certainty unless the actor is explicitly configured or known.
+Important: `confirmed` describes detection confidence, not authentication.
+Only an explicitly configured actor or known bot has `identityTrust: "verified"`.
+Commit authors, labels, titles, and bodies are attacker-controlled metadata;
+they are `"unverified"` and cannot grant privileged agent actions.
 
 ## 13. Action detection
 
@@ -534,6 +539,7 @@ infra_path_changed: +40
 permissions_changed: +60
 secrets_pattern_detected: +80
 agent_unknown_confidence: +20
+agent_unverified_identity: +20
 agent_confirmed: +0
 blocked_action_detected: +100
 ```

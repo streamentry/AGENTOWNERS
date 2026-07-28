@@ -1,5 +1,38 @@
 [
   {
+    "id": "spoofed-commit-author-cannot-use-agent-allowlist",
+    "invariant": "A forged commit email may identify configured automation but cannot use its allowlist or known-agent default.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "automation": {
+          "match": {
+            "commitEmails": ["automation@example.test"]
+          },
+          "allowed": ["open_pr"]
+        }
+      },
+      "defaults": {
+        "unknown_agent": "block",
+        "known_agent": "allow"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "untrusted-human",
+      "commitEmails": ["automation@example.test"],
+      "changedFiles": ["src/index.ts"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 20,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
     "id": "self-asserted-agent-marker-remains-unknown",
     "invariant": "An untrusted pull request body marker cannot escape the unknown-agent default.",
     "outcome": "decision",

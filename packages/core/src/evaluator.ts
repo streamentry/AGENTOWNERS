@@ -65,6 +65,9 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   if (when.agents !== undefined) {
     const agentName = agentDetection.agentName ?? 'unknown';
     if (!when.agents.includes(agentName)) return null;
+    // A rule may still block or require review for a metadata match, but a
+    // spoofable identity must never satisfy an explicit allow rule.
+    if (agentDetection.identityTrust !== 'verified' && rule.effect === 'allow') return null;
     matchedConditions.push('agents');
   }
 
@@ -200,7 +203,10 @@ function evaluateAgentActions(input: EvaluationInput): MatchedRule | null {
   const approval = input.detectedActions.filter((action) =>
     agentPolicy.requires_approval?.includes(action),
   );
-  const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
+  const allowed =
+    input.agentDetection.identityTrust !== 'verified'
+      ? []
+      : input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
 
   const effect =
     blocked.length > 0
@@ -242,8 +248,10 @@ function computeDefaultEffect(input: EvaluationInput): 'allow' | 'require_approv
     return defaults?.docs_only ?? 'allow';
   }
 
-  // Only non-spoofable confirmation may use the known-agent default.
-  if (agentDetection.confidence !== 'confirmed') {
+  // Only a verified identity may use the known-agent default. A policy match
+  // from commit metadata, labels, titles, or bodies remains confirmed
+  // detection, but it is not authentication.
+  if (agentDetection.confidence !== 'confirmed' || agentDetection.identityTrust !== 'verified') {
     return defaults?.unknown_agent ?? 'require_approval';
   }
 
@@ -301,6 +309,7 @@ export function evaluatePolicy(input: EvaluationInput): Decision {
     diffLinesCount,
     detectedActions,
     agentConfidence: agentDetection.confidence,
+    agentIdentityTrust: agentDetection.identityTrust,
   });
 
   // Add standard labels

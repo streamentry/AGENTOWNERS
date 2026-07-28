@@ -267,6 +267,7 @@ export async function run(): Promise<void> {
       agentDetection: {
         matchedAgent: agentDetection.agentName,
         confidence: agentDetection.confidence,
+        identityTrust: agentDetection.identityTrust,
       },
       decision,
       changedFiles,

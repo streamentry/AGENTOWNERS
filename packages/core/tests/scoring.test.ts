@@ -111,6 +111,23 @@ describe('computeRiskScore', () => {
     expect(unknown.score - confirmed.score).toBe(20);
   });
 
+  it('unverified identity metadata adds conservative risk even when detection is confirmed', () => {
+    const verified = computeRiskScore({
+      filesClassification: makeClassification(),
+      detectedActions: ['open_pr'],
+      agentConfidence: 'confirmed',
+      agentIdentityTrust: 'verified',
+    });
+    const unverified = computeRiskScore({
+      filesClassification: makeClassification(),
+      detectedActions: ['open_pr'],
+      agentConfidence: 'confirmed',
+      agentIdentityTrust: 'unverified',
+    });
+
+    expect(unverified.score - verified.score).toBe(20);
+  });
+
   it('diff 50-300 lines adds 15 points', () => {
     const { score } = computeRiskScore({
       filesClassification: makeClassification(),

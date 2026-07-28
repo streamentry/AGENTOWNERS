@@ -41,6 +41,8 @@ semantic versioning.
 - Updated the GitHub Actions toolkit dependencies.
 - Updated the test and build dependency graph and pinned patched transitive
   versions so the npm advisory audit is clean.
+- Separated detection confidence from identity trust; spoofable commit,
+  label, title, and body matches cannot grant privileged agent allows.
 
 ### Fixed
 
@@ -49,7 +51,8 @@ semantic versioning.
 - Source-only changes no longer produce a false `modify_tests` action.
 - Pull requests now use policy from the immutable base commit rather than the
   untrusted pull request workspace.
-- Spoofable agent markers no longer receive known-agent defaults.
+- Spoofable agent metadata no longer receives known-agent defaults or
+  agent-specific allow decisions.
 - CLI Git refs can no longer inject options into diff or log commands.
 - Available pull request patch content now participates in secret detection.
 - Git security fixtures no longer write identity into contributor Git

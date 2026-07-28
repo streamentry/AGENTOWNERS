@@ -104,6 +104,7 @@ vi.mock('@agent-owners/core', () => ({
   detectAgent: vi.fn().mockReturnValue({
     agentName: 'copilot',
     confidence: 'confirmed',
+    identityTrust: 'verified',
     signals: ['known bot actor'],
   }),
   evaluatePolicy: vi.fn().mockReturnValue(mockDecisionAllow),
@@ -259,6 +260,11 @@ describe('GitHub Action — integration via mocks', () => {
         issueBody: 'The issue requests a new example policy.',
         prTitle: undefined,
         prBody: undefined,
+      }),
+    );
+    expect(core.renderAuditJson).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agentDetection: expect.objectContaining({ identityTrust: 'verified' }),
       }),
     );
   });

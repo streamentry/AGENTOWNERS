@@ -37,6 +37,9 @@ export function registerFingerprint(program: Command): void {
       const lines: string[] = []
       lines.push('Agent detection result:')
       lines.push(`  Confidence: ${result.confidence}`)
+      if (result.identityTrust) {
+        lines.push(`  Identity trust: ${result.identityTrust}`)
+      }
 
       if (result.agentName) {
         lines.push(`  Agent: ${result.agentName}`)

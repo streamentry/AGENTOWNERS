@@ -1,6 +1,11 @@
 // F7: Verdict Renderer — spec section 15 and f7-verdict-renderer.md
 
-import type { Decision, AgentDetectionConfidence, AgentAction } from './types.js';
+import type {
+  AgentAction,
+  AgentDetectionConfidence,
+  AgentIdentityTrust,
+  Decision,
+} from './types.js';
 
 export type RenderOptions = {
   actor?: string;
@@ -16,6 +21,7 @@ export type AuditRecord = {
   actor: string;
   matchedAgent?: string;
   confidence: AgentDetectionConfidence;
+  identityTrust: AgentIdentityTrust;
   decision: Decision['effect'];
   riskScore: number;
   riskLevel: string;
@@ -32,6 +38,7 @@ export type AuditContext = {
   agentDetection: {
     matchedAgent?: string;
     confidence: AgentDetectionConfidence;
+    identityTrust?: AgentIdentityTrust;
   };
   decision: Decision;
   changedFiles: string[];
@@ -207,6 +214,7 @@ export function renderAuditJson(context: AuditContext): AuditRecord {
     actor,
     matchedAgent: agentDetection.matchedAgent ?? decision.matchedAgent,
     confidence: agentDetection.confidence,
+    identityTrust: agentDetection.identityTrust ?? 'unverified',
     decision: decision.effect,
     riskScore: decision.riskScore,
     riskLevel: decision.riskLevel,
