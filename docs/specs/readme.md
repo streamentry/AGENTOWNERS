@@ -694,7 +694,7 @@ jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: '.github/AGENTOWNERS.yml'
@@ -729,6 +729,10 @@ inputs:
     default: 'true'
   known-agent-actors:
     required: false
+  comment-author:
+    required: false
+    default: 'github-actions[bot]'
+    description: 'GitHub login whose complete verdict markers may be updated'
 ```
 
 Action outputs:
@@ -1450,7 +1454,7 @@ jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: '.github/AGENTOWNERS.yml'

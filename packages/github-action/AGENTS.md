@@ -73,5 +73,6 @@ come from `payload.pull_request.base.sha` captured by that webhook. Never
 replace it with a later PR metadata response, because a force-push can create a
 time-of-check/time-of-use policy change.
 Sticky verdict reconciliation must require the complete opening and closing
-markers in the expected positions; never overwrite a comment that merely quotes
-or partially contains the marker.
+markers in the expected positions and the configured author login; never
+overwrite a comment that merely quotes, partially contains, or is authored by
+another account.

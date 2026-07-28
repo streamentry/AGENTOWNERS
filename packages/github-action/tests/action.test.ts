@@ -138,6 +138,7 @@ function setupInputs(overrides: Record<string, string> = {}): void {
     'fail-on-require-approval': 'false',
     'add-labels': 'true',
     'known-agent-actors': '',
+    'comment-author': 'github-actions[bot]',
   };
   const merged = { ...defaults, ...overrides };
   mockCore.getInput.mockImplementation((name: string) => merged[name] ?? '');
@@ -331,6 +332,7 @@ describe('GitHub Action — integration via mocks', () => {
       'test-repo',
       1,
       '<!-- agentowners-verdict -->\nverdict',
+      'github-actions[bot]',
     );
     expect(mockOctokit.rest.issues.createComment).toHaveBeenCalled();
 
@@ -366,6 +368,33 @@ describe('GitHub Action — integration via mocks', () => {
     );
   });
 
+  it('does not overwrite a complete marker owned by another account', async () => {
+    setupInputs({ 'comment-author': 'github-actions[bot]' });
+    setupOctokitPR(['src/index.ts']);
+    mockContext.payload = {
+      action: 'opened',
+      pull_request: { number: 1, base: { sha: 'event-base-sha' } },
+      repository: { default_branch: 'main' },
+    };
+    mockOctokit.rest.issues.listComments.mockResolvedValue({
+      data: [
+        {
+          id: 900,
+          body: '<!-- agentowners-verdict -->\nForged\n<!-- /agentowners-verdict -->',
+          user: { login: 'attacker' },
+        },
+      ],
+    });
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
+      expect.objectContaining({ issue_number: 1 }),
+    );
+  });
+
   it('block with fail-on-block=true → setFailed called', async () => {
     // Test the fail logic directly
     const effect = mockDecisionBlock.effect;
@@ -397,7 +426,7 @@ describe('GitHub Action — integration via mocks', () => {
     // In dry-run mode, no octokit comment or label calls are made
     if (shouldComment) {
       const { upsertVerdictComment } = await import('../src/comment.js');
-      await upsertVerdictComment(mockOctokit as never, 'o', 'r', 1, 'body');
+      await upsertVerdictComment(mockOctokit as never, 'o', 'r', 1, 'body', 'github-actions[bot]');
     }
     if (mode !== 'dry-run') {
       await mockOctokit.rest.issues.addLabels({
@@ -423,13 +452,21 @@ describe('GitHub Action — integration via mocks', () => {
         {
           id: 99,
           body: '<!-- agentowners-verdict -->\nOld verdict\n<!-- /agentowners-verdict -->',
+          user: { login: 'github-actions[bot]' },
         },
       ],
     });
     mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 99 } });
 
     const { upsertVerdictComment } = await import('../src/comment.js');
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new verdict body');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new verdict body',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
       expect.objectContaining({ comment_id: 99 }),
@@ -497,7 +534,14 @@ describe('upsertVerdictComment', () => {
     mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
     mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 1 } });
 
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'body text');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'body text',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
       expect.objectContaining({ issue_number: 1, body: 'body text' }),
@@ -513,12 +557,20 @@ describe('upsertVerdictComment', () => {
         {
           id: 55,
           body: '<!-- agentowners-verdict -->\nOld content\n<!-- /agentowners-verdict -->',
+          user: { login: 'github-actions[bot]' },
         },
       ],
     });
     mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 55 } });
 
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new body',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
       expect.objectContaining({ comment_id: 55, body: 'new body' }),
@@ -539,11 +591,19 @@ describe('upsertVerdictComment', () => {
           {
             id: 201,
             body: '<!-- agentowners-verdict -->\nOld content\n<!-- /agentowners-verdict -->',
+            user: { login: 'github-actions[bot]' },
           },
         ],
       });
 
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new body',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(1, {
       owner: 'owner',
@@ -572,11 +632,23 @@ describe('upsertVerdictComment', () => {
       data: [
         { id: 77, body: 'A user quoted <!-- agentowners-verdict --> in a discussion.' },
         { id: 78, body: '<!-- agentowners-verdict -->\nIncomplete' },
+        {
+          id: 80,
+          body: '<!-- agentowners-verdict -->\nForged\n<!-- /agentowners-verdict -->',
+          user: { login: 'attacker' },
+        },
       ],
     });
     mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 79 } });
 
-    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+    await upsertVerdictComment(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      'new body',
+      'github-actions[bot]',
+    );
 
     expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
     expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(

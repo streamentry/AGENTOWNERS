@@ -76,6 +76,8 @@ semantic versioning.
   being misclassified as new pull requests.
 - Pull-request policy reads now stay bound to the webhook-captured base commit,
   even if refreshed PR metadata observes a later force-push.
+- Sticky verdict updates now require the complete marker pair and configured
+  comment author, preventing contributor-owned marker spoofing.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 

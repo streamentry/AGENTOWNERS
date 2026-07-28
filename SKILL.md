@@ -56,6 +56,8 @@ Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
 input reach a shell. For GitHub pull requests, load policy from the
 event-captured `pull_request.base.sha`, not a later mutable metadata response.
+For Action comments, require both complete markers and the configured author
+identity before updating an existing comment.
 For CLI Git operations, treat refs as hostile options and use
 `--end-of-options`.
 Tests must not mutate contributor Git configuration; scope fixture identity to

@@ -16,7 +16,12 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
-import { parseActionMode, parseBooleanInput, requireGitHubToken } from './config.js';
+import {
+  DEFAULT_COMMENT_AUTHOR,
+  parseActionMode,
+  parseBooleanInput,
+  requireGitHubToken,
+} from './config.js';
 import { extractPullRequestBaseSha, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
 const SUPPORTED_EVENT_ACTIONS: Readonly<Record<string, readonly string[]>> = {
@@ -47,6 +52,7 @@ export async function run(): Promise<void> {
       false,
     );
     const addLabels = parseBooleanInput(core.getInput('add-labels'), 'add-labels', true);
+    const commentAuthor = core.getInput('comment-author').trim() || DEFAULT_COMMENT_AUTHOR;
     const knownAgentActorsRaw = core.getInput('known-agent-actors');
     const knownAgentActors = knownAgentActorsRaw
       ? knownAgentActorsRaw
@@ -274,7 +280,7 @@ export async function run(): Promise<void> {
     const isDryRun = mode === 'dry-run';
     const shouldComment = (mode === 'comment' || mode === 'both') && !isDryRun;
     if (shouldComment && issueNumber !== undefined) {
-      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody);
+      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody, commentAuthor);
       core.info('Verdict comment posted/updated.');
     }
 

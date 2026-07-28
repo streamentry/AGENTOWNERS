@@ -207,6 +207,8 @@ jobs:
           policy-path: '.github/AGENTOWNERS.yml'
           mode: 'both'
           fail-on-block: 'true'
+          # Set this when github-token writes as another account.
+          comment-author: 'github-actions[bot]'
 ```
 
 Open an agent-generated PR and inspect the verdict before switching from

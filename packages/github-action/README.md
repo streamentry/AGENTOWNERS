@@ -25,6 +25,8 @@ steps:
       policy-path: .github/AGENTOWNERS.yml
       mode: both
       fail-on-block: "true"
+      # Change this only when github-token writes as another account.
+      comment-author: github-actions[bot]
 ```
 
 For sensitive repositories, pin the full immutable commit SHA instead of a
@@ -35,4 +37,7 @@ permission, and writes `agentowners-decision.json` for downstream audit
 artifact upload. The audit record includes identity trust so reviewers can
 distinguish authenticated actors from spoofable commit, label, title, and body
 evidence. Re-running the Action replaces stale AGENTOWNERS `risk-*` labels
-without removing unrelated maintainer labels.
+without removing unrelated maintainer labels. Sticky verdict updates require a
+complete marker authored by `comment-author`; a contributor cannot forge a
+marker and have their comment overwritten. The default is
+`github-actions[bot]`. Set it when a custom token writes as another account.

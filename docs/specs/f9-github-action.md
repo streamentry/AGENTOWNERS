@@ -48,6 +48,10 @@ inputs:
   known-agent-actors:
     required: false
     description: "Comma-separated list of known agent actor names"
+  comment-author:
+    required: false
+    default: "github-actions[bot]"
+    description: "GitHub login whose complete verdict markers may be updated"
 
 outputs:
   decision:
@@ -103,8 +107,9 @@ Markers: `<!-- agentowners-verdict -->` and
 
 Logic:
 1. List existing PR comments
-2. Find a comment that starts with the opening marker and contains the closing
-   marker. Quoted or incomplete markers are not owned verdicts.
+2. Find a comment authored by the configured `comment-author` that starts with
+   the opening marker and contains the closing marker. Quoted, incomplete, or
+   complete markers authored by another account are not owned verdicts.
 3. If found → update it (PATCH)
 4. If not found → create new comment (POST)
 
@@ -124,7 +129,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Block decision → does not fail when fail-on-block is false
 - Dry-run mode → no comment posted, no labels
 - Sticky comment updated on re-run
-- Quoted or incomplete marker comments are never overwritten
+- Quoted, incomplete, or wrong-author marker comments are never overwritten
 - Audit JSON written correctly
 - Labels applied to PR
 - Unsupported pull request, issue, comment, and review actions are skipped
@@ -140,3 +145,5 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
   flag such as `fail-on-require-approval`.
 - Bind pull-request policy evaluation to the event-captured base SHA so a
   force-push after delivery cannot change the policy judging that event.
+- Bind sticky-comment updates to the configured author login so a contributor
+  cannot forge a complete marker and cause their comment to be overwritten.

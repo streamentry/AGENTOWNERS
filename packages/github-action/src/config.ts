@@ -1,4 +1,5 @@
 export const ACTION_MODES = ['comment', 'check', 'both', 'dry-run'] as const;
+export const DEFAULT_COMMENT_AUTHOR = 'github-actions[bot]';
 
 export type ActionMode = (typeof ACTION_MODES)[number];
 

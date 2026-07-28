@@ -34391,12 +34391,12 @@ async function getIssueMetadata(octokit, owner, repo, issueNumber) {
 // src/comment.ts
 var MARKER = "<!-- agentowners-verdict -->";
 var MARKER_CLOSE2 = "<!-- /agentowners-verdict -->";
-function isVerdictComment(body) {
-  return body?.startsWith(`${MARKER}
-`) === true && body.includes(`
+function isVerdictComment(comment, trustedAuthor) {
+  return comment.user?.login?.toLowerCase() === trustedAuthor.toLowerCase() && comment.body?.startsWith(`${MARKER}
+`) === true && comment.body.includes(`
 ${MARKER_CLOSE2}`);
 }
-async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
+async function upsertVerdictComment(octokit, owner, repo, issueNumber, body, trustedAuthor) {
   let page = 1;
   let existing;
   while (!existing) {
@@ -34408,7 +34408,7 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
       page
     });
     existing = comments.data.find(
-      (c) => isVerdictComment(c.body)
+      (comment) => isVerdictComment(comment, trustedAuthor)
     );
     if (existing || comments.data.length < 100) break;
     page += 1;
@@ -34432,6 +34432,7 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
 
 // src/config.ts
 var ACTION_MODES = ["comment", "check", "both", "dry-run"];
+var DEFAULT_COMMENT_AUTHOR = "github-actions[bot]";
 function parseActionMode(rawMode) {
   const mode = rawMode.trim() || "comment";
   if (ACTION_MODES.includes(mode)) {
@@ -34517,6 +34518,7 @@ async function run() {
       false
     );
     const addLabels = parseBooleanInput(getInput("add-labels"), "add-labels", true);
+    const commentAuthor = getInput("comment-author").trim() || DEFAULT_COMMENT_AUTHOR;
     const knownAgentActorsRaw = getInput("known-agent-actors");
     const knownAgentActors = knownAgentActorsRaw ? knownAgentActorsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
     const token = requireGitHubToken(process.env["GITHUB_TOKEN"], getInput("github-token"));
@@ -34701,7 +34703,7 @@ async function run() {
     const isDryRun = mode === "dry-run";
     const shouldComment = (mode === "comment" || mode === "both") && !isDryRun;
     if (shouldComment && issueNumber !== void 0) {
-      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody);
+      await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody, commentAuthor);
       info("Verdict comment posted/updated.");
     }
     if (addLabels && issueNumber !== void 0 && !isDryRun && decision.labelsToApply.length > 0) {
