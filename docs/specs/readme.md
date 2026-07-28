@@ -739,7 +739,8 @@ Behavior:
   * infer actions
   * evaluate policy
   * post or update a sticky comment
-  * optionally apply labels
+  * optionally reconcile reserved risk labels
+  * request missing reviewers explicitly named by matched rules
   * fail check if decision is block
 
 * On issue events:
@@ -1283,8 +1284,6 @@ Do not build these in MVP, but design so they are possible:
 ### v1.1
 
 * GitHub App
-* label application
-* reviewer request
 * support for issue triage
 * richer agent fingerprints
 * SARIF output

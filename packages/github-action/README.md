@@ -18,11 +18,17 @@ steps:
     with:
       policy-path: .github/AGENTOWNERS.yml
       mode: both
-      fail-on-block: "true"
+      fail-on-block: 'true'
 ```
 
 For sensitive repositories, pin the full immutable commit SHA instead of a
 moving major-version tag.
+
+Reviewer requests run only when a matched policy rule explicitly names
+reviewers. The Action requests only missing reviewers on pull requests, skips
+the pull-request author, and accepts same-organization teams as `@owner/team`.
+Label reconciliation removes only stale AGENTOWNERS risk labels; all
+policy-defined and user labels remain intact.
 
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes `agentowners-decision.json` for downstream audit

@@ -16,8 +16,10 @@ description: Implement or review deterministic AI-agent governance changes in AG
 8. Run `pnpm verify`.
 9. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-10. For release-facing changes, run `pnpm verify:packages`.
-11. In the pull request, disclose agent use, exact evidence, risks, and rollback.
+10. For Action governance changes, test notification idempotency and preserve
+    user-owned labels before regenerating the bundle.
+11. For release-facing changes, run `pnpm verify:packages`.
+12. In the pull request, disclose agent use, exact evidence, risks, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted

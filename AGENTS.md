@@ -79,6 +79,7 @@ packages/github-action/src/
   index.ts    — main action entry
   github.ts   — GitHub API helpers (PR files, PR metadata)
   comment.ts  — sticky comment upsert (VERDICT_MARKER)
+  governance.ts — reviewer request and managed-label lifecycle boundaries
 
 examples/
   minimal/            — permissive starting point for new projects

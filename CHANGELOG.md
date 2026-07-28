@@ -15,6 +15,8 @@ semantic versioning.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.
+- Policy-configured, idempotent reviewer requests and reserved risk-label lifecycle
+  reconciliation in the GitHub Action.
 
 ### Changed
 

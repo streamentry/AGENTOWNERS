@@ -12,6 +12,7 @@ artifact and must be regenerated, never hand-edited.
 - `src/github.ts`: event metadata adapter
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
+- `src/governance.ts`: reviewer request and managed-label lifecycle
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 
@@ -23,8 +24,18 @@ flowchart LR
   Core --> Decision
   Decision --> Comment
   Decision --> Labels
+  Decision --> Reviewers
   Decision --> Outputs
   Decision --> Status
+```
+
+```mermaid
+flowchart TB
+  Entrypoint[index.ts] --> Adapter[github.ts]
+  Entrypoint --> Comment[comment.ts]
+  Entrypoint --> Governance[governance.ts]
+  Governance --> ReviewRequests[GitHub review requests]
+  Governance --> ManagedLabels[Reserved risk labels]
 ```
 
 ```mermaid
@@ -37,7 +48,7 @@ sequenceDiagram
   Action->>GitHub: read metadata
   Action->>Core: normalized input
   Core-->>Action: decision
-  Action->>GitHub: verdict and labels
+  Action->>GitHub: verdict, labels, and reviewer requests
   Action-->>Runner: outputs and status
 ```
 
