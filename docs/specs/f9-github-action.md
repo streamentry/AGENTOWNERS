@@ -21,6 +21,10 @@ description: CODEOWNERS for AI agents — policy enforcement for AI-generated PR
 author: agentowners
 
 inputs:
+  github-token:
+    required: false
+    default: ${{ github.token }}
+    description: "GitHub token for metadata, verdict comments, and labels"
   policy-path:
     required: false
     default: ".github/AGENTOWNERS.yml"
@@ -49,14 +53,14 @@ outputs:
   decision:
     description: "allow | require_approval | block"
   risk-score:
-    description: "0-100+"
+    description: "0-100"
   risk-level:
     description: "low | medium | high | critical"
   matched-rules:
     description: "JSON array of matched rules"
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
 ```
 

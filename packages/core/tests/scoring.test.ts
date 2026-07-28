@@ -17,6 +17,23 @@ function makeClassification(overrides: Partial<FilesClassification> = {}): Files
 }
 
 describe('computeRiskScore', () => {
+  it('caps compounded risk at 100', () => {
+    const result = computeRiskScore({
+      filesClassification: makeClassification({
+        changesWorkflows: true,
+        changesAuth: true,
+        changesInfra: true,
+        secretFilesDetected: true,
+      }),
+      detectedActions: ['edit_workflows', 'touch_secrets', 'change_permissions'],
+      agentConfidence: 'unknown',
+      diffLinesCount: 1000,
+    });
+
+    expect(result.score).toBe(100);
+    expect(result.level).toBe('critical');
+  });
+
   it('docs-only contribution → low risk', () => {
     const { score, level } = computeRiskScore({
       filesClassification: makeClassification({ docsOnly: true }),
@@ -112,12 +129,14 @@ describe('computeRiskScore', () => {
     });
     // deps(30) + small_diff(5) = 35
     expect(score).toBe(35);
-    expect(computeRiskScore({
-      filesClassification: makeClassification({ changesDependencies: true }),
-      diffLinesCount: 10,
-      detectedActions: ['open_pr', 'modify_dependencies'],
-      agentConfidence: 'confirmed',
-    }).level).toBe('medium');
+    expect(
+      computeRiskScore({
+        filesClassification: makeClassification({ changesDependencies: true }),
+        diffLinesCount: 10,
+        detectedActions: ['open_pr', 'modify_dependencies'],
+        agentConfidence: 'confirmed',
+      }).level,
+    ).toBe('medium');
   });
 
   it('auth path changed adds 50 points', () => {

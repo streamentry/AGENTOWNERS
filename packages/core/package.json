@@ -4,14 +4,29 @@
   "description": "Core policy engine for AGENTOWNERS",
   "license": "Apache-2.0",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/streamentry/AGENTOWNERS.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/streamentry/AGENTOWNERS#readme",
+  "bugs": {
+    "url": "https://github.com/streamentry/AGENTOWNERS/issues"
+  },
+  "keywords": ["ai-agents", "governance", "policy-engine", "github", "security"],
   "files": ["dist"],
   "publishConfig": {
     "access": "public"

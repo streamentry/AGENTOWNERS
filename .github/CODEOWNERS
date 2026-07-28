@@ -1,0 +1,6 @@
+* @streamentry
+
+/packages/core/ @streamentry
+/.github/workflows/ @streamentry
+/action.yml @streamentry
+/packages/github-action/action.yml @streamentry

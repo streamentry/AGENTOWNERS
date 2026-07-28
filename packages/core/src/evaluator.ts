@@ -70,7 +70,7 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   // files condition — any changed file matches any glob pattern
   if (when.files !== undefined) {
     const matched = changedFiles.filter((f) =>
-      when.files!.some((pattern) => minimatch(f, pattern, { dot: true }))
+      when.files!.some((pattern) => minimatch(f, pattern, { dot: true })),
     );
     if (matched.length === 0) return null;
     fileMatches.push(...matched);
@@ -80,7 +80,7 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   // files_not condition — no changed file matches any glob pattern
   if (when.files_not !== undefined) {
     const forbidden = changedFiles.some((f) =>
-      when.files_not!.some((pattern) => minimatch(f, pattern, { dot: true }))
+      when.files_not!.some((pattern) => minimatch(f, pattern, { dot: true })),
     );
     if (forbidden) return null;
     matchedConditions.push('files_not');
@@ -181,6 +181,38 @@ function effectPriority(effect: 'allow' | 'require_approval' | 'block'): number 
   return 1;
 }
 
+function evaluateAgentActions(input: EvaluationInput): MatchedRule | null {
+  const agentName = input.agentDetection.agentName;
+  const agentPolicy = agentName ? input.policy.agents?.[agentName] : undefined;
+  if (!agentName || !agentPolicy || input.detectedActions.length === 0) return null;
+
+  const blocked = input.detectedActions.filter((action) => agentPolicy.blocked?.includes(action));
+  const approval = input.detectedActions.filter((action) =>
+    agentPolicy.requires_approval?.includes(action),
+  );
+  const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
+
+  const effect =
+    blocked.length > 0
+      ? 'block'
+      : approval.length > 0
+        ? 'require_approval'
+        : allowed.length === input.detectedActions.length
+          ? 'allow'
+          : null;
+  if (effect === null) return null;
+
+  const matchedActions =
+    effect === 'block' ? blocked : effect === 'require_approval' ? approval : allowed;
+
+  return {
+    name: `Agent policy: ${agentName}`,
+    effect,
+    reason: `Configured agent action policy resolved to ${effect}.`,
+    matchedConditions: [`actions: ${matchedActions.join(', ')}`],
+  };
+}
+
 function computeDefaultEffect(input: EvaluationInput): 'allow' | 'require_approval' | 'block' {
   const { policy, agentDetection, filesClassification } = input;
   const defaults = policy.defaults;
@@ -217,6 +249,11 @@ export function evaluatePolicy(input: EvaluationInput): Decision {
 
   const rules = policy.rules ?? [];
   const matchedRules: MatchedRule[] = [];
+  const agentActionRule = evaluateAgentActions(input);
+
+  if (agentActionRule !== null) {
+    matchedRules.push(agentActionRule);
+  }
 
   for (const rule of rules) {
     const matched = evaluateRule(rule, input);
@@ -231,9 +268,8 @@ export function evaluatePolicy(input: EvaluationInput): Decision {
     effect = computeDefaultEffect(input);
   } else {
     effect = matchedRules.reduce(
-      (best, mr) =>
-        effectPriority(mr.effect) > effectPriority(best) ? mr.effect : best,
-      'allow' as 'allow' | 'require_approval' | 'block'
+      (best, mr) => (effectPriority(mr.effect) > effectPriority(best) ? mr.effect : best),
+      'allow' as 'allow' | 'require_approval' | 'block',
     );
   }
 
@@ -242,8 +278,8 @@ export function evaluatePolicy(input: EvaluationInput): Decision {
     new Set(
       matchedRules
         .filter((mr) => mr.effect === 'require_approval' || mr.effect === 'block')
-        .flatMap((mr) => mr.reviewers ?? [])
-    )
+        .flatMap((mr) => mr.reviewers ?? []),
+    ),
   );
 
   // Collect labels from matched rules
@@ -283,7 +319,7 @@ function buildExplanation(
   matchedRules: MatchedRule[],
   agentDetection: AgentDetectionResult,
   score: number,
-  level: string
+  level: string,
 ): string {
   const agentLabel = agentDetection.agentName ?? 'an unknown agent';
   const lines: string[] = [];

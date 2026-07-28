@@ -11,6 +11,10 @@ branding:
   color: orange
 
 inputs:
+  github-token:
+    description: GitHub token used to read metadata, post verdicts, and apply labels
+    required: false
+    default: ${{ github.token }}
   policy-path:
     description: Path to the AGENTOWNERS policy file
     required: false
@@ -42,12 +46,12 @@ outputs:
   decision:
     description: "Final policy decision: allow | require_approval | block"
   risk-score:
-    description: Numeric risk score from 0 to 100+
+    description: Numeric risk score from 0 to 100
   risk-level:
     description: "Risk level: low | medium | high | critical"
   matched-rules:
     description: JSON array of matched rule names
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js

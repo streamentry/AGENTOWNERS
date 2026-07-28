@@ -5,7 +5,7 @@ export default defineConfig({
   format: ['cjs'],
   dts: false,
   clean: true,
-  sourcemap: true,
+  sourcemap: false,
   noExternal: [/.*/],
   platform: 'node',
 });

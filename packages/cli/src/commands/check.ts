@@ -1,5 +1,5 @@
-import * as path from 'path'
-import { Command } from 'commander'
+import * as path from 'path';
+import { Command } from 'commander';
 import {
   loadPolicyFile,
   classifyFiles,
@@ -7,17 +7,17 @@ import {
   detectAgent,
   evaluatePolicy,
   renderVerdict,
-} from '@agent-owners/core'
-import { getChangedFiles, getCommitMessages, getCurrentActor } from '../git.js'
+} from '@agent-owners/core';
+import { getChangedFiles, getCommitMessages, getCurrentActor } from '../git.js';
 
 type CheckOptions = {
-  policy: string
-  base: string
-  head: string
-  actor?: string
-  output: 'text' | 'json'
-  mode: 'advisory' | 'enforcement' | 'dry-run'
-}
+  policy: string;
+  base: string;
+  head: string;
+  actor?: string;
+  output: 'text' | 'json';
+  mode: 'advisory' | 'enforcement' | 'dry-run';
+};
 
 export function registerCheck(program: Command): void {
   program
@@ -30,49 +30,49 @@ export function registerCheck(program: Command): void {
     .option('--output <format>', 'Output format: text | json', 'text')
     .option('--mode <mode>', 'Mode: advisory | enforcement | dry-run', 'advisory')
     .action(async (options: CheckOptions) => {
-      const policyPath = path.resolve(process.cwd(), options.policy)
+      const policyPath = path.resolve(process.cwd(), options.policy);
 
-      let policy
+      let policy;
       try {
-        policy = await loadPolicyFile(policyPath)
+        policy = await loadPolicyFile(policyPath);
       } catch (err: unknown) {
         process.stderr.write(
           `Error loading policy: ${err instanceof Error ? err.message : String(err)}\n`,
-        )
-        process.exit(1)
+        );
+        process.exit(1);
       }
 
-      const cwd = process.cwd()
-      let changedFiles: string[] = []
-      let commitMessages: string[] = []
+      const cwd = process.cwd();
+      let changedFiles: string[] = [];
+      let commitMessages: string[] = [];
 
       try {
-        changedFiles = getChangedFiles(options.base, options.head, cwd)
-      } catch {
-        // not in a git repo or diff failed — continue with empty list
+        changedFiles = getChangedFiles(options.base, options.head, cwd);
+        commitMessages = getCommitMessages(options.base, options.head, cwd);
+      } catch (err: unknown) {
+        process.stderr.write(
+          `Error reading git range ${options.base}..${options.head}: ${
+            err instanceof Error ? err.message : String(err)
+          }\n`,
+        );
+        process.exit(2);
+        return;
       }
 
-      try {
-        commitMessages = getCommitMessages(options.base, options.head, cwd)
-      } catch {
-        // ignore
-      }
+      const actor = options.actor ?? getCurrentActor(cwd) ?? 'unknown';
 
-      const actor =
-        options.actor ?? getCurrentActor(cwd) ?? 'unknown'
-
-      const filesClassification = classifyFiles(changedFiles)
+      const filesClassification = classifyFiles(changedFiles);
 
       const detectedActions = inferActions({
         eventType: 'pull_request.opened',
         changedFiles,
-      })
+      });
 
       const agentDetection = detectAgent({
         actor,
         commitMessages,
         policy,
-      })
+      });
 
       const decision = evaluatePolicy({
         policy,
@@ -81,20 +81,20 @@ export function registerCheck(program: Command): void {
         changedFiles,
         filesClassification,
         actor,
-      })
+      });
 
       if (options.output === 'json') {
-        process.stdout.write(JSON.stringify(decision, null, 2) + '\n')
+        process.stdout.write(JSON.stringify(decision, null, 2) + '\n');
       } else {
-        const text = renderVerdict(decision, { actor })
-        process.stdout.write(text + '\n')
+        const text = renderVerdict(decision, { actor });
+        process.stdout.write(text + '\n');
       }
 
       // Exit code logic
-      const isBlock = decision.effect === 'block'
+      const isBlock = decision.effect === 'block';
       if (isBlock && options.mode === 'enforcement') {
-        process.exit(1)
+        process.exit(1);
       }
-      process.exit(0)
-    })
+      process.exit(0);
+    });
 }

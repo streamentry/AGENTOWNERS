@@ -291,6 +291,13 @@ export type AgentPolicy = {
 };
 ```
 
+Policy validation is strict and fail closed:
+
+* unknown fields are rejected at every object level;
+* `match` and rule `when` objects must not be empty;
+* an action may appear in only one of an agent's `allowed`,
+  `requires_approval`, or `blocked` lists.
+
 ### 11.3 Actions
 
 Supported actions in v1:
@@ -526,13 +533,15 @@ agent_confirmed: +0
 blocked_action_detected: +100
 ```
 
+The additive score is capped at 100.
+
 Risk levels:
 
 ```text
 0-20: low
 21-49: medium
 50-79: high
-80-100+: critical
+80-100: critical
 ```
 
 Decision priority:
@@ -547,7 +556,12 @@ If no block but any rule requires approval, final decision is require_approval.
 
 If explicit allow and no stricter rule, final decision is allow.
 
-If no rule matches, use defaults.
+Agent-specific action lists use the same priority. A blocked action contributes
+`block`; otherwise an approval action contributes `require_approval`. An agent
+`allow` applies only when every detected action is listed as allowed. Unlisted
+actions fall through to repository rules and conservative defaults.
+
+If no agent action policy or rule matches, use defaults.
 
 Default behavior should be conservative:
 
@@ -657,15 +671,15 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   issues: write
 
 jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: agentowners/agentowners/check-action@v1
+      - uses: actions/checkout@v6
+      - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: ".github/AGENTOWNERS.yml"
           mode: "comment"
@@ -677,6 +691,10 @@ Action inputs:
 
 ```yaml
 inputs:
+  github-token:
+    required: false
+    default: ${{ github.token }}
+    description: "GitHub token for metadata, verdict comments, and labels"
   policy-path:
     required: false
     default: ".github/AGENTOWNERS.yml"
@@ -704,7 +722,7 @@ outputs:
   decision:
     description: "allow | require_approval | block"
   risk-score:
-    description: "0-100+"
+    description: "0-100"
   risk-level:
     description: "low | medium | high | critical"
   matched-rules:
@@ -1294,7 +1312,7 @@ Do not build these in MVP, but design so they are possible:
 Repository:
 
 ```text
-agentowners/agentowners
+streamentry/AGENTOWNERS
 ```
 
 NPM packages:
@@ -1314,7 +1332,7 @@ agentowners
 GitHub Action:
 
 ```yaml
-uses: agentowners/agentowners/check-action@v1
+uses: streamentry/AGENTOWNERS@v0
 ```
 
 Policy file:
@@ -1381,8 +1399,8 @@ jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: agentowners/agentowners/check-action@v0
+      - uses: actions/checkout@v6
+      - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: ".github/AGENTOWNERS.yml"
           mode: "both"
@@ -1403,4 +1421,3 @@ The final repository must include:
 * release workflow
 
 The project is not successful if it merely describes a policy. It is successful only when a maintainer can copy one YAML file and one GitHub Action into a repo and immediately get a useful verdict on an AI-generated PR.
-

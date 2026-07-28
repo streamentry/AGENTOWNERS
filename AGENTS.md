@@ -25,6 +25,9 @@ pnpm test
 
 # 4. Type check
 pnpm typecheck
+
+# Complete gate, including release-artifact smoke tests
+pnpm verify
 ```
 
 ## Repository map
@@ -58,7 +61,7 @@ packages/core/tests/
 
 packages/cli/src/
   index.ts           — commander entry point
-  git.ts             — git shell helpers (getChangedFiles, getCommitMessages)
+  git.ts             — shell-free Git adapter (getChangedFiles, getCommitMessages)
   commands/init.ts   — agentowners init
   commands/validate.ts — agentowners validate
   commands/check.ts  — agentowners check
@@ -79,7 +82,51 @@ examples/
 docs/specs/
   readme.md           — full product specification (canonical requirements)
   f1-policy-schema.md through f10-examples-tests.md — per-feature specs
+
+scripts/
+  verify-release.mjs  — smoke-tests package exports and the bundled Action entry
 ```
+
+## Architecture diagrams
+
+### Flowchart
+
+```mermaid
+flowchart LR
+  Event[GitHub event or Git range] --> Adapter
+  Policy[AGENTOWNERS.yml] --> Core
+  Adapter --> Core
+  Core --> Decision
+  Decision --> Verdict
+  Decision --> Audit
+  Decision --> ExitStatus
+```
+
+### Component diagram
+
+```mermaid
+flowchart TB
+  CLI["@agent-owners/cli"] --> Core["@agent-owners/core"]
+  Action["@agent-owners/github-action"] --> Core
+  Git --> CLI
+  GitHubAPI --> Action
+  Policy --> Core
+```
+
+### Sequence diagram
+
+```mermaid
+sequenceDiagram
+  participant Adapter
+  participant Core
+  participant Effect
+  Adapter->>Core: normalized untrusted input
+  Core->>Core: detect, classify, infer, evaluate
+  Core-->>Adapter: deterministic decision
+  Adapter->>Effect: render, label, audit, or exit
+```
+
+See `docs/architecture.md` for trust boundaries and expanded diagrams.
 
 ## Decision to code: key invariants
 
@@ -89,6 +136,7 @@ These are immutable safety rules. Never change them:
 |-----------|------|
 | Decision priority | `block > require_approval > allow` — always, no exceptions |
 | Policy as data | Never `eval()`, `new Function()`, or execute policy content as code |
+| Strict schema | Unknown fields and empty rule conditions fail validation |
 | Secret redaction | Never print matched secret values — use `[REDACTED]` |
 | Determinism | Same inputs → same output. No randomness, no timestamps in evaluation |
 | No database | The core engine is stateless: policy file + event context → Decision |
@@ -170,7 +218,15 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 - [ ] Secret patterns in diff content are detected but never printed
 - [ ] No `eval`, `new Function`, or dynamic `require` from policy input
 - [ ] No shell execution with user-controlled strings
+- [ ] Git subprocesses use argv APIs such as `execFileSync`, never interpolated commands
 - [ ] GitHub Action permissions are `contents: read`, `pull-requests: write`, `issues: write` only
+
+## Generated release artifacts
+
+`packages/github-action/dist/index.js` is intentionally committed because
+GitHub executes JavaScript Actions directly from the repository. Never edit it
+by hand. Run `pnpm build`, then `pnpm verify:release`, and include the regenerated
+bundle whenever Action source changes.
 
 ## What NOT to build (v1 non-goals)
 

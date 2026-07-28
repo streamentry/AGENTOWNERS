@@ -16,6 +16,7 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRChangedFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
+import { requireGitHubToken } from './config.js';
 
 async function run(): Promise<void> {
   try {
@@ -27,11 +28,14 @@ async function run(): Promise<void> {
     const addLabels = core.getInput('add-labels') !== 'false';
     const knownAgentActorsRaw = core.getInput('known-agent-actors');
     const knownAgentActors = knownAgentActorsRaw
-      ? knownAgentActorsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+      ? knownAgentActorsRaw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
 
     // 2. GitHub context
-    const token = process.env['GITHUB_TOKEN'] ?? core.getInput('github-token');
+    const token = requireGitHubToken(process.env['GITHUB_TOKEN'], core.getInput('github-token'));
     const octokit = github.getOctokit(token);
     const ctx = github.context;
     const { owner, repo } = ctx.repo;
@@ -153,10 +157,7 @@ async function run(): Promise<void> {
     });
 
     // If the actor is in knownAgentActors and not already confirmed, mark as likely
-    if (
-      knownAgentActors.includes(actor) &&
-      agentDetection.confidence === 'unknown'
-    ) {
+    if (knownAgentActors.includes(actor) && agentDetection.confidence === 'unknown') {
       agentDetection.signals.push(`known-agent-actors input: ${actor}`);
       (agentDetection as { confidence: string }).confidence = 'likely';
     }
@@ -177,7 +178,9 @@ async function run(): Promise<void> {
     // 9. Render verdict
     const verdictBody = renderVerdict(decision, { actor });
 
-    core.info(`Decision: ${decision.effect} (risk: ${decision.riskLevel}, score: ${decision.riskScore})`);
+    core.info(
+      `Decision: ${decision.effect} (risk: ${decision.riskLevel}, score: ${decision.riskScore})`,
+    );
 
     // 10. Post/update sticky comment (if mode includes "comment")
     const isDryRun = mode === 'dry-run';
@@ -196,7 +199,12 @@ async function run(): Promise<void> {
     core.setOutput('decision', decision.effect);
     core.setOutput('risk-score', String(decision.riskScore));
     core.setOutput('risk-level', decision.riskLevel);
-    core.setOutput('matched-rules', JSON.stringify(decision.matchedRules.map((r: import('@agent-owners/core').MatchedRule) => r.name)));
+    core.setOutput(
+      'matched-rules',
+      JSON.stringify(
+        decision.matchedRules.map((r: import('@agent-owners/core').MatchedRule) => r.name),
+      ),
+    );
 
     // 13. Write audit artifact
     const auditRecord = renderAuditJson({

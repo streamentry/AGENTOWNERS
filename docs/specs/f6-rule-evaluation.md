@@ -16,6 +16,14 @@ If no block but any requires approval → `require_approval`
 If explicit allow and no stricter rule → `allow`
 If no rule matches → use defaults
 
+Agent-specific action lists participate in the same priority resolution:
+
+- Any detected action in the matched agent's `blocked` list contributes `block`.
+- Otherwise, any action in `requires_approval` contributes `require_approval`.
+- An `allow` effect is contributed only when every detected action is explicitly
+  listed in `allowed`.
+- Unlisted actions fall through to repository rules and conservative defaults.
+
 ### Default Behavior (conservative)
 ```yaml
 defaults:
@@ -101,11 +109,13 @@ agent_confirmed: +0
 blocked_action_detected: +100
 ```
 
+The additive score is capped at 100 before assigning the risk level.
+
 Risk levels:
 - 0-20: low
 - 21-49: medium
 - 50-79: high
-- 80+: critical
+- 80-100: critical
 
 ### `computeRiskScore(input: RiskScoringInput): { score: number; level: RiskLevel }`
 

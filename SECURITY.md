@@ -2,9 +2,11 @@
 
 ## Reporting a vulnerability
 
-Open a GitHub issue with title `[SECURITY] <brief description>` and we will respond within 48 hours. For critical vulnerabilities affecting production systems, use GitHub's private security advisory feature.
-
-Do not post proof-of-concept code in public issues.
+Report vulnerabilities through
+[GitHub private security advisories](https://github.com/streamentry/AGENTOWNERS/security/advisories/new).
+Include affected versions, impact, a minimal reproduction, and any suggested
+fix. Do not disclose vulnerability details or proof-of-concept code in a public
+issue.
 
 ## Security requirements
 
@@ -43,7 +45,9 @@ All PR content (title, body, labels, commit messages) is treated as untrusted in
 
 ### Audit artifacts
 
-The GitHub Action produces `agentowners-decision.json` as a workflow artifact. This file contains the decision, matched rules, and risk score — but never secret values or raw diff content.
+The GitHub Action produces `agentowners-decision.json` as a workflow artifact.
+This file contains the decision, matched rules, and risk score, but never
+secret values or raw diff content.
 
 ## What is in scope
 

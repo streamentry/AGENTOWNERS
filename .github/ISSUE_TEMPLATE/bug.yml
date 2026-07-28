@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible policy, CLI, or Action defect
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A useful bug report contains a minimal policy, exact input, actual
+        decision, and expected decision. Remove secrets before submitting.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - Core policy engine
+        - CLI
+        - GitHub Action
+        - Documentation or examples
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the smallest policy, command or event, and changed-file list.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result and policy reason
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AGENTOWNERS version or commit
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Was an AI agent involved in producing this report?
+      options:
+        - "No"
+        - "Yes, with human verification"
+        - "Yes, without human verification"
+    validations:
+      required: true

@@ -1,0 +1,76 @@
+version: 1
+
+agents:
+  github-copilot:
+    match:
+      actors:
+        - "github-copilot[bot]"
+        - "copilot-swe-agent[bot]"
+    allowed:
+      - open_pr
+      - modify_docs
+      - modify_tests
+    requires_approval:
+      - modify_dependencies
+      - modify_auth
+      - modify_infra
+    blocked:
+      - edit_workflows
+      - touch_secrets
+      - change_permissions
+      - merge_pr
+
+defaults:
+  known_agent: require_approval
+  unknown_agent: require_approval
+  docs_only: allow
+  workflows: block
+  secrets: block
+
+rules:
+  - name: "Block workflow and release-control changes"
+    when:
+      files:
+        - ".github/workflows/**"
+        - "action.yml"
+        - "packages/github-action/action.yml"
+    effect: block
+    reviewers:
+      - "@streamentry"
+    labels:
+      - "security-review"
+    reason: "Automation and release entry points are privileged execution surfaces."
+
+  - name: "Require approval for policy-engine changes"
+    when:
+      files:
+        - "packages/core/src/**"
+        - "packages/core/package.json"
+    effect: require_approval
+    reviewers:
+      - "@streamentry"
+    labels:
+      - "core-review"
+    reason: "Core changes can alter every downstream governance decision."
+
+  - name: "Require approval for dependency changes"
+    when:
+      changes_package_files: true
+    effect: require_approval
+    reviewers:
+      - "@streamentry"
+    labels:
+      - "dependency-review"
+    reason: "Dependency changes modify the project supply chain."
+
+  - name: "Allow isolated documentation changes"
+    when:
+      docs_only: true
+    effect: allow
+    labels:
+      - "documentation"
+    reason: "Documentation-only changes do not alter enforcement behavior."
+
+audit:
+  enabled: true
+  output: ".agentowners/audit/decision.json"

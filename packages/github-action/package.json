@@ -3,6 +3,19 @@
   "version": "0.1.0",
   "description": "GitHub Action for AGENTOWNERS policy enforcement",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/streamentry/AGENTOWNERS.git",
+    "directory": "packages/github-action"
+  },
+  "homepage": "https://github.com/streamentry/AGENTOWNERS#readme",
+  "bugs": {
+    "url": "https://github.com/streamentry/AGENTOWNERS/issues"
+  },
+  "keywords": ["ai-agents", "governance", "github-action", "security", "policy-as-code"],
   "main": "dist/index.js",
   "files": ["dist", "action.yml"],
   "publishConfig": {

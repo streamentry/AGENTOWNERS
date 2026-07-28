@@ -1,5 +1,8 @@
 node_modules/
 dist/
+!packages/github-action/dist/
+packages/github-action/dist/*
+!packages/github-action/dist/index.js
 coverage/
 *.js.map
 *.d.ts.map
@@ -10,3 +13,4 @@ coverage/
 .agentowners/audit/
 .cmd-fleet/
 logs/
+.omx/

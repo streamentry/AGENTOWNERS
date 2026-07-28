@@ -22,17 +22,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run tests
-        run: pnpm test
+      - name: Verify repository
+        run: pnpm verify
 
       - name: Coverage (core only)
         run: pnpm --filter @agent-owners/core test -- --coverage
-
-      - name: Type check
-        run: pnpm typecheck
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7

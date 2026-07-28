@@ -1,16 +1,16 @@
-import { describe, it, expect } from 'vitest'
-import { ZodError } from 'zod'
-import { parsePolicy, agentOwnersPolicySchema } from '../src/schema.js'
+import { describe, it, expect } from 'vitest';
+import { ZodError } from 'zod';
+import { parsePolicy, agentOwnersPolicySchema } from '../src/schema.js';
 
 describe('parsePolicy', () => {
   it('parses a minimal policy with only version', () => {
-    const result = parsePolicy({ version: 1 })
-    expect(result.version).toBe(1)
-    expect(result.agents).toBeUndefined()
-    expect(result.rules).toBeUndefined()
-    expect(result.defaults).toBeUndefined()
-    expect(result.audit).toBeUndefined()
-  })
+    const result = parsePolicy({ version: 1 });
+    expect(result.version).toBe(1);
+    expect(result.agents).toBeUndefined();
+    expect(result.rules).toBeUndefined();
+    expect(result.defaults).toBeUndefined();
+    expect(result.audit).toBeUndefined();
+  });
 
   it('parses a full policy with agents, rules, and defaults', () => {
     const input = {
@@ -60,25 +60,25 @@ describe('parsePolicy', () => {
         enabled: true,
         output: 'agentowners-decision.json',
       },
-    }
+    };
 
-    const result = parsePolicy(input)
-    expect(result.version).toBe(1)
-    expect(result.defaults?.unknown_agent).toBe('require_approval')
-    expect(result.agents?.['github-copilot'].match.actors).toEqual(['github-copilot[bot]'])
-    expect(result.agents?.['github-copilot'].allowed).toContain('open_pr')
-    expect(result.agents?.['github-copilot'].blocked).toContain('merge_pr')
-    expect(result.rules).toHaveLength(2)
-    expect(result.rules?.[0].name).toBe('Block workflow edits')
-    expect(result.rules?.[0].effect).toBe('block')
-    expect(result.rules?.[1].reviewers).toEqual(['@maintainers/security'])
-    expect(result.audit?.enabled).toBe(true)
-    expect(result.audit?.output).toBe('agentowners-decision.json')
-  })
+    const result = parsePolicy(input);
+    expect(result.version).toBe(1);
+    expect(result.defaults?.unknown_agent).toBe('require_approval');
+    expect(result.agents?.['github-copilot'].match.actors).toEqual(['github-copilot[bot]']);
+    expect(result.agents?.['github-copilot'].allowed).toContain('open_pr');
+    expect(result.agents?.['github-copilot'].blocked).toContain('merge_pr');
+    expect(result.rules).toHaveLength(2);
+    expect(result.rules?.[0].name).toBe('Block workflow edits');
+    expect(result.rules?.[0].effect).toBe('block');
+    expect(result.rules?.[1].reviewers).toEqual(['@maintainers/security']);
+    expect(result.audit?.enabled).toBe(true);
+    expect(result.audit?.output).toBe('agentowners-decision.json');
+  });
 
   it('throws ZodError when version is 2', () => {
-    expect(() => parsePolicy({ version: 2 })).toThrow(ZodError)
-  })
+    expect(() => parsePolicy({ version: 2 })).toThrow(ZodError);
+  });
 
   it('throws ZodError for an invalid effect value', () => {
     const input = {
@@ -91,9 +91,9 @@ describe('parsePolicy', () => {
           reason: 'test',
         },
       ],
-    }
-    expect(() => parsePolicy(input)).toThrow(ZodError)
-  })
+    };
+    expect(() => parsePolicy(input)).toThrow(ZodError);
+  });
 
   it('throws ZodError for an unknown action name in allowed list', () => {
     const input = {
@@ -104,9 +104,9 @@ describe('parsePolicy', () => {
           allowed: ['fly_rocket'], // not a valid AgentAction
         },
       },
-    }
-    expect(() => parsePolicy(input)).toThrow(ZodError)
-  })
+    };
+    expect(() => parsePolicy(input)).toThrow(ZodError);
+  });
 
   it('throws ZodError when a rule is missing the required reason field', () => {
     const input = {
@@ -119,19 +119,62 @@ describe('parsePolicy', () => {
           // reason is missing
         },
       ],
-    }
-    expect(() => parsePolicy(input)).toThrow(ZodError)
-  })
+    };
+    expect(() => parsePolicy(input)).toThrow(ZodError);
+  });
 
   it('throws ZodError when version field is missing entirely', () => {
-    expect(() => parsePolicy({})).toThrow(ZodError)
-  })
-})
+    expect(() => parsePolicy({})).toThrow(ZodError);
+  });
+});
 
 describe('agentOwnersPolicySchema', () => {
-  it('passes through unknown top-level fields (passthrough behavior)', () => {
-    // By default zod strips unknown keys from z.object — that is fine for forward compat
-    const result = agentOwnersPolicySchema.safeParse({ version: 1, unknownField: 'ignored' })
-    expect(result.success).toBe(true)
-  })
-})
+  it('rejects unknown top-level fields so policy typos fail closed', () => {
+    const result = agentOwnersPolicySchema.safeParse({ version: 1, unknownField: 'ignored' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects unknown nested condition fields', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      rules: [
+        {
+          name: 'Misspelled condition',
+          when: { change_workflows: true },
+          effect: 'block',
+          reason: 'A typo must not silently disable enforcement.',
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects rules with no conditions', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      rules: [
+        {
+          name: 'Accidental global rule',
+          when: {},
+          effect: 'allow',
+          reason: 'Empty conditions would match every input.',
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects actions assigned to conflicting agent policy lists', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      agents: {
+        bot: {
+          match: { actors: ['bot[bot]'] },
+          allowed: ['merge_pr'],
+          blocked: ['merge_pr'],
+        },
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+});

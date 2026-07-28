@@ -1,0 +1,41 @@
+name: Feature proposal
+description: Propose a bounded, testable governance capability
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Governance problem
+      description: Describe the unsafe or high-friction behavior, not a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: policy
+    attributes:
+      label: Proposed policy behavior
+      description: Give concrete inputs, expected decisions, and precedence behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: disconfirming
+    attributes:
+      label: Cheapest disconfirming test
+      description: What small test would prove this proposal is unnecessary or wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Security and compatibility trade-offs
+      description: Include fail-open risk, false positives, and migration cost.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This does not require a database, SaaS dashboard, auto-merge, or admin permissions.
+          required: true

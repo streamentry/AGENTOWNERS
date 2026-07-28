@@ -40,10 +40,7 @@ export function computeRiskScore(input: RiskScoringInput): { score: number; leve
   }
 
   // Secrets
-  if (
-    filesClassification.secretFilesDetected ||
-    detectedActions.includes('touch_secrets')
-  ) {
+  if (filesClassification.secretFilesDetected || detectedActions.includes('touch_secrets')) {
     score += 80;
   }
 
@@ -76,8 +73,9 @@ export function computeRiskScore(input: RiskScoringInput): { score: number; leve
     score += 100;
   }
 
-  const level = scoreToLevel(score);
-  return { score, level };
+  const cappedScore = Math.min(score, 100);
+  const level = scoreToLevel(cappedScore);
+  return { score: cappedScore, level };
 }
 
 function scoreToLevel(score: number): RiskLevel {

@@ -17,7 +17,9 @@
     "test:coverage": "pnpm -r run test:coverage",
     "lint": "eslint packages/*/src/**/*.ts",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"packages/*/src/**/*.ts\""
+    "format": "prettier --write \"packages/*/src/**/*.ts\"",
+    "verify:release": "node scripts/verify-release.mjs",
+    "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm verify:release"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

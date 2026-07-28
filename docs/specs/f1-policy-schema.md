@@ -104,13 +104,20 @@ All fields from spec section 11.5.
 - Version must be exactly `1`
 - All optional fields use `.optional()`
 - AgentAction enum: `z.enum([...])`
+- All policy objects are strict. Unknown fields fail validation so typos cannot
+  silently disable enforcement.
+- Every `match` and `when` object must contain at least one supported field.
+- The same action cannot appear in more than one of `allowed`,
+  `requires_approval`, and `blocked` for a single agent.
 
 ## Tests
 - Valid minimal policy parses without error
 - Valid full policy parses without error
 - Unknown version throws ZodError
 - Invalid effect throws ZodError
-- Extra unknown fields are stripped (use `.strict()` or `.passthrough()` — choose passthrough for forward compat)
+- Extra unknown fields throw ZodError
+- Empty rule conditions throw ZodError
+- Conflicting agent action assignments throw ZodError
 - Missing required fields throw ZodError
 
 ## Files

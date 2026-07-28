@@ -9,23 +9,21 @@ Read [AGENTS.md](AGENTS.md) first. It has everything you need: repo map, invaria
 ### Setup
 
 ```bash
-git clone https://github.com/agentowners/agentowners
-cd agentowners
+git clone https://github.com/streamentry/AGENTOWNERS.git
+cd AGENTOWNERS
 pnpm install
-pnpm build
-pnpm test
+pnpm verify
 ```
 
 Node.js 22+ and pnpm 9+ required.
 
 ### Development workflow
 
-1. **Find or create an issue** — all work starts with an issue
-2. **Fork and branch** — `feat/my-feature` or `fix/the-bug`
-3. **Write tests first** (TDD) — failing test, then implementation
-4. **Run `pnpm test`** — all 200+ tests must pass
-5. **Run `pnpm typecheck`** — zero TypeScript errors
-6. **Open a PR** — title follows conventional commits format
+1. **Find or create an issue:** all work starts with an issue
+2. **Fork and branch:** `feat/my-feature` or `fix/the-bug`
+3. **Write tests first:** capture the intended behavior with a failing test
+4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
+5. **Open a PR:** use a conventional-commit title and complete the evidence template
 
 ### Commit format
 
@@ -58,21 +56,22 @@ Scopes: `core` `cli` `github-action` `examples` `docs`
 
 - Functions: < 50 lines
 - Files: < 800 lines
-- No `any` — use `unknown` and narrow safely
-- No mutation — return new objects
+- No `any`; use `unknown` and narrow safely
+- No mutation; return new objects
 - Import paths end in `.js` (NodeNext)
 - No `console.log` in library code
 
 ### Security
 
-If you find a security vulnerability, open a GitHub issue with title `[SECURITY] ...` before disclosing publicly.
+Report vulnerabilities through
+[GitHub private security advisories](https://github.com/streamentry/AGENTOWNERS/security/advisories/new).
+Never disclose vulnerability details in a public issue.
 
 See [SECURITY.md](SECURITY.md) for full policy.
 
 ### PR checklist
 
-- [ ] Tests pass (`pnpm test`)
-- [ ] TypeScript compiles (`pnpm typecheck`)
+- [ ] Full verification passes (`pnpm verify`)
 - [ ] New functionality has tests
 - [ ] Decision priority invariant preserved (`block > require_approval > allow`)
 - [ ] No secrets or tokens committed

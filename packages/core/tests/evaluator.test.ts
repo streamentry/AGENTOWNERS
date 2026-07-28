@@ -54,7 +54,9 @@ describe('evaluateRule', () => {
     const result = evaluateRule(rule, input);
     expect(result).not.toBeNull();
     expect(result?.effect).toBe('block');
-    expect(result?.matchedConditions?.some((c) => c.includes('.github/workflows/ci.yml'))).toBe(true);
+    expect(result?.matchedConditions?.some((c) => c.includes('.github/workflows/ci.yml'))).toBe(
+      true,
+    );
   });
 
   it('returns MatchedRule when changes_workflows condition matches', () => {
@@ -133,12 +135,18 @@ describe('evaluateRule', () => {
       effect: 'block',
       reason: 'Unknown agents blocked.',
     };
-    const match = evaluateRule(rule, baseInput({
-      agentDetection: { confidence: 'unknown', agentName: 'unknown', signals: [] },
-    }));
-    const noMatch = evaluateRule(rule, baseInput({
-      agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
-    }));
+    const match = evaluateRule(
+      rule,
+      baseInput({
+        agentDetection: { confidence: 'unknown', agentName: 'unknown', signals: [] },
+      }),
+    );
+    const noMatch = evaluateRule(
+      rule,
+      baseInput({
+        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+      }),
+    );
     expect(match).not.toBeNull();
     expect(noMatch).toBeNull();
   });
@@ -171,6 +179,89 @@ describe('evaluateRule', () => {
 });
 
 describe('evaluatePolicy', () => {
+  it('enforces blocked actions from the matched agent policy', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        copilot: {
+          match: { actors: ['github-copilot[bot]'] },
+          blocked: ['merge_pr'],
+        },
+      },
+      rules: [
+        {
+          name: 'Allow routine work',
+          when: { actors: ['github-copilot[bot]'] },
+          effect: 'allow',
+          reason: 'Routine work is allowed.',
+        },
+      ],
+    };
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        actor: 'github-copilot[bot]',
+        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+        detectedActions: ['merge_pr'],
+      }),
+    );
+
+    expect(decision.effect).toBe('block');
+    expect(decision.matchedRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Agent policy: copilot',
+          effect: 'block',
+        }),
+      ]),
+    );
+  });
+
+  it('enforces approval actions from the matched agent policy', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        copilot: {
+          match: { actors: ['github-copilot[bot]'] },
+          requires_approval: ['modify_dependencies'],
+        },
+      },
+    };
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        actor: 'github-copilot[bot]',
+        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+        detectedActions: ['modify_dependencies'],
+      }),
+    );
+
+    expect(decision.effect).toBe('require_approval');
+    expect(decision.matchedRules[0]?.matchedConditions).toContain('actions: modify_dependencies');
+  });
+
+  it('allows an explicitly allowed action when no stricter rule matches', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        copilot: {
+          match: { actors: ['github-copilot[bot]'] },
+          allowed: ['modify_docs'],
+        },
+      },
+    };
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        actor: 'github-copilot[bot]',
+        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+        detectedActions: ['modify_docs'],
+      }),
+    );
+
+    expect(decision.effect).toBe('allow');
+  });
+
   it('block rule takes precedence over allow', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,
@@ -338,7 +429,10 @@ describe('evaluatePolicy', () => {
     };
     const input = baseInput({
       policy,
-      filesClassification: makeClassification({ changesDependencies: true, changesWorkflows: true }),
+      filesClassification: makeClassification({
+        changesDependencies: true,
+        changesWorkflows: true,
+      }),
       diffLinesCount: 10,
     });
     const decision = evaluatePolicy(input);
