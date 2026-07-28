@@ -30,6 +30,8 @@ export function registerInit(program: Command): void {
       const dir = path.dirname(outputPath)
       fs.mkdirSync(dir, { recursive: true })
       try {
+        // `--force` is explicit authority from the local operator. Without it,
+        // exclusive creation prevents overwrites and closes the check/write race.
         fs.writeFileSync(outputPath, content, {
           encoding: 'utf8',
           flag: force ? 'w' : 'wx',
