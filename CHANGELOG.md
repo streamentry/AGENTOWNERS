@@ -12,6 +12,9 @@ semantic versioning.
 - A manually invoked, read-only adversarial reviewer custom agent with a
   falsifiable finding contract.
 - Release and isolated-consumer verification.
+- Tested release primitives for all-package registry preflight, exact-version
+  recovery, OIDC tarball publication, and stable GitHub Action major tags.
+- Hermetic npm cache isolation for packed-package consumer verification.
 - Deterministic JSON Schema generation, editor integration, package export, and
   CI drift detection.
 - Versioned `agentowners self-check` JSON and exit-code contract for agent
