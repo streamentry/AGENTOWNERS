@@ -106,6 +106,7 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/reviewing.md     — independent review sequence and disposition template
 docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/

@@ -92,6 +92,9 @@ the invariant, failure mechanism, and exact evidence; it does not need merge
 permission. AI-assisted review prepares evidence, but never substitutes for
 independent human approval.
 
+Use the [reviewing playbook](docs/reviewing.md) when you need a bounded review
+sequence, surface-specific checks, or a copyable disposition template.
+
 ### Maintainer review contract
 
 Every reviewed contribution should receive one explicit disposition:
