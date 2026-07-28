@@ -105,6 +105,9 @@ Logic:
 ## Label Application
 Apply `labelsToApply` from Decision to the PR/issue.
 Create labels if they don't exist (with sensible colors).
+Before adding the current verdict, remove only stale AGENTOWNERS-managed
+labels (`ai-agent` and `risk-*`). Preserve unrelated maintainer and policy
+labels.
 
 ## Audit Artifact
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.

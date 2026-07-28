@@ -33,6 +33,7 @@ const mockOctokit = {
       createComment: vi.fn(),
       updateComment: vi.fn(),
       addLabels: vi.fn(),
+      removeLabel: vi.fn(),
       getLabel: vi.fn(),
       createLabel: vi.fn(),
       get: vi.fn(),
@@ -168,6 +169,7 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
   mockOctokit.rest.issues.getLabel.mockRejectedValue(new Error('not found'));
   mockOctokit.rest.issues.createLabel.mockResolvedValue({ data: {} });
   mockOctokit.rest.issues.addLabels.mockResolvedValue({ data: [] });
+  mockOctokit.rest.issues.removeLabel.mockResolvedValue({ data: {} });
 }
 
 // Integration tests — we import action logic directly and test run() behaviour
@@ -484,6 +486,39 @@ describe('upsertVerdictComment', () => {
       expect.objectContaining({ comment_id: 201, body: 'new body' }),
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+  });
+});
+
+describe('applyLabels', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('removes stale managed risk labels while preserving unrelated labels', async () => {
+    const { applyLabels } = await import('../src/index.js');
+
+    await applyLabels(
+      mockOctokit as never,
+      'owner',
+      'repo',
+      1,
+      ['ai-agent', 'risk-low'],
+      ['ai-agent', 'risk-high', 'security-review'],
+    );
+
+    expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      name: 'risk-high',
+    });
+    expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledTimes(1);
+    expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith({
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 1,
+      labels: ['ai-agent', 'risk-low'],
+    });
   });
 });
 

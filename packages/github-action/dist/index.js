@@ -21510,6 +21510,7 @@ var require_picomatch2 = __commonJS({
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  applyLabels: () => applyLabels,
   run: () => run
 });
 module.exports = __toCommonJS(index_exports);
@@ -34634,7 +34635,7 @@ async function run() {
       info("Verdict comment posted/updated.");
     }
     if (addLabels && issueNumber !== void 0 && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply, labels);
     }
     setOutput("decision", decision.effect);
     setOutput("risk-score", String(decision.riskScore));
@@ -34673,7 +34674,23 @@ async function run() {
     setFailed(error2 instanceof Error ? error2.message : String(error2));
   }
 }
-async function applyLabels(octokit, owner, repo, issueNumber, labels) {
+var MANAGED_LABELS = ["ai-agent", "risk-low", "risk-medium", "risk-high", "risk-critical"];
+async function applyLabels(octokit, owner, repo, issueNumber, labels, currentLabels = []) {
+  const desiredLabels = new Set(labels);
+  const staleManagedLabels = currentLabels.filter(
+    (label) => MANAGED_LABELS.includes(label) && !desiredLabels.has(label)
+  );
+  for (const label of staleManagedLabels) {
+    try {
+      await octokit.rest.issues.removeLabel({
+        owner,
+        repo,
+        issue_number: issueNumber,
+        name: label
+      });
+    } catch {
+    }
+  }
   const labelColors = {
     "ai-agent": "a2eeef",
     "risk-low": "0e8a16",
@@ -34702,6 +34719,7 @@ async function applyLabels(octokit, owner, repo, issueNumber, labels) {
 run();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  applyLabels,
   run
 });
 /*! Bundled license information:

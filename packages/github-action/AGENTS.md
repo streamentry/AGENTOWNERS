@@ -61,4 +61,6 @@ and distinct from issue/comment metadata. Pass the core detector's
 actors from spoofable commit, label, title, and body evidence.
 
 Action inputs must fail closed: an unknown `mode` or boolean value is an error,
-never a silent no-op that bypasses comments or enforcement.
+never a silent no-op that bypasses comments or enforcement. Label lifecycle
+tests must prove stale managed risk labels are removed while unrelated labels
+remain untouched.

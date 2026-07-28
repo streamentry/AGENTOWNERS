@@ -249,7 +249,7 @@ export async function run(): Promise<void> {
 
     // 11. Apply labels
     if (addLabels && issueNumber !== undefined && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply, labels);
     }
 
     // 12. Set outputs
@@ -298,13 +298,35 @@ export async function run(): Promise<void> {
   }
 }
 
-async function applyLabels(
+const MANAGED_LABELS = ['ai-agent', 'risk-low', 'risk-medium', 'risk-high', 'risk-critical'] as const;
+
+export async function applyLabels(
   octokit: ReturnType<typeof github.getOctokit>,
   owner: string,
   repo: string,
   issueNumber: number,
   labels: string[],
+  currentLabels: string[] = [],
 ): Promise<void> {
+  const desiredLabels = new Set(labels);
+  const staleManagedLabels = currentLabels.filter(
+    (label) =>
+      (MANAGED_LABELS as readonly string[]).includes(label) && !desiredLabels.has(label),
+  );
+
+  for (const label of staleManagedLabels) {
+    try {
+      await octokit.rest.issues.removeLabel({
+        owner,
+        repo,
+        issue_number: issueNumber,
+        name: label,
+      });
+    } catch {
+      // The label may have been removed concurrently; continue applying the verdict.
+    }
+  }
+
   // Ensure labels exist before applying
   const labelColors: Record<string, string> = {
     'ai-agent': 'a2eeef',
