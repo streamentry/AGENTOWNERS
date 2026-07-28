@@ -1,13 +1,26 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(import.meta.dirname, '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const packageDirectories = ['core', 'cli', 'github-action'];
-const temporaryRoot = await mkdtemp(join(tmpdir(), 'agentowners-pack-'));
-const packDirectory = join(temporaryRoot, 'packages');
-const consumerDirectory = join(temporaryRoot, 'consumer');
+
+function verifyRequestedNodeMajor(args) {
+  if (args.length === 0) return;
+  if (args.length !== 2 || args[0] !== '--node-major' || !/^\d+$/.test(args[1])) {
+    throw new Error('Usage: verify-packed-packages.mjs [--node-major <major>]');
+  }
+
+  const expected = Number(args[1]);
+  const actual = Number(process.versions.node.split('.')[0]);
+  if (actual !== expected) {
+    throw new Error(
+      `Packed package verification requires Node ${expected}, received ${process.versions.node}`,
+    );
+  }
+}
 
 function run(command, args, cwd) {
   return execFileSync(command, args, {
@@ -21,6 +34,12 @@ async function packageVersion(directory) {
   const contents = await readFile(resolve(root, 'packages', directory, 'package.json'), 'utf8');
   return JSON.parse(contents).version;
 }
+
+verifyRequestedNodeMajor(process.argv.slice(2));
+
+const temporaryRoot = await mkdtemp(join(tmpdir(), 'agentowners-pack-'));
+const packDirectory = join(temporaryRoot, 'packages');
+const consumerDirectory = join(temporaryRoot, 'consumer');
 
 try {
   await Promise.all([

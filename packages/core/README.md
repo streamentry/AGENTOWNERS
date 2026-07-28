@@ -13,6 +13,8 @@ actions, resolves policy rules, scores risk, and renders auditable decisions.
 npm install @agent-owners/core
 ```
 
+Runtime requirement: Node.js 22 or newer.
+
 The package exports its generated authoring schema as
 `@agent-owners/core/schema.json`. The checked-in
 [schema artifact](./agentowners.schema.json) is generated from the runtime Zod

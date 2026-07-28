@@ -8,6 +8,8 @@ Local, deterministic governance checks for AI-agent contributions.
 npm install --global @agent-owners/cli
 ```
 
+Runtime requirement: Node.js 22 or newer.
+
 ## Use
 
 ```bash

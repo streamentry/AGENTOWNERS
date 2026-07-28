@@ -14,6 +14,11 @@ repository policy.
 > The npm packages and stable `v0` Action tag are not published yet. Evaluate
 > from source; do not pin a production workflow to `main`.
 
+The contributor and package consumer baseline is Node 22+. The GitHub Action
+runs on GitHub's Node 24 runtime. Release reviewers can reproduce the minimum
+package boundary with `pnpm verify:packages:node22` from an actual Node 22
+process.
+
 ---
 
 ## Why

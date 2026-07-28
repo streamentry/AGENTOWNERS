@@ -1,7 +1,7 @@
 import { access, readFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { createRequire } from 'node:module';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -78,6 +78,11 @@ async function verifyPackageMetadata() {
         `Version mismatch: packages/${directory} is ${packageJson.version}, root is ${rootPackage.version}`,
       );
     }
+    if (packageJson.engines?.node !== rootPackage.engines?.node) {
+      throw new Error(
+        `Node engine mismatch: packages/${directory} declares ${packageJson.engines?.node}, root declares ${rootPackage.engines?.node}`,
+      );
+    }
     await assertFile(`packages/${directory}/README.md`);
   }
 
@@ -106,6 +111,25 @@ function verifyCommittedActionBundle() {
   }
 }
 
+function verifyPackedRuntimeGuard() {
+  const unexpectedMajor = Number(process.versions.node.split('.')[0]) + 1;
+  const result = spawnSync(
+    process.execPath,
+    [
+      resolve(root, 'scripts/verify-packed-packages.mjs'),
+      '--node-major',
+      String(unexpectedMajor),
+    ],
+    { cwd: root, encoding: 'utf8' },
+  );
+  const expectedDiagnostic = `requires Node ${unexpectedMajor}, received ${process.versions.node}`;
+
+  if (result.status === 0 || !result.stderr.includes(expectedDiagnostic)) {
+    throw new Error('Packed-package runtime guard did not reject a mismatched Node major');
+  }
+}
+
 await Promise.all([verifyCorePackage(), verifyAction(), verifyCli(), verifyPackageMetadata()]);
+verifyPackedRuntimeGuard();
 verifyCommittedActionBundle();
 process.stdout.write('Release artifacts verified.\n');
