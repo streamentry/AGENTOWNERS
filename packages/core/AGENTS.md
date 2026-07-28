@@ -10,7 +10,7 @@ network calls, clocks, randomness, or persistent state.
 - `types.ts`: public contract
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
-- `classifier.ts`: path and secret classification
+- `classifier.ts`: path, permission-sensitive surface, and secret classification
 - `detection.ts`: actor, commit, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
@@ -90,5 +90,7 @@ After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
+Permission-sensitive paths must emit both `modify_auth` and
+`change_permissions`; general authentication paths emit only `modify_auth`.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.

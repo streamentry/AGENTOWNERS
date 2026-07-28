@@ -51,7 +51,7 @@ A rule matches when ALL specified conditions in `when` are satisfied:
 - `commits_over`: commit count exceeds threshold
 - `changes_package_files`: FilesClassification.changesDependencies
 - `changes_workflows`: FilesClassification.changesWorkflows
-- `changes_permissions`: FilesClassification.changesAuth
+- `changes_permissions`: FilesClassification.changesPermissions
 - `changes_auth`: FilesClassification.changesAuth
 - `changes_infra`: FilesClassification.changesInfra
 - `docs_only`: FilesClassification.docsOnly

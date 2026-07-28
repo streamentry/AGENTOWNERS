@@ -7,6 +7,7 @@ export type FileClassification = {
   isWorkflow: boolean;
   isInfra: boolean;
   isAuth: boolean;
+  isPermissions: boolean;
   isSecret: boolean;
 };
 
@@ -16,6 +17,7 @@ export type FilesClassification = {
   changesWorkflows: boolean;
   changesDependencies: boolean;
   changesAuth: boolean;
+  changesPermissions: boolean;
   changesInfra: boolean;
   secretFilesDetected: boolean;
   files: Record<string, FileClassification>;
@@ -42,6 +44,10 @@ const INFRA_PATTERNS = [
 const AUTH_PATTERNS = [
   '**/auth/**', '**/security/**', '**/permissions/**', '**/roles/**',
   '**/policy/**', '**/rbac/**',
+];
+
+const PERMISSIONS_PATTERNS = [
+  '**/permissions/**', '**/roles/**', '**/policy/**', '**/rbac/**',
 ];
 
 const SECRET_FILE_PATTERNS = [
@@ -76,6 +82,7 @@ export function classifyFile(filePath: string): FileClassification {
     isWorkflow: matchGlobs(WORKFLOW_PATTERNS, filePath),
     isInfra: matchGlobs(INFRA_PATTERNS, filePath),
     isAuth: matchGlobs(AUTH_PATTERNS, filePath),
+    isPermissions: matchGlobs(PERMISSIONS_PATTERNS, filePath),
     isSecret: matchGlobs(SECRET_FILE_PATTERNS, filePath),
   };
 }
@@ -95,6 +102,7 @@ export function classifyFiles(filePaths: string[]): FilesClassification {
     changesWorkflows: classifications.some((c) => c.isWorkflow),
     changesDependencies: classifications.some((c) => c.isDependency),
     changesAuth: classifications.some((c) => c.isAuth),
+    changesPermissions: classifications.some((c) => c.isPermissions),
     changesInfra: classifications.some((c) => c.isInfra),
     secretFilesDetected: classifications.some((c) => c.isSecret),
     files,

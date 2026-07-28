@@ -21,6 +21,13 @@ describe('classifyFile', () => {
   it('classifies src/auth/login.ts as auth', () => {
     const r = classifyFile('src/auth/login.ts');
     expect(r.isAuth).toBe(true);
+    expect(r.isPermissions).toBe(false);
+  });
+
+  it('classifies permission policy paths separately from general auth paths', () => {
+    const r = classifyFile('src/permissions/roles.ts');
+    expect(r.isAuth).toBe(true);
+    expect(r.isPermissions).toBe(true);
   });
 
   it('classifies .github/workflows/ci.yml as workflow', () => {
@@ -89,6 +96,11 @@ describe('classifyFiles', () => {
   it('secretFilesDetected is false when no secret files', () => {
     const result = classifyFiles(['src/main.ts', 'README.md']);
     expect(result.secretFilesDetected).toBe(false);
+  });
+
+  it('tracks permission-sensitive changes independently from general auth changes', () => {
+    expect(classifyFiles(['src/auth/login.ts']).changesPermissions).toBe(false);
+    expect(classifyFiles(['src/rbac/policy.ts']).changesPermissions).toBe(true);
   });
 });
 
