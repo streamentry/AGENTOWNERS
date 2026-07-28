@@ -12,6 +12,14 @@ Overlap checked:
 
 <!-- Keep this bounded. Name any deliberately untouched area. -->
 
+## Review routing
+
+<!-- Select the narrowest existing label that matches the changed files. -->
+
+- Review lane: `core-review` | `security-review` | `dependency-review` | `governance` | `documentation`
+- [ ] I added the narrowest matching review-lane label, or explained in the PR why none applies.
+- [ ] I checked the [review queues](https://github.com/streamentry/AGENTOWNERS/pulls?q=is%3Apr+is%3Aopen) for overlapping work.
+
 ## Evidence
 
 <!-- Paste exact commands and concise results. Do not say "tests pass" if any were skipped. -->
