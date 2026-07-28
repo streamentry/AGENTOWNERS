@@ -177,4 +177,64 @@ describe('agentOwnersPolicySchema', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  // Focused action-assignment conflicts not duplicated by the versioned corpus.
+
+  it('invariant: rejects same action in allowed and requires_approval', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      agents: {
+        bot: {
+          match: { actors: ['bot[bot]'] },
+          allowed: ['modify_dependencies'],
+          requires_approval: ['modify_dependencies'],
+        },
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('invariant: rejects same action in requires_approval and blocked', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      agents: {
+        bot: {
+          match: { actors: ['bot[bot]'] },
+          requires_approval: ['edit_workflows'],
+          blocked: ['edit_workflows'],
+        },
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('invariant: rejects triple conflicting assignment of same action', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      agents: {
+        bot: {
+          match: { actors: ['bot[bot]'] },
+          allowed: ['open_pr'],
+          requires_approval: ['open_pr'],
+          blocked: ['open_pr'],
+        },
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('invariant: accepts non-overlapping action assignments', () => {
+    const result = agentOwnersPolicySchema.safeParse({
+      version: 1,
+      agents: {
+        bot: {
+          match: { actors: ['bot[bot]'] },
+          allowed: ['open_pr', 'modify_docs'],
+          requires_approval: ['modify_dependencies'],
+          blocked: ['merge_pr', 'touch_secrets'],
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
 });
