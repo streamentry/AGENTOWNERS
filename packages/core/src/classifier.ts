@@ -21,7 +21,7 @@ export type FilesClassification = {
   files: Record<string, FileClassification>;
 };
 
-const DOCS_PATTERNS = ['*.md', 'docs/**', '*.rst', '*.adoc'];
+const DOCS_PATTERNS = ['**/*.md', 'docs/**', '**/*.rst', '**/*.adoc'];
 
 const TESTS_PATTERNS = ['**/*.test.*', '**/*.spec.*', 'tests/**', '__tests__/**'];
 

@@ -97,6 +97,7 @@ examples/
   strict-oss/         — strict open-source project policy
   security-sensitive/ — maximum restriction for security-critical repos
   monorepo/           — per-package rules in a monorepo
+  */AGENTOWNERS.fixtures.yml — executable decision contract for every profile
 
 docs/specs/
   readme.md           — full product specification (canonical requirements)

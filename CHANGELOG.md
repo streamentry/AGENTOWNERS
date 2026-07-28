@@ -36,6 +36,9 @@ semantic versioning.
 
 ### Fixed
 
+- Documentation classification now recognizes Markdown, reStructuredText, and
+  AsciiDoc files at any repository depth, keeping monorepo docs-only policies
+  deterministic.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

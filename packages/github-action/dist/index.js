@@ -33232,7 +33232,7 @@ function loadPolicyText(raw, source = "policy text") {
     throw new PolicyLoadError(source, err);
   }
 }
-var DOCS_PATTERNS = ["*.md", "docs/**", "*.rst", "*.adoc"];
+var DOCS_PATTERNS = ["**/*.md", "docs/**", "**/*.rst", "**/*.adoc"];
 var TESTS_PATTERNS = ["**/*.test.*", "**/*.spec.*", "tests/**", "__tests__/**"];
 var DEPENDENCY_PATTERNS = [
   "package.json",

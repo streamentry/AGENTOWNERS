@@ -18,6 +18,12 @@ describe('classifyFile', () => {
     expect(r.isSecret).toBe(false);
   });
 
+  it('classifies documentation files at any repository depth', () => {
+    expect(classifyFile('packages/cli/README.md').isDocs).toBe(true);
+    expect(classifyFile('packages/core/reference.adoc').isDocs).toBe(true);
+    expect(classifyFile('services/api/guide.rst').isDocs).toBe(true);
+  });
+
   it('classifies src/auth/login.ts as auth', () => {
     const r = classifyFile('src/auth/login.ts');
     expect(r.isAuth).toBe(true);

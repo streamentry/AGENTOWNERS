@@ -10,7 +10,7 @@ network calls, clocks, randomness, or persistent state.
 - `types.ts`: public contract
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
-- `classifier.ts`: path and secret classification
+- `classifier.ts`: repository-depth-independent path and secret classification
 - `detection.ts`: actor, commit, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction

@@ -9,7 +9,7 @@ Deterministic classification of changed files into categories used for action in
 ## File Categories (from spec section 19)
 
 ### Docs patterns
-`*.md`, `docs/**`, `*.rst`, `*.adoc`
+`**/*.md`, `docs/**`, `**/*.rst`, `**/*.adoc` (including repository-root files)
 
 ### Tests patterns
 `**/*.test.*`, `**/*.spec.*`, `tests/**`, `__tests__/**`
@@ -86,6 +86,7 @@ Returns true if any pattern matches.
 
 ## Tests (`packages/core/tests/classifier.test.ts`)
 - `.md` file classified as docs
+- nested Markdown, reStructuredText, and AsciiDoc files classified as docs
 - `src/auth/session.ts` classified as auth
 - `.github/workflows/test.yml` classified as workflow
 - `package.json` classified as dependency
