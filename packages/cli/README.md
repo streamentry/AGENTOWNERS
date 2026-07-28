@@ -35,6 +35,9 @@ agentowners test \
 # Return nonzero when policy blocks the change
 agentowners check --base main --head HEAD --mode enforcement
 
+# Emit SARIF 2.1.0 for standard code-scanning tools
+agentowners check --base main --head HEAD --output sarif > agentowners.sarif
+
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
 ```
@@ -53,6 +56,9 @@ invalid command input, `65` for invalid policy data, `66` for invalid fixture
 data, and `70` for an unexpected internal failure. Use `--output json` for the
 versioned machine result. See the
 [fixture specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f13-policy-fixtures.md).
+
+SARIF output is deterministic and contains only non-allow policy results.
+Approval decisions are warnings and blocked decisions are errors.
 
 See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
 and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

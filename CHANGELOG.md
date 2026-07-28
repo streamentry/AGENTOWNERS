@@ -18,6 +18,8 @@ semantic versioning.
   preflight.
 - Strict, portable policy fixture suites and the deterministic
   `agentowners test` runner.
+- Deterministic SARIF 2.1.0 rendering and CLI output for code-scanning
+  interoperability.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.

@@ -40,11 +40,11 @@ project does not claim.
 
 ## What ships
 
-| Package | Responsibility | Trust boundary |
-|---------|----------------|----------------|
-| `@agent-owners/core` | Schema, detection, classification, evaluation, scoring, rendering | Pure and stateless; no shell, network, clock, or database |
-| `@agent-owners/cli` | Local policy creation, validation, fingerprinting, and Git-range checks | Git refs are passed as argv, never through a shell |
-| `@agent-owners/github-action` | Event ingestion, sticky verdicts, labels, audit output, CI status | Least-privilege GitHub token permissions |
+| Package                       | Responsibility                                                          | Trust boundary                                            |
+| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| `@agent-owners/core`          | Schema, detection, classification, evaluation, scoring, rendering       | Pure and stateless; no shell, network, clock, or database |
+| `@agent-owners/cli`           | Local policy creation, validation, fingerprinting, and Git-range checks | Git refs are passed as argv, never through a shell        |
+| `@agent-owners/github-action` | Event ingestion, sticky verdicts, labels, audit output, CI status       | Least-privilege GitHub token permissions                  |
 
 The engine detects agent signals, classifies changed paths, infers actions,
 applies agent-specific and repository-wide rules, and resolves conflicts with
@@ -95,24 +95,24 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Allow docs-only changes"
+  - name: 'Allow docs-only changes'
     when:
       docs_only: true
     effect: allow
-    reason: "Docs-only changes are low risk."
+    reason: 'Docs-only changes are low risk.'
 
-  - name: "Block workflow edits"
+  - name: 'Block workflow edits'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "Agents may not modify GitHub Actions workflows."
+    reason: 'Agents may not modify GitHub Actions workflows.'
 
-  - name: "Require approval for dependency changes"
+  - name: 'Require approval for dependency changes'
     when:
       changes_package_files: true
     effect: require_approval
-    reason: "Dependency changes require maintainer review."
+    reason: 'Dependency changes require maintainer review.'
 ```
 
 The first-line schema directive gives compatible YAML editors completion and
@@ -150,9 +150,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
-          policy-path: ".github/AGENTOWNERS.yml"
-          mode: "both"
-          fail-on-block: "true"
+          policy-path: '.github/AGENTOWNERS.yml'
+          mode: 'both'
+          fail-on-block: 'true'
 ```
 
 Open an agent-generated PR and inspect the verdict before switching from
@@ -206,6 +206,9 @@ agentowners validate .github/AGENTOWNERS.yml
 # Check local diff against policy
 agentowners check --base main --head HEAD
 
+# Produce deterministic SARIF 2.1.0 for code-scanning upload
+agentowners check --base main --head HEAD --output sarif > agentowners.sarif
+
 # Give an agent a versioned pre-PR decision contract
 agentowners self-check \
   --policy .github/AGENTOWNERS.yml \
@@ -232,16 +235,22 @@ classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
 
+`check --output sarif` emits no alert for an allowed decision, warnings for
+required approval, and errors for blocked changes. Rule identifiers, partial
+fingerprints, and repository-relative locations are stable across equivalent
+runs. Upload the file with `github/codeql-action/upload-sarif@v4` where GitHub
+code scanning is available.
+
 ---
 
 ## Policy profiles
 
-| Profile | Default behavior | Use case |
-|---------|-----------------|----------|
-| `minimal` | `require_approval` | New projects, getting started |
-| `strict-oss` | `require_approval` | Open-source with many contributors |
-| `security-sensitive` | `block` for unknown | Security-critical repositories |
-| `monorepo` | Per-package rules | Large monorepos |
+| Profile              | Default behavior    | Use case                           |
+| -------------------- | ------------------- | ---------------------------------- |
+| `minimal`            | `require_approval`  | New projects, getting started      |
+| `strict-oss`         | `require_approval`  | Open-source with many contributors |
+| `security-sensitive` | `block` for unknown | Security-critical repositories     |
+| `monorepo`           | Per-package rules   | Large monorepos                    |
 
 ```bash
 agentowners init --profile strict-oss
@@ -261,7 +270,7 @@ agents:
   github-copilot:
     match:
       actors:
-        - "github-copilot[bot]"
+        - 'github-copilot[bot]'
     allowed:
       - open_pr
       - comment
@@ -279,12 +288,12 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Block workflow edits"
+  - name: 'Block workflow edits'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "Agents may not modify CI/CD workflows."
+    reason: 'Agents may not modify CI/CD workflows.'
 ```
 
 ### Rule conditions
@@ -311,11 +320,11 @@ rules:
 
 ### Effects
 
-| Effect | Meaning |
-|--------|---------|
-| `allow` | No approval needed |
+| Effect             | Meaning                            |
+| ------------------ | ---------------------------------- |
+| `allow`            | No approval needed                 |
 | `require_approval` | Human review required before merge |
-| `block` | Action is forbidden |
+| `block`            | Action is forbidden                |
 
 Priority: `block > require_approval > allow`
 
@@ -348,19 +357,19 @@ AGENTOWNERS detects AI agents from:
 
 Each decision gets a risk score from 0–100:
 
-| Signal | Score |
-|--------|-------|
-| Docs only | +5 |
-| Small diff (< 50 lines) | +5 |
-| Tests changed | +10 |
-| Large diff (> 300 lines) | +30 |
-| Dependency files changed | +30 |
-| Infra paths changed | +40 |
-| Auth paths changed | +50 |
-| Workflow files changed | +50 |
-| Permission changes | +60 |
-| Secret patterns detected | +80 |
-| Block action detected | +100 |
+| Signal                   | Score |
+| ------------------------ | ----- |
+| Docs only                | +5    |
+| Small diff (< 50 lines)  | +5    |
+| Tests changed            | +10   |
+| Large diff (> 300 lines) | +30   |
+| Dependency files changed | +30   |
+| Infra paths changed      | +40   |
+| Auth paths changed       | +50   |
+| Workflow files changed   | +50   |
+| Permission changes       | +60   |
+| Secret patterns detected | +80   |
+| Block action detected    | +100  |
 
 Risk levels: `low` (0–20) · `medium` (21–49) · `high` (50–79) · `critical` (80+)
 
@@ -370,15 +379,15 @@ Risk levels: `low` (0–20) · `medium` (21–49) · `high` (50–79) · `critic
 
 The CLI and Action expose different adapters around the same decision:
 
-| Surface | Mode | Behavior |
-|---------|------|----------|
-| CLI | `advisory` | Print verdict; never fail for a blocked decision |
-| CLI | `enforcement` | Exit nonzero for a blocked decision |
-| CLI | `dry-run` | Print the deterministic decision without side effects |
-| Action | `comment` | Upsert a verdict comment |
-| Action | `check` | Set outputs and enforce configured failure behavior |
-| Action | `both` | Comment and enforce |
-| Action | `dry-run` | Set outputs without comments or labels |
+| Surface | Mode          | Behavior                                              |
+| ------- | ------------- | ----------------------------------------------------- |
+| CLI     | `advisory`    | Print verdict; never fail for a blocked decision      |
+| CLI     | `enforcement` | Exit nonzero for a blocked decision                   |
+| CLI     | `dry-run`     | Print the deterministic decision without side effects |
+| Action  | `comment`     | Upsert a verdict comment                              |
+| Action  | `check`       | Set outputs and enforce configured failure behavior   |
+| Action  | `both`        | Comment and enforce                                   |
+| Action  | `dry-run`     | Set outputs without comments or labels                |
 
 The CLI defaults to `advisory`; the Action defaults to `comment`.
 
@@ -390,13 +399,13 @@ AGENTOWNERS governs contributions at the repository boundary. Runtime agent
 control planes govern model calls, tools, networks, or data access. They are
 complements, not substitutes.
 
-| Question | AGENTOWNERS | Runtime guardrail | AI reviewer |
-|----------|-------------|-------------------|-------------|
-| May this agent change this repository surface? | Yes | Usually not | No |
-| Is the decision deterministic and reviewable as code? | Yes | Varies | No |
-| Does it inspect code quality or correctness? | No | No | Yes |
-| Does it intercept tool calls outside GitHub? | No | Yes | No |
-| Does it require a hosted control plane? | No | Often | Often |
+| Question                                              | AGENTOWNERS | Runtime guardrail | AI reviewer |
+| ----------------------------------------------------- | ----------- | ----------------- | ----------- |
+| May this agent change this repository surface?        | Yes         | Usually not       | No          |
+| Is the decision deterministic and reviewable as code? | Yes         | Varies            | No          |
+| Does it inspect code quality or correctness?          | No          | No                | Yes         |
+| Does it intercept tool calls outside GitHub?          | No          | Yes               | No          |
+| Does it require a hosted control plane?               | No          | Often             | Often       |
 
 This boundary is the product. Expanding into model hosting, code review, or a
 dashboard would weaken portability and auditability.
@@ -411,6 +420,7 @@ This is a permission layer for AI contributions.
 AGENTOWNERS is deterministic: the same policy and PR produce the same verdict. No LLM, external API, or ambiguity.
 
 Design principles:
+
 1. Policy over prompts
 2. Constraints over suggestions
 3. Deterministic first, AI optional later

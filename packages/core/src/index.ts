@@ -10,6 +10,7 @@ export * from './detection.js';
 export * from './actions.js';
 export * from './scoring.js';
 export * from './renderer.js';
+export * from './sarif.js';
 export * from './profiles.js';
 export * from './evaluator.js';
 export * from './fixtures.js';

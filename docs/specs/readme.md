@@ -8,13 +8,13 @@ AGENTOWNERS is **CODEOWNERS for AI agents**: an open-source policy layer that le
 
 AI coding agents are becoming normal contributors in GitHub repositories. They can open PRs, comment on issues, review code, propose fixes, and sometimes trigger automation. The missing layer is not another AI reviewer. The missing layer is repo-native governance:
 
-* Which agent is acting?
-* What action is it trying to perform?
-* Which files, labels, issues, or PRs are affected?
-* Is the action allowed?
-* Does it require human approval?
-* Who should review it?
-* Was the decision auditable later?
+- Which agent is acting?
+- What action is it trying to perform?
+- Which files, labels, issues, or PRs are affected?
+- Is the action allowed?
+- Does it require human approval?
+- Who should review it?
+- Was the decision auditable later?
 
 AGENTOWNERS solves this by adding a repo-level policy file plus enforcement tools.
 
@@ -42,36 +42,36 @@ The primary user is an open-source maintainer who accepts or expects AI-generate
 
 They want:
 
-* less AI spam
-* fewer risky agent PRs
-* automatic labeling of agent-created work
-* clear review escalation
-* protection for sensitive paths
-* audit logs for agent actions
-* simple config checked into the repo
+- less AI spam
+- fewer risky agent PRs
+- automatic labeling of agent-created work
+- clear review escalation
+- protection for sensitive paths
+- audit logs for agent actions
+- simple config checked into the repo
 
 They do not want:
 
-* a SaaS dashboard
-* another AI reviewer
-* a complex enterprise governance system
-* a new agent framework
-* a tool requiring them to change their existing agents
+- a SaaS dashboard
+- another AI reviewer
+- a complex enterprise governance system
+- a new agent framework
+- a tool requiring them to change their existing agents
 
 ## 4. Non-goals
 
 Do not build these in v1:
 
-* Do not build a full AI code reviewer.
-* Do not build a hosted SaaS product.
-* Do not build a payment layer.
-* Do not build a new agent protocol.
-* Do not build a full identity standard.
-* Do not require users to replace Copilot, Codex, Claude Code, Cursor, OpenHands, Devin, or other agents.
-* Do not require a database in MVP.
-* Do not require users to run a server in MVP.
-* Do not request broad GitHub permissions.
-* Do not allow auto-merge or repository administration changes in v1.
+- Do not build a full AI code reviewer.
+- Do not build a hosted SaaS product.
+- Do not build a payment layer.
+- Do not build a new agent protocol.
+- Do not build a full identity standard.
+- Do not require users to replace Copilot, Codex, Claude Code, Cursor, OpenHands, Devin, or other agents.
+- Do not require a database in MVP.
+- Do not require users to run a server in MVP.
+- Do not request broad GitHub permissions.
+- Do not allow auto-merge or repository administration changes in v1.
 
 ## 5. Product shape
 
@@ -79,25 +79,25 @@ The project should ship as three things:
 
 1. A policy format:
 
-   * `.github/AGENTOWNERS.yml`
+   - `.github/AGENTOWNERS.yml`
 
 2. A GitHub Action:
 
-   * `agentowners/check-action`
+   - `agentowners/check-action`
 
 3. A CLI:
 
-   * `agentowners check`
-   * `agentowners explain`
-   * `agentowners init`
-   * `agentowners validate`
-   * `agentowners fingerprint`
+   - `agentowners check`
+   - `agentowners explain`
+   - `agentowners init`
+   - `agentowners validate`
+   - `agentowners fingerprint`
 
 Optional later:
 
 4. A GitHub App:
 
-   * for webhook-based enforcement and action execution
+   - for webhook-based enforcement and action execution
 
 The MVP should work without a GitHub App by running as a GitHub Action on pull requests and issues.
 
@@ -161,18 +161,18 @@ Use TypeScript.
 
 Required libraries:
 
-* Node.js 22+
-* TypeScript
-* zod for schema validation
-* js-yaml for YAML parsing
-* minimatch for glob matching
-* commander for CLI
-* @actions/core for GitHub Action
-* @actions/github for GitHub context
-* vitest for tests
-* eslint
-* prettier
-* tsup or tsx for builds
+- Node.js 22+
+- TypeScript
+- zod for schema validation
+- js-yaml for YAML parsing
+- minimatch for glob matching
+- commander for CLI
+- @actions/core for GitHub Action
+- @actions/github for GitHub context
+- vitest for tests
+- eslint
+- prettier
+- tsup or tsx for builds
 
 Do not use a database in MVP.
 
@@ -214,8 +214,8 @@ agents:
   github-copilot:
     match:
       actors:
-        - "github-copilot[bot]"
-        - "copilot-swe-agent[bot]"
+        - 'github-copilot[bot]'
+        - 'copilot-swe-agent[bot]'
     allowed:
       - open_pr
       - comment
@@ -230,31 +230,31 @@ agents:
       - change_permissions
 
 rules:
-  - name: "Block workflow edits by agents"
+  - name: 'Block workflow edits by agents'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "AI agents may not modify CI/CD workflows without maintainer approval."
+    reason: 'AI agents may not modify CI/CD workflows without maintainer approval.'
 
-  - name: "Require approval for auth changes"
+  - name: 'Require approval for auth changes'
     when:
       files:
-        - "**/auth/**"
-        - "**/security/**"
-        - "**/permissions/**"
+        - '**/auth/**'
+        - '**/security/**'
+        - '**/permissions/**'
     effect: require_approval
     reviewers:
-      - "@maintainers/security"
-    reason: "Auth and permission changes require human review."
+      - '@maintainers/security'
+    reason: 'Auth and permission changes require human review.'
 
-  - name: "Allow docs-only agent PRs"
+  - name: 'Allow docs-only agent PRs'
     when:
       files:
-        - "docs/**"
-        - "*.md"
+        - 'docs/**'
+        - '*.md'
     effect: allow
-    reason: "Docs-only changes are low risk."
+    reason: 'Docs-only changes are low risk.'
 ```
 
 ## 11. Core data model
@@ -293,9 +293,9 @@ export type AgentPolicy = {
 
 Policy validation is strict and fail closed:
 
-* unknown fields are rejected at every object level;
-* `match` and rule `when` objects must not be empty;
-* an action may appear in only one of an agent's `allowed`,
+- unknown fields are rejected at every object level;
+- `match` and rule `when` objects must not be empty;
+- an action may appear in only one of an agent's `allowed`,
   `requires_approval`, or `blocked` lists.
 
 ### 11.3 Actions
@@ -304,25 +304,25 @@ Supported actions in v1:
 
 ```ts
 export type AgentAction =
-  | "open_pr"
-  | "update_pr"
-  | "comment"
-  | "review_comment"
-  | "approve_pr"
-  | "request_changes"
-  | "label_issue"
-  | "close_issue"
-  | "reopen_issue"
-  | "assign_issue"
-  | "edit_workflows"
-  | "modify_tests"
-  | "modify_docs"
-  | "modify_dependencies"
-  | "modify_auth"
-  | "modify_infra"
-  | "touch_secrets"
-  | "change_permissions"
-  | "merge_pr";
+  | 'open_pr'
+  | 'update_pr'
+  | 'comment'
+  | 'review_comment'
+  | 'approve_pr'
+  | 'request_changes'
+  | 'label_issue'
+  | 'close_issue'
+  | 'reopen_issue'
+  | 'assign_issue'
+  | 'edit_workflows'
+  | 'modify_tests'
+  | 'modify_docs'
+  | 'modify_dependencies'
+  | 'modify_auth'
+  | 'modify_infra'
+  | 'touch_secrets'
+  | 'change_permissions'
+  | 'merge_pr';
 ```
 
 ### 11.4 Rule
@@ -331,7 +331,7 @@ export type AgentAction =
 export type Rule = {
   name: string;
   when: RuleCondition;
-  effect: "allow" | "require_approval" | "block";
+  effect: 'allow' | 'require_approval' | 'block';
   reviewers?: string[];
   labels?: string[];
   reason: string;
@@ -368,12 +368,12 @@ export type RuleCondition = {
 
 ```ts
 export type Decision = {
-  effect: "allow" | "require_approval" | "block";
+  effect: 'allow' | 'require_approval' | 'block';
   matchedRules: MatchedRule[];
   matchedAgent?: string;
   detectedActions: AgentAction[];
   riskScore: number;
-  riskLevel: "low" | "medium" | "high" | "critical";
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
   requiredReviewers: string[];
   labelsToApply: string[];
   explanation: string;
@@ -387,49 +387,49 @@ The tool must detect whether a PR, issue, comment, or commit likely came from an
 Detection levels:
 
 ```ts
-export type AgentDetectionConfidence = "confirmed" | "likely" | "possible" | "unknown";
+export type AgentDetectionConfidence = 'confirmed' | 'likely' | 'possible' | 'unknown';
 ```
 
 Detection signals:
 
 1. GitHub actor matches known bot:
 
-   * `github-copilot[bot]`
-   * `copilot-swe-agent[bot]`
-   * `dependabot[bot]`
-   * `renovate[bot]`
-   * configured actor names
+   - `github-copilot[bot]`
+   - `copilot-swe-agent[bot]`
+   - `dependabot[bot]`
+   - `renovate[bot]`
+   - configured actor names
 
 2. Commit message contains agent signature:
 
-   * `Co-Authored-By: Claude`
-   * `Co-Authored-By: Codex`
-   * `Generated with`
-   * `🤖`
-   * `AI-generated`
-   * `Claude Code`
-   * `OpenAI Codex`
-   * `Cursor`
+   - `Co-Authored-By: Claude`
+   - `Co-Authored-By: Codex`
+   - `Generated with`
+   - `🤖`
+   - `AI-generated`
+   - `Claude Code`
+   - `OpenAI Codex`
+   - `Cursor`
 
 3. PR body contains known agent markers:
 
-   * generated summary
-   * agent run link
-   * tool-specific footer
-   * configured body patterns
+   - generated summary
+   - agent run link
+   - tool-specific footer
+   - configured body patterns
 
 4. Labels:
 
-   * `ai-generated`
-   * `agent`
-   * `copilot`
-   * `codex`
-   * `claude`
-   * configured labels
+   - `ai-generated`
+   - `agent`
+   - `copilot`
+   - `codex`
+   - `claude`
+   - configured labels
 
 5. Explicit config match:
 
-   * policy maps a GitHub actor to an agent name
+   - policy maps a GitHub actor to an agent name
 
 Important: Do not claim certainty unless the actor is explicitly configured or known.
 
@@ -447,14 +447,14 @@ open_pr
 
 Additional inferred actions:
 
-* `modify_docs` if only Markdown/docs files changed
-* `modify_tests` if test files changed
-* `modify_dependencies` if package files changed
-* `edit_workflows` if `.github/workflows/**` changed
-* `modify_auth` if paths match auth/security/permissions
-* `modify_infra` if paths match infra/deploy/terraform/k8s/docker
-* `change_permissions` if files contain permission/auth policy changes
-* `touch_secrets` if files or diff mention secrets patterns
+- `modify_docs` if only Markdown/docs files changed
+- `modify_tests` if test files changed
+- `modify_dependencies` if package files changed
+- `edit_workflows` if `.github/workflows/**` changed
+- `modify_auth` if paths match auth/security/permissions
+- `modify_infra` if paths match infra/deploy/terraform/k8s/docker
+- `change_permissions` if files contain permission/auth policy changes
+- `touch_secrets` if files or diff mention secrets patterns
 
 ### 13.2 PR synchronize/update
 
@@ -646,6 +646,11 @@ Matched rule:
 No human approval required by AGENTOWNERS policy.
 ```
 
+Machine consumers may request deterministic SARIF 2.1.0. Allowed decisions
+produce no results, approval decisions produce warnings, and blocked decisions
+produce errors. Rule IDs, partial fingerprints, and relative artifact URIs must
+remain stable for equivalent decisions. See `f12-sarif-output.md`.
+
 ## 16. GitHub Action behavior
 
 Create an action at:
@@ -681,10 +686,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: streamentry/AGENTOWNERS@v0
         with:
-          policy-path: ".github/AGENTOWNERS.yml"
-          mode: "comment"
-          fail-on-block: "true"
-          fail-on-require-approval: "false"
+          policy-path: '.github/AGENTOWNERS.yml'
+          mode: 'comment'
+          fail-on-block: 'true'
+          fail-on-require-approval: 'false'
 ```
 
 Action inputs:
@@ -694,23 +699,23 @@ inputs:
   github-token:
     required: false
     default: ${{ github.token }}
-    description: "GitHub token for metadata, verdict comments, and labels"
+    description: 'GitHub token for metadata, verdict comments, and labels'
   policy-path:
     required: false
-    default: ".github/AGENTOWNERS.yml"
+    default: '.github/AGENTOWNERS.yml'
   mode:
     required: false
-    default: "comment"
-    description: "comment | check | both | dry-run"
+    default: 'comment'
+    description: 'comment | check | both | dry-run'
   fail-on-block:
     required: false
-    default: "true"
+    default: 'true'
   fail-on-require-approval:
     required: false
-    default: "false"
+    default: 'false'
   add-labels:
     required: false
-    default: "true"
+    default: 'true'
   known-agent-actors:
     required: false
 ```
@@ -720,38 +725,38 @@ Action outputs:
 ```yaml
 outputs:
   decision:
-    description: "allow | require_approval | block"
+    description: 'allow | require_approval | block'
   risk-score:
-    description: "0-100"
+    description: '0-100'
   risk-level:
-    description: "low | medium | high | critical"
+    description: 'low | medium | high | critical'
   matched-rules:
-    description: "JSON array of matched rules"
+    description: 'JSON array of matched rules'
 ```
 
 Behavior:
 
-* On PR events:
+- On PR events:
 
-  * fetch changed files
-  * fetch PR metadata
-  * infer agent
-  * infer actions
-  * evaluate policy
-  * post or update a sticky comment
-  * optionally apply labels
-  * fail check if decision is block
+  - fetch changed files
+  - fetch PR metadata
+  - infer agent
+  - infer actions
+  - evaluate policy
+  - post or update a sticky comment
+  - optionally apply labels
+  - fail check if decision is block
 
-* On issue events:
+- On issue events:
 
-  * inspect actor, title, body, labels
-  * evaluate comment/label/close action
-  * post verdict as issue comment if needed
+  - inspect actor, title, body, labels
+  - evaluate comment/label/close action
+  - post verdict as issue comment if needed
 
-* On review events:
+- On review events:
 
-  * inspect review state
-  * block or warn on agent approvals/request-changes if policy disallows
+  - inspect review state
+  - block or warn on agent approvals/request-changes if policy disallows
 
 Sticky comment marker:
 
@@ -810,6 +815,16 @@ agentowners check --event pull_request --payload event.json
 ```
 
 For MVP, implement local diff mode first.
+
+Output formats:
+
+```text
+agentowners check --base main --head HEAD --output text
+agentowners check --base main --head HEAD --output json
+agentowners check --base main --head HEAD --output sarif
+```
+
+Unknown formats fail before reading Git.
 
 ### 17.4 `agentowners explain`
 
@@ -870,24 +885,24 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Allow docs-only changes"
+  - name: 'Allow docs-only changes'
     when:
       docs_only: true
     effect: allow
-    reason: "Docs-only changes are low risk."
+    reason: 'Docs-only changes are low risk.'
 
-  - name: "Block workflow edits"
+  - name: 'Block workflow edits'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "Agents may not modify GitHub Actions workflows."
+    reason: 'Agents may not modify GitHub Actions workflows.'
 
-  - name: "Require approval for dependency changes"
+  - name: 'Require approval for dependency changes'
     when:
       changes_package_files: true
     effect: require_approval
-    reason: "Dependency changes require maintainer review."
+    reason: 'Dependency changes require maintainer review.'
 ```
 
 ### 18.2 strict-oss
@@ -903,31 +918,31 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Block sensitive paths"
+  - name: 'Block sensitive paths'
     when:
       files:
-        - ".github/workflows/**"
-        - ".github/actions/**"
-        - "**/auth/**"
-        - "**/security/**"
-        - "**/permissions/**"
-        - "infra/**"
-        - "terraform/**"
-        - "k8s/**"
+        - '.github/workflows/**'
+        - '.github/actions/**'
+        - '**/auth/**'
+        - '**/security/**'
+        - '**/permissions/**'
+        - 'infra/**'
+        - 'terraform/**'
+        - 'k8s/**'
     effect: block
-    reason: "Agents may not modify sensitive operational or security paths."
+    reason: 'Agents may not modify sensitive operational or security paths.'
 
-  - name: "Require approval for large diffs"
+  - name: 'Require approval for large diffs'
     when:
       diff_lines_over: 300
     effect: require_approval
-    reason: "Large AI-generated diffs are hard to review safely."
+    reason: 'Large AI-generated diffs are hard to review safely.'
 
-  - name: "Require approval for dependencies"
+  - name: 'Require approval for dependencies'
     when:
       changes_package_files: true
     effect: require_approval
-    reason: "Dependency changes can affect supply-chain risk."
+    reason: 'Dependency changes can affect supply-chain risk.'
 ```
 
 ### 18.3 security-sensitive
@@ -943,37 +958,37 @@ defaults:
   secrets: block
 
 rules:
-  - name: "Block unknown agents"
+  - name: 'Block unknown agents'
     when:
       agents:
-        - "unknown"
+        - 'unknown'
     effect: block
-    reason: "Unknown agents cannot act in this repository."
+    reason: 'Unknown agents cannot act in this repository.'
 
-  - name: "Block all workflow edits"
+  - name: 'Block all workflow edits'
     when:
       files:
-        - ".github/workflows/**"
+        - '.github/workflows/**'
     effect: block
-    reason: "CI/CD workflows must be edited by humans."
+    reason: 'CI/CD workflows must be edited by humans.'
 
-  - name: "Block auth/security edits"
+  - name: 'Block auth/security edits'
     when:
       files:
-        - "**/auth/**"
-        - "**/security/**"
-        - "**/permissions/**"
+        - '**/auth/**'
+        - '**/security/**'
+        - '**/permissions/**'
     effect: block
-    reason: "Security-sensitive code must be changed by accountable humans."
+    reason: 'Security-sensitive code must be changed by accountable humans.'
 
-  - name: "Require approval for test changes"
+  - name: 'Require approval for test changes'
     when:
       files:
-        - "**/*.test.*"
-        - "**/*.spec.*"
-        - "tests/**"
+        - '**/*.test.*'
+        - '**/*.spec.*'
+        - 'tests/**'
     effect: require_approval
-    reason: "Agents may weaken tests accidentally."
+    reason: 'Agents may weaken tests accidentally.'
 ```
 
 ## 19. File classification
@@ -1124,9 +1139,9 @@ Schema:
 
 In v1, store audit in:
 
-* GitHub Action artifact
-* sticky PR comment
-* optional `.agentowners/audit/*.json` only for local CLI use
+- GitHub Action artifact
+- sticky PR comment
+- optional `.agentowners/audit/*.json` only for local CLI use
 
 Do not commit audit logs automatically to the repository in v1.
 
@@ -1206,21 +1221,21 @@ The MVP is complete when all of these work:
 
 Test:
 
-* YAML parsing
-* schema validation
-* glob matching
-* rule priority
-* default policy behavior
-* docs-only classification
-* test-only classification
-* dependency file detection
-* workflow file detection
-* auth path detection
-* infra path detection
-* secret pattern redaction
-* agent actor matching
-* risk scoring
-* decision explanation
+- YAML parsing
+- schema validation
+- glob matching
+- rule priority
+- default policy behavior
+- docs-only classification
+- test-only classification
+- dependency file detection
+- workflow file detection
+- auth path detection
+- infra path detection
+- secret pattern redaction
+- agent actor matching
+- risk scoring
+- decision explanation
 
 ### Integration tests
 
@@ -1238,10 +1253,10 @@ fixtures/
 
 Each fixture contains:
 
-* policy file
-* changed files list
-* fake GitHub event payload
-* expected decision JSON
+- policy file
+- changed files list
+- fake GitHub event payload
+- expected decision JSON
 
 ### GitHub Action test
 
@@ -1251,19 +1266,19 @@ Do not require real GitHub API calls in unit tests.
 
 ## 24. Security requirements
 
-* Use least privilege in GitHub Actions.
-* Default to read-only where possible.
-* Do not request repository administration permission.
-* Do not request secrets permission.
-* Do not execute untrusted code from PRs.
-* Do not parse or print secret values.
-* Treat PR content as untrusted input.
-* Never run shell commands from policy content.
-* Avoid dynamic evaluation.
-* Avoid remote code loading.
-* Validate YAML strictly.
-* Fail closed on invalid policy if `strict` mode is enabled.
-* In advisory mode, fail open but comment with warning.
+- Use least privilege in GitHub Actions.
+- Default to read-only where possible.
+- Do not request repository administration permission.
+- Do not request secrets permission.
+- Do not execute untrusted code from PRs.
+- Do not parse or print secret values.
+- Treat PR content as untrusted input.
+- Never run shell commands from policy content.
+- Avoid dynamic evaluation.
+- Avoid remote code loading.
+- Validate YAML strictly.
+- Fail closed on invalid policy if `strict` mode is enabled.
+- In advisory mode, fail open but comment with warning.
 
 ## 25. Modes
 
@@ -1273,22 +1288,22 @@ Support three modes:
 
 Default for new users.
 
-* comment verdict
-* never block CI
-* useful for learning
+- comment verdict
+- never block CI
+- useful for learning
 
 ### Enforcement mode
 
-* block forbidden agent actions
-* fail CI on `block`
-* optionally fail CI on `require_approval`
+- block forbidden agent actions
+- fail CI on `block`
+- optionally fail CI on `require_approval`
 
 ### Dry-run mode
 
-* print decision only
-* no comments
-* no labels
-* no CI failure
+- print decision only
+- no comments
+- no labels
+- no CI failure
 
 ## 26. Versioning
 
@@ -1308,30 +1323,29 @@ Do not build these in MVP, but design so they are possible:
 
 ### v1.1
 
-* GitHub App
-* label application
-* reviewer request
-* support for issue triage
-* richer agent fingerprints
-* SARIF output
+- GitHub App
+- label application
+- reviewer request
+- support for issue triage
+- richer agent fingerprints
 
 ### v1.2
 
-* OpenHands integration
-* Claude Code integration
-* Codex integration
-* Cursor integration
-* agent self-check command
+- OpenHands integration
+- Claude Code integration
+- Codex integration
+- Cursor integration
+- agent self-check command
 
 ### v2
 
-* signed agent action manifests
-* policy inheritance for orgs
-* compatibility with AGENTS.md
-* `AGENTOWNERS.lock`
-* temporal audit graph
-* support for GitLab
-* support for Forgejo/Gitea
+- signed agent action manifests
+- policy inheritance for orgs
+- compatibility with AGENTS.md
+- `AGENTOWNERS.lock`
+- temporal audit graph
+- support for GitLab
+- support for Forgejo/Gitea
 
 ## 28. Suggested package names
 
@@ -1428,22 +1442,22 @@ jobs:
       - uses: actions/checkout@v6
       - uses: streamentry/AGENTOWNERS@v0
         with:
-          policy-path: ".github/AGENTOWNERS.yml"
-          mode: "both"
-          fail-on-block: "true"
+          policy-path: '.github/AGENTOWNERS.yml'
+          mode: 'both'
+          fail-on-block: 'true'
 ```
 
 The final repository must include:
 
-* working TypeScript packages
-* CLI
-* GitHub Action
-* policy examples
-* tests
-* README
-* docs
-* security notes
-* contribution guide
-* release workflow
+- working TypeScript packages
+- CLI
+- GitHub Action
+- policy examples
+- tests
+- README
+- docs
+- security notes
+- contribution guide
+- release workflow
 
 The project is not successful if it merely describes a policy. It is successful only when a maintainer can copy one YAML file and one GitHub Action into a repo and immediately get a useful verdict on an AI-generated PR.

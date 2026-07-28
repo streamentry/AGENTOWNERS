@@ -8,7 +8,7 @@
 AGENTOWNERS is a TypeScript monorepo that ships a governance layer for AI agents in GitHub repositories:
 
 - `@agent-owners/core` — deterministic policy engine (schema, evaluation, detection, scoring, rendering)
-- `@agent-owners/cli` — `agentowners` CLI tool  
+- `@agent-owners/cli` — `agentowners` CLI tool
 - `@agent-owners/github-action` — GitHub Action for CI enforcement
 
 ## Quickstart for agents
@@ -45,6 +45,7 @@ packages/core/src/
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
+  sarif.ts       — deterministic SARIF 2.1.0 rendering
   profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
   index.ts       — barrel export (all public API)
 
@@ -60,6 +61,7 @@ packages/core/tests/
   evaluator.test.ts  — rule evaluation
   scoring.test.ts    — risk scoring
   renderer.test.ts   — verdict rendering
+  sarif.test.ts      — SARIF stability, severity, and safe locations
   profiles.test.ts   — built-in profiles parse correctly
   integration.test.ts — end-to-end pipeline with fixtures
   fixtures-runner.test.ts — public fixture schema, runner, and loader contract
@@ -77,6 +79,7 @@ packages/cli/src/
   commands/test.ts  — portable policy fixture runner
 
 packages/cli/tests/
+  check.test.ts      — SARIF output and invalid-format boundaries
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
 
@@ -125,6 +128,7 @@ flowchart LR
   Core --> Decision
   Decision --> Verdict
   Decision --> Audit
+  Decision --> SARIF
   Decision --> ExitStatus
 ```
 
@@ -149,7 +153,7 @@ sequenceDiagram
   Adapter->>Core: normalized untrusted input
   Core->>Core: detect, classify, infer, evaluate
   Core-->>Adapter: deterministic decision
-  Adapter->>Effect: render, label, audit, or exit
+  Adapter->>Effect: render, label, audit, SARIF, or exit
 ```
 
 See `docs/architecture.md` for trust boundaries and expanded diagrams.
@@ -174,10 +178,13 @@ These are immutable safety rules. Never change them:
 ## How to add a new feature
 
 ### 1. Read the spec first
+
 Feature specs are in `docs/specs/f*.md`. The root spec is `docs/specs/readme.md`.
 
 ### 2. Follow the implementation order
+
 Per spec section 29 — always in this order:
+
 1. Add types to `packages/core/src/types.ts`
 2. Add Zod schema to `packages/core/src/schema.ts`
 3. Implement in the relevant module
@@ -185,11 +192,13 @@ Per spec section 29 — always in this order:
 5. Write tests BEFORE implementing (TDD)
 
 ### 3. Add tests
+
 - Unit test file: `packages/core/tests/<module>.test.ts`
 - Integration fixture if the feature changes the evaluation pipeline
 - All tests must pass: `pnpm test`
 
 ### 4. Export
+
 Add new public exports to `packages/core/src/index.ts`.
 
 ## Adding a new policy profile

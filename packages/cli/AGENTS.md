@@ -41,7 +41,7 @@ sequenceDiagram
   Git-->>CLI: files and commits
   CLI->>Core: evaluation input
   Core-->>CLI: decision
-  CLI-->>User: verdict and exit code
+  CLI-->>User: Markdown, JSON, or SARIF and exit code
 ```
 
 `test` reads explicit policy and fixture paths. It does not inspect Git state
@@ -98,3 +98,4 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
+Unknown output formats must fail before reading Git.

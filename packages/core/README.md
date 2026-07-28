@@ -38,7 +38,8 @@ import {
   evaluatePolicy,
   inferActions,
   parsePolicy,
-} from '@agent-owners/core'
+  renderSarif,
+} from '@agent-owners/core';
 
 const policy = parsePolicy({
   version: 1,
@@ -47,19 +48,19 @@ const policy = parsePolicy({
     workflows: 'block',
     secrets: 'block',
   },
-})
+});
 
-const changedFiles = ['docs/guide.md']
-const filesClassification = classifyFiles(changedFiles)
+const changedFiles = ['docs/guide.md'];
+const filesClassification = classifyFiles(changedFiles);
 const agentDetection = detectAgent({
   actor: 'github-copilot[bot]',
   policy,
-})
+});
 const detectedActions = inferActions({
   eventType: 'pull_request.opened',
   changedFiles,
   filesClassification,
-})
+});
 
 const decision = evaluatePolicy({
   policy,
@@ -68,7 +69,9 @@ const decision = evaluatePolicy({
   changedFiles,
   filesClassification,
   actor: 'github-copilot[bot]',
-})
+});
+
+const sarif = renderSarif(decision);
 ```
 
 Read the [policy specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/readme.md)
