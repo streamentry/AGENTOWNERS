@@ -11,6 +11,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
 - `policy-reference.md`: end-user schema, condition, action, and trust contract
+- `quickstart.md`: five-minute source checkout and first-decision path
 - `philosophy.md`: durable design principles
 - `roadmap.md`: explicit future scope
 - `releasing.md`: maintainer-only release gates and publication evidence
@@ -27,6 +28,7 @@ flowchart LR
   OfficialSources --> Ecosystem
   Specs --> Architecture
   Schema[Runtime schema] --> PolicyReference
+  README --> Quickstart
   Philosophy --> Specs
   Architecture --> README
   PolicyReference --> README

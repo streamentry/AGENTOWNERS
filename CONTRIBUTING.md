@@ -34,6 +34,10 @@ revising the change. Input and environment failures use exits `64` through
 
 ## For humans
 
+The fastest newcomer path is the [five-minute quickstart](docs/quickstart.md).
+It proves the source checkout, creates a policy, runs a local decision, and
+shows the safe Action rollout boundary before a contributor changes code.
+
 ### Setup
 
 ```bash

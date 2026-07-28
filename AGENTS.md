@@ -111,6 +111,7 @@ docs/specs/
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
 docs/policy-reference.md — end-user schema, condition, action, and trust reference
+docs/quickstart.md      — five-minute source checkout and first-decision path
 docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/

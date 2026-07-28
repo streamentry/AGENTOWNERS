@@ -8,6 +8,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 1. Read `AGENTS.md`, the nearest package `AGENTS.md`, and the relevant spec.
    Use `docs/policy-reference.md` when a change depends on policy syntax,
    condition semantics, action inference, or identity trust.
+   Use `docs/quickstart.md` to verify the supported newcomer path and command
+   boundaries before changing onboarding or release-facing documentation.
 2. Refresh `origin/main`; inspect open and recently merged work for overlap.
 3. State the invariant, expected behavior, and any distinct value retained from
    related contributions.

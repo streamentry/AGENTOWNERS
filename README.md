@@ -66,6 +66,10 @@ block by default.
 
 Until the first signed release, run the repository directly:
 
+For the shortest path from checkout to a first policy decision, follow the
+[five-minute quickstart](docs/quickstart.md). The detailed commands below are
+the complete source-tree contract.
+
 ```bash
 git clone https://github.com/streamentry/AGENTOWNERS.git
 cd AGENTOWNERS

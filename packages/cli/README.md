@@ -11,6 +11,10 @@ Use the CLI for local Git ranges, policy validation, portable fixtures, SARIF,
 and machine-readable agent preflight. Use `@agent-owners/core` when embedding
 the engine, or the repository Action for GitHub event enforcement.
 
+New contributors should start with the repository’s
+[five-minute quickstart](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/quickstart.md)
+before wiring the CLI into an automated merge gate.
+
 ## Install
 
 Available after the first public release:

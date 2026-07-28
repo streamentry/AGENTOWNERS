@@ -121,6 +121,7 @@ Scope: core cli github-action examples docs
 - `docs/specs/readme.md` — canonical product spec (sections 1–31)
 - `docs/specs/f1-f13.md` — per-feature implementation specs
 - `docs/policy-reference.md` — end-user policy format reference
+- `docs/quickstart.md` — five-minute source checkout and first decision
 - `docs/architecture.md` — components and trust boundaries
 - `docs/ecosystem.md` — dated control-surface comparison
 - `docs/philosophy.md` — why the project exists
