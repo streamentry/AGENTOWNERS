@@ -34049,13 +34049,39 @@ var fixtureInputSchema = external_exports.object({
       message: "review_state requires pull_request_review.submitted"
     });
   }
-  const hasPullRequestFiles = input.event.startsWith("pull_request.") || input.event === "pull_request_review.submitted";
-  if (!hasPullRequestFiles && input.changed_files.length > 0) {
+  const isPullRequestEvent = input.event.startsWith("pull_request.") || input.event === "pull_request_review.submitted";
+  if (!isPullRequestEvent && input.changed_files.length > 0) {
     context3.addIssue({
       code: external_exports.ZodIssueCode.custom,
       path: ["changed_files"],
       message: "changed_files requires a pull request event"
     });
+  }
+  if (!isPullRequestEvent && input.commit_messages.length > 0) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: ["commit_messages"],
+      message: "commit_messages requires a pull request event"
+    });
+  }
+  for (const field of ["diff_lines_count", "commits_count"]) {
+    if (!isPullRequestEvent && input[field] !== void 0) {
+      context3.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} requires a pull request event`
+      });
+    }
+  }
+  const hasPullRequestMetadata = isPullRequestEvent || input.event.startsWith("issue_comment.");
+  for (const field of ["pr_title", "pr_body"]) {
+    if (!hasPullRequestMetadata && input[field] !== void 0) {
+      context3.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} requires a pull request context`
+      });
+    }
   }
 });
 var fixtureExpectationSchema = external_exports.object({

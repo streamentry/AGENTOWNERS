@@ -140,6 +140,45 @@ describe('parsePolicyFixtureSuite', () => {
     );
   });
 
+  it.each(['pr_title', 'pr_body'] as const)(
+    'rejects %s on issue events whose production adapter cannot supply PR metadata',
+    (field) => {
+      const suite = validSuite();
+      suite.cases[0]!.input.event = 'issues.opened';
+      suite.cases[0]!.input.changed_files = [];
+      Object.assign(suite.cases[0]!.input, { [field]: 'unreachable PR metadata' });
+
+      expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+        `${field} requires a pull request context`,
+      );
+    },
+  );
+
+  it.each(['diff_lines_count', 'commits_count'] as const)(
+    'rejects %s outside pull request events',
+    (field) => {
+      const suite = validSuite();
+      suite.cases[0]!.input.event = 'issue_comment.created';
+      suite.cases[0]!.input.changed_files = [];
+      Object.assign(suite.cases[0]!.input, { [field]: 1 });
+
+      expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+        `${field} requires a pull request event`,
+      );
+    },
+  );
+
+  it('rejects commit messages outside pull request events', () => {
+    const suite = validSuite();
+    suite.cases[0]!.input.event = 'issues.opened';
+    suite.cases[0]!.input.changed_files = [];
+    Object.assign(suite.cases[0]!.input, { commit_messages: ['unreachable commit'] });
+
+    expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+      'commit_messages requires a pull request event',
+    );
+  });
+
   it('loads and validates a portable YAML suite from disk', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'agentowners-fixtures-'));
     temporaryDirectories.push(directory);

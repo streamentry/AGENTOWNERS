@@ -67,6 +67,10 @@ Optional:
 
 `review_state` is valid only for `pull_request_review.submitted`.
 `changed_files` is valid only for pull-request and pull-request-review events.
+Non-empty `commit_messages`, `diff_lines_count`, and `commits_count` are valid
+only for pull-request and pull-request-review events. `pr_title` and `pr_body`
+are valid for pull-request, pull-request-review, and issue-comment events
+because an issue comment can target a pull request.
 Paths must be repository-relative Git paths with `/` separators. Absolute
 paths, drive prefixes, backslashes, empty segments, `.` segments, `..`
 segments, and NUL bytes are invalid.

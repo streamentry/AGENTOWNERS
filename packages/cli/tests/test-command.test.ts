@@ -66,6 +66,7 @@ describe('test command', () => {
   let stderr = '';
 
   beforeEach(() => {
+    vi.clearAllMocks();
     process.exitCode = undefined;
     stdout = '';
     stderr = '';
