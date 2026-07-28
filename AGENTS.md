@@ -179,6 +179,7 @@ These are immutable safety rules. Never change them:
 | Decision priority | `block > require_approval > allow` — always, no exceptions |
 | Policy as data | Never `eval()`, `new Function()`, or execute policy content as code |
 | Strict schema | Unknown fields and empty rule conditions fail validation |
+| Threshold safety | `diff_lines_over` and `commits_over` must be nonnegative |
 | Secret redaction | Never print matched secret values — use `[REDACTED]` |
 | Markdown output safety | Human-readable verdicts escape untrusted actor, path, policy, reviewer, label, reason, and explanation text; audit JSON remains structured |
 | Determinism | Same inputs → same output. No randomness, no timestamps in evaluation |

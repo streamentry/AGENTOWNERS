@@ -22,6 +22,8 @@ drop unlisted detected actions, while block and approval rules may match any
 listed action.
 The verdict-renderer specification must keep human-readable Markdown escaped
 while leaving audit JSON structured.
+The policy reference and schema specification must describe numeric threshold
+inputs as nonnegative; negative thresholds are rejected by the runtime schema.
 
 ## Diagrams
 

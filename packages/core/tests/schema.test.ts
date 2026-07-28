@@ -177,4 +177,23 @@ describe('agentOwnersPolicySchema', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it.each(['diff_lines_over', 'commits_over'] as const)(
+    'rejects negative %s thresholds that would match every normal event',
+    (field) => {
+      const result = agentOwnersPolicySchema.safeParse({
+        version: 1,
+        rules: [
+          {
+            name: 'Invalid negative threshold',
+            when: { [field]: -1 },
+            effect: 'require_approval',
+            reason: 'Thresholds must describe nonnegative event counts.',
+          },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    },
+  );
 });

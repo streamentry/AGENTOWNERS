@@ -106,6 +106,8 @@ and changed files before delegating to the canonical evaluator; an empty action
 list silently bypasses action-scoped rules.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
+Threshold conditions `diff_lines_over` and `commits_over` must remain
+nonnegative; negative values would turn a count threshold into a global match.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule

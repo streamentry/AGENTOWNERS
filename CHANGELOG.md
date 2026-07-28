@@ -78,6 +78,8 @@ semantic versioning.
   even if refreshed PR metadata observes a later force-push.
 - Sticky verdict updates now require the complete marker pair and configured
   comment author, preventing contributor-owned marker spoofing.
+- Policy validation now rejects negative diff-line and commit-count thresholds
+  that could accidentally match every normal event.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 

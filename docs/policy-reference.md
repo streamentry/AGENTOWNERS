@@ -175,8 +175,8 @@ priority effect wins; rule order does not let an allow override a block.
 | `labels` | `string[]` | At least one event label matches. |
 | `pr_title`, `pr_body` | `string[]` | At least one case-insensitive substring or regular expression matches. |
 | `issue_title`, `issue_body` | `string[]` | At least one case-insensitive substring or regular expression matches. |
-| `diff_lines_over` | number | The supplied diff line count must be greater than the threshold. |
-| `commits_over` | number | The supplied commit count must be greater than the threshold. |
+| `diff_lines_over` | nonnegative number | The supplied diff line count must be greater than the threshold. |
+| `commits_over` | nonnegative number | The supplied commit count must be greater than the threshold. |
 | `changes_package_files` | boolean | Requires dependency-file classification. |
 | `changes_workflows` | boolean | Requires workflow-file classification. |
 | `changes_permissions` | boolean | Requires permission/auth-path classification. |
