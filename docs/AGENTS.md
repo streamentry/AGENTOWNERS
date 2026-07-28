@@ -12,6 +12,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `ecosystem.md`: source-backed control-surface comparison
 - `philosophy.md`: durable design principles
 - `roadmap.md`: explicit future scope
+- `assets/`: maintained documentation and social-preview media
 
 ## Diagrams
 
