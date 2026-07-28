@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import * as yaml from 'js-yaml';
 import { PROFILE_NAMES, PROFILES, getProfile } from '../src/profiles.js';
 import { parsePolicy } from '../src/schema.js';
@@ -20,6 +22,13 @@ describe('PROFILES', () => {
       'monorepo',
       'dependency-bots',
     ]);
+  });
+
+  it.each(PROFILE_NAMES)('keeps the %s profile aligned with its checked-in example', (name) => {
+    const examplePath = resolve(import.meta.dirname, '../../../examples', name, 'AGENTOWNERS.yml');
+    const example = yaml.load(readFileSync(examplePath, 'utf8'));
+    const generated = yaml.load(PROFILES[name]);
+    expect(generated).toEqual(example);
   });
 
   for (const [name, yamlStr] of Object.entries(PROFILES)) {
