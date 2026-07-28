@@ -23,6 +23,7 @@ semantic versioning.
 
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
+- Source-only changes no longer produce a false `modify_tests` action.
 
 ## [0.1.0] - 2026-07-28
 

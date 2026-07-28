@@ -50,7 +50,17 @@ const DEPENDENCY_PATTERNS = [
 ];
 const WORKFLOW_PATTERNS = [/^\.github\/workflows\//];
 const AUTH_PATTERNS = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-const INFRA_PATTERNS = [/^terraform\//i, /\.tf$/, /^infra\//i, /^deploy\//i, /dockerfile$/i, /docker-compose/i, /^k8s\//i, /^kubernetes\//i, /^helm\//i];
+const INFRA_PATTERNS = [
+  /^terraform\//i,
+  /\.tf$/,
+  /^infra\//i,
+  /^deploy\//i,
+  /dockerfile$/i,
+  /docker-compose/i,
+  /^k8s\//i,
+  /^kubernetes\//i,
+  /^helm\//i,
+];
 const SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
 
 function classifyFilesLocal(files: string[]): LocalFilesClassification {
@@ -67,6 +77,25 @@ function classifyFilesLocal(files: string[]): LocalFilesClassification {
   const docsOnly = nonDocFiles.length === 0 && files.length > 0;
 
   return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
+}
+
+function hasClassifiedTests(classification: Record<string, unknown>): boolean {
+  if (typeof classification['hasTests'] === 'boolean') {
+    return classification['hasTests'];
+  }
+
+  const files = classification['files'];
+  if (typeof files === 'object' && files !== null && !Array.isArray(files)) {
+    return Object.values(files).some(
+      (value) =>
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        (value as Record<string, unknown>)['isTests'] === true,
+    );
+  }
+
+  return classification['testsOnly'] === true;
 }
 
 export function inferFileBasedActions(classification: LocalFilesClassification): AgentAction[] {
@@ -88,15 +117,27 @@ export function inferActions(input: ActionInferenceInput): AgentAction[] {
   const fc = filesClassification as Record<string, unknown> | undefined;
   const classification: LocalFilesClassification = fc
     ? {
-        docsOnly: (fc['docsOnly'] as boolean | undefined) ?? (fc['changesWorkflows'] === undefined && false),
-        hasTests: (fc['hasTests'] as boolean | undefined) ?? !(fc['testsOnly'] as boolean | undefined),
-        hasDependencies: (fc['hasDependencies'] as boolean | undefined) ?? (fc['changesDependencies'] as boolean | undefined),
-        hasWorkflows: (fc['hasWorkflows'] as boolean | undefined) ?? (fc['changesWorkflows'] as boolean | undefined),
-        hasAuth: (fc['hasAuth'] as boolean | undefined) ?? (fc['changesAuth'] as boolean | undefined),
-        hasInfra: (fc['hasInfra'] as boolean | undefined) ?? (fc['changesInfra'] as boolean | undefined),
-        hasSecrets: (fc['hasSecrets'] as boolean | undefined) ?? (fc['secretFilesDetected'] as boolean | undefined),
+        docsOnly:
+          (fc['docsOnly'] as boolean | undefined) ??
+          (fc['changesWorkflows'] === undefined && false),
+        hasTests: hasClassifiedTests(fc),
+        hasDependencies:
+          (fc['hasDependencies'] as boolean | undefined) ??
+          (fc['changesDependencies'] as boolean | undefined),
+        hasWorkflows:
+          (fc['hasWorkflows'] as boolean | undefined) ??
+          (fc['changesWorkflows'] as boolean | undefined),
+        hasAuth:
+          (fc['hasAuth'] as boolean | undefined) ?? (fc['changesAuth'] as boolean | undefined),
+        hasInfra:
+          (fc['hasInfra'] as boolean | undefined) ?? (fc['changesInfra'] as boolean | undefined),
+        hasSecrets:
+          (fc['hasSecrets'] as boolean | undefined) ??
+          (fc['secretFilesDetected'] as boolean | undefined),
       }
-    : (changedFiles ? classifyFilesLocal(changedFiles) : {});
+    : changedFiles
+      ? classifyFilesLocal(changedFiles)
+      : {};
 
   switch (eventType) {
     case 'pull_request.opened':

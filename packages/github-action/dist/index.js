@@ -33437,7 +33437,17 @@ var DEPENDENCY_PATTERNS2 = [
 ];
 var WORKFLOW_PATTERNS2 = [/^\.github\/workflows\//];
 var AUTH_PATTERNS2 = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-var INFRA_PATTERNS2 = [/^terraform\//i, /\.tf$/, /^infra\//i, /^deploy\//i, /dockerfile$/i, /docker-compose/i, /^k8s\//i, /^kubernetes\//i, /^helm\//i];
+var INFRA_PATTERNS2 = [
+  /^terraform\//i,
+  /\.tf$/,
+  /^infra\//i,
+  /^deploy\//i,
+  /dockerfile$/i,
+  /docker-compose/i,
+  /^k8s\//i,
+  /^kubernetes\//i,
+  /^helm\//i
+];
 var SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
 function classifyFilesLocal(files) {
   if (files.length === 0) return {};
@@ -33450,6 +33460,18 @@ function classifyFilesLocal(files) {
   const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
   const docsOnly = nonDocFiles.length === 0 && files.length > 0;
   return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
+}
+function hasClassifiedTests(classification) {
+  if (typeof classification["hasTests"] === "boolean") {
+    return classification["hasTests"];
+  }
+  const files = classification["files"];
+  if (typeof files === "object" && files !== null && !Array.isArray(files)) {
+    return Object.values(files).some(
+      (value) => typeof value === "object" && value !== null && !Array.isArray(value) && value["isTests"] === true
+    );
+  }
+  return classification["testsOnly"] === true;
 }
 function inferFileBasedActions(classification) {
   const actions = [];
@@ -33468,7 +33490,7 @@ function inferActions(input) {
   const fc = filesClassification;
   const classification = fc ? {
     docsOnly: fc["docsOnly"] ?? (fc["changesWorkflows"] === void 0 && false),
-    hasTests: fc["hasTests"] ?? !fc["testsOnly"],
+    hasTests: hasClassifiedTests(fc),
     hasDependencies: fc["hasDependencies"] ?? fc["changesDependencies"],
     hasWorkflows: fc["hasWorkflows"] ?? fc["changesWorkflows"],
     hasAuth: fc["hasAuth"] ?? fc["changesAuth"],

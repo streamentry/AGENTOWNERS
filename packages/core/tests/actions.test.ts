@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { inferActions, inferFileBasedActions } from '../src/actions.js';
+import { classifyFiles } from '../src/classifier.js';
 import type { FilesClassification } from '../src/actions.js';
 
 describe('inferFileBasedActions', () => {
@@ -91,6 +92,39 @@ describe('inferActions', () => {
     });
     expect(result).toContain('open_pr');
     expect(result).toContain('edit_workflows');
+  });
+
+  it('does not infer modify_tests for a classified source-only change', () => {
+    const changedFiles = ['src/index.ts'];
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles,
+      filesClassification: classifyFiles(changedFiles),
+    });
+
+    expect(result).not.toContain('modify_tests');
+  });
+
+  it('infers modify_tests for mixed source and test classifications', () => {
+    const changedFiles = ['src/index.ts', 'tests/index.test.ts'];
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles,
+      filesClassification: classifyFiles(changedFiles),
+    });
+
+    expect(result).toContain('modify_tests');
+  });
+
+  it('infers modify_tests for a tests-only classification', () => {
+    const changedFiles = ['tests/index.test.ts'];
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles,
+      filesClassification: classifyFiles(changedFiles),
+    });
+
+    expect(result).toContain('modify_tests');
   });
 
   it('PR synchronize → update_pr + file-based actions', () => {
