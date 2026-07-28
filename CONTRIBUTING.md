@@ -39,6 +39,27 @@ Node.js 22+ and pnpm 9+ required.
 4. **Run `pnpm verify`:** lint, types, build, tests, and release smoke tests
 5. **Open a PR:** use a conventional-commit title and complete the evidence template
 
+### Contribution evidence matrix
+
+Every pull request must run `pnpm verify` and the explicit `self-check` command
+above. Add the smallest focused proof for each surface the change touches:
+
+| Change surface | Focused proof before the full gate | Additional pull-request evidence |
+| --- | --- | --- |
+| Policy types or schema | Focused schema test, then `pnpm generate:schema` | Commit the generated schema and show `pnpm verify:schema` passing |
+| Detection, classification, actions, evaluation, or scoring | Focused unit test plus a portable fixture when repository-visible behavior changes | Name the invariant and the temporary production mutation that makes the new test fail |
+| Renderer, audit JSON, or SARIF | Focused renderer or SARIF test | Prove exact ordering, stable identifiers, repository-relative paths, and redaction where applicable |
+| CLI behavior | Focused CLI test using real argument parsing and exit codes | Include stdout, stderr, and exit-code boundaries; treat Git refs as hostile input |
+| GitHub Action adapter | Focused Action test, then `pnpm build` | Commit the regenerated bundle and show that base-policy loading and least privilege remain intact |
+| Package metadata or dependencies | `pnpm verify:packages` | Include isolated install, runtime smoke tests, and production dependency audit results |
+| Example policy | Parse the policy and run its portable fixture suite | Assert exact decisions and detected actions; do not rely on prose examples |
+| Documentation only | Validate every command, path, version, and link changed by the PR | State which product behavior is unchanged and cite dated primary sources for ecosystem claims |
+
+Evidence is scoped. A green full suite does not replace the focused proof that
+reaches the changed branch. A focused test does not justify a repository-wide
+claim. If a required command is unavailable, report the exact limitation
+instead of marking it as passed.
+
 ### Choose a contribution lane
 
 Use the narrowest label that matches the work:
