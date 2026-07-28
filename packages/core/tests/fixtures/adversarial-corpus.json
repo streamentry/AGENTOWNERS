@@ -63,6 +63,38 @@
     }
   },
   {
+    "id": "permission-action-cannot-fall-through",
+    "invariant": "A permission-sensitive path emits change_permissions so an agent-specific block cannot silently fall through.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "permission-agent": {
+          "match": {
+            "actors": ["permission-agent[bot]"]
+          },
+          "allowed": ["open_pr", "modify_auth"],
+          "blocked": ["change_permissions"]
+        }
+      },
+      "defaults": {
+        "known_agent": "allow"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "permission-agent[bot]",
+      "changedFiles": ["src/permissions/roles.ts"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 100,
+      "riskLevel": "critical",
+      "detectedActions": ["open_pr", "modify_auth", "change_permissions"],
+      "matchedRuleEffects": ["block"]
+    }
+  },
+  {
     "id": "mixed-allowed-and-unlisted-actions",
     "invariant": "A partially allowed action set falls through to conservative known-agent defaults.",
     "outcome": "decision",

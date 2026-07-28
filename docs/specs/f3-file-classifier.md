@@ -31,6 +31,13 @@ Deterministic classification of changed files into categories used for action in
 `**/auth/**`, `**/security/**`, `**/permissions/**`, `**/roles/**`,
 `**/policy/**`, `**/rbac/**`
 
+### Permission-sensitive patterns
+`**/permissions/**`, `**/roles/**`, `**/policy/**`, `**/rbac/**`
+
+Permission-sensitive files remain auth-sensitive, but receive a distinct
+classification so `change_permissions` is not inferred for every authentication
+implementation change.
+
 ### Secrets file names
 `.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa`, `id_ed25519`, `secrets.*`
 
@@ -49,6 +56,7 @@ export type FileClassification = {
   isWorkflow: boolean;
   isInfra: boolean;
   isAuth: boolean;
+  isPermissions: boolean;
   isSecret: boolean;
 };
 
@@ -58,6 +66,7 @@ export type FilesClassification = {
   changesWorkflows: boolean;
   changesDependencies: boolean;
   changesAuth: boolean;
+  changesPermissions: boolean;
   changesInfra: boolean;
   secretFilesDetected: boolean;
   files: Record<string, FileClassification>;
@@ -67,7 +76,7 @@ export type FilesClassification = {
 ## Functions
 
 ### `classifyFile(filePath: string): FileClassification`
-Classify a single file path against all category patterns using `minimatch`.
+Classify a single file path against all category patterns using `picomatch`.
 
 ### `classifyFiles(filePaths: string[]): FilesClassification`
 Classify a list of changed files. Compute aggregate properties:
@@ -79,7 +88,7 @@ Classify a list of changed files. Compute aggregate properties:
 Scan diff content for secret-like patterns. Return list of matched pattern names (NOT the values). Never include the actual secret value in output — redact with `[REDACTED]`.
 
 ### `matchGlob(pattern: string, filePath: string): boolean`
-Wrapper around `minimatch` with consistent options (`{ dot: true, matchBase: false }`).
+Wrapper around `picomatch` with dotfile matching enabled.
 
 ### `matchGlobs(patterns: string[], filePath: string): boolean`
 Returns true if any pattern matches.
@@ -87,6 +96,7 @@ Returns true if any pattern matches.
 ## Tests (`packages/core/tests/classifier.test.ts`)
 - `.md` file classified as docs
 - `src/auth/session.ts` classified as auth
+- `src/permissions/roles.ts` classified as auth and permission-sensitive
 - `.github/workflows/test.yml` classified as workflow
 - `package.json` classified as dependency
 - `Dockerfile` classified as infra

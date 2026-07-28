@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluatePolicy, evaluateRule } from '../src/evaluator.js';
+import { classifyFiles } from '../src/classifier.js';
 import type { EvaluationInput } from '../src/evaluator.js';
 import type { AgentOwnersPolicy, Rule } from '../src/types.js';
 import type { FilesClassification } from '../src/classifier.js';
@@ -11,6 +12,7 @@ function makeClassification(overrides: Partial<FilesClassification> = {}): Files
     changesWorkflows: false,
     changesDependencies: false,
     changesAuth: false,
+    changesPermissions: false,
     changesInfra: false,
     secretFilesDetected: false,
     files: {},
@@ -32,6 +34,33 @@ function baseInput(overrides: Partial<EvaluationInput> = {}): EvaluationInput {
 }
 
 describe('evaluateRule', () => {
+  it('does not treat every auth change as a permission change', () => {
+    const rule: Rule = {
+      name: 'Permission changes only',
+      when: { changes_permissions: true },
+      effect: 'block',
+      reason: 'Permission changes are privileged.',
+    };
+    const changedFiles = ['src/auth/login.ts'];
+    const input = baseInput({
+      changedFiles,
+      filesClassification: classifyFiles(changedFiles),
+    });
+
+    expect(evaluateRule(rule, input)).toBeNull();
+
+    const permissionFiles = ['src/permissions/roles.ts'];
+    expect(
+      evaluateRule(
+        rule,
+        baseInput({
+          changedFiles: permissionFiles,
+          filesClassification: classifyFiles(permissionFiles),
+        }),
+      )?.matchedConditions,
+    ).toContain('changes_permissions');
+  });
+
   it.each([
     {
       field: 'issue_title' as const,

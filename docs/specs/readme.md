@@ -453,7 +453,7 @@ Additional inferred actions:
 - `edit_workflows` if `.github/workflows/**` changed
 - `modify_auth` if paths match auth/security/permissions
 - `modify_infra` if paths match infra/deploy/terraform/k8s/docker
-- `change_permissions` if files contain permission/auth policy changes
+- `change_permissions` if paths match permissions/roles/policy/RBAC surfaces
 - `touch_secrets` if files or diff mention secrets patterns
 
 ### 13.2 PR synchronize/update

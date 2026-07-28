@@ -25,6 +25,10 @@ describe('inferFileBasedActions', () => {
     expect(inferFileBasedActions({ hasAuth: true })).toContain('modify_auth');
   });
 
+  it('permissions → change_permissions', () => {
+    expect(inferFileBasedActions({ hasPermissions: true })).toContain('change_permissions');
+  });
+
   it('infra → modify_infra', () => {
     expect(inferFileBasedActions({ hasInfra: true })).toContain('modify_infra');
   });
@@ -65,6 +69,17 @@ describe('inferActions', () => {
     });
     expect(result).toContain('open_pr');
     expect(result).toContain('modify_auth');
+    expect(result).not.toContain('change_permissions');
+  });
+
+  it('PR opened with permission files infers the privileged permission action', () => {
+    const result = inferActions({
+      eventType: 'pull_request.opened',
+      changedFiles: ['src/permissions/roles.ts'],
+    });
+    expect(result).toEqual(
+      expect.arrayContaining(['open_pr', 'modify_auth', 'change_permissions']),
+    );
   });
 
   it('PR opened with package.json → [open_pr, modify_dependencies]', () => {

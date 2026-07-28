@@ -9,6 +9,7 @@ type LocalFilesClassification = {
   hasDependencies?: boolean;
   hasWorkflows?: boolean;
   hasAuth?: boolean;
+  hasPermissions?: boolean;
   hasInfra?: boolean;
   hasSecrets?: boolean;
 };
@@ -39,6 +40,7 @@ const DEPENDENCY_PATTERNS = [
 ];
 const WORKFLOW_PATTERNS = [/^\.github\/workflows\//];
 const AUTH_PATTERNS = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
+const PERMISSIONS_PATTERNS = [/(^|\/)(permissions?|roles?|policy|rbac)(\/|$)/i];
 const INFRA_PATTERNS = [
   /^terraform\//i,
   /\.tf$/,
@@ -57,6 +59,7 @@ function classifyFilesLocal(files: string[]): LocalFilesClassification {
 
   const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS.some((p) => p.test(f)));
   const hasAuth = files.some((f) => AUTH_PATTERNS.some((p) => p.test(f)));
+  const hasPermissions = files.some((f) => PERMISSIONS_PATTERNS.some((p) => p.test(f)));
   const hasInfra = files.some((f) => INFRA_PATTERNS.some((p) => p.test(f)));
   const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
   const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS.some((p) => p.test(f)));
@@ -65,7 +68,16 @@ function classifyFilesLocal(files: string[]): LocalFilesClassification {
   const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
   const docsOnly = nonDocFiles.length === 0 && files.length > 0;
 
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
+  return {
+    docsOnly,
+    hasTests,
+    hasDependencies,
+    hasWorkflows,
+    hasAuth: hasAuth || hasPermissions,
+    hasPermissions,
+    hasInfra,
+    hasSecrets,
+  };
 }
 
 function hasClassifiedTests(classification: Record<string, unknown>): boolean {
@@ -94,6 +106,7 @@ export function inferFileBasedActions(classification: LocalFilesClassification):
   if (classification.hasDependencies) actions.push('modify_dependencies');
   if (classification.hasWorkflows) actions.push('edit_workflows');
   if (classification.hasAuth) actions.push('modify_auth');
+  if (classification.hasPermissions) actions.push('change_permissions');
   if (classification.hasInfra) actions.push('modify_infra');
   if (classification.hasSecrets) actions.push('touch_secrets');
   return actions;
@@ -118,6 +131,9 @@ export function inferActions(input: ActionInferenceInput): AgentAction[] {
           (fc['changesWorkflows'] as boolean | undefined),
         hasAuth:
           (fc['hasAuth'] as boolean | undefined) ?? (fc['changesAuth'] as boolean | undefined),
+        hasPermissions:
+          (fc['hasPermissions'] as boolean | undefined) ??
+          (fc['changesPermissions'] as boolean | undefined),
         hasInfra:
           (fc['hasInfra'] as boolean | undefined) ?? (fc['changesInfra'] as boolean | undefined),
         hasSecrets:

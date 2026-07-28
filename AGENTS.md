@@ -292,9 +292,11 @@ These are roadmap items for v2+ (see spec section 27).
 2. **Mutating `MatchedRule`** — return new objects, never mutate
 3. **Changing decision priority** — `block > require_approval > allow` is immutable
 4. **Printing secret values** — always redact with `[REDACTED]`
-5. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
-6. **Skipping barrel export** — always add new exports to `src/index.ts`
-7. **Writing Git config in tests** — pass fixture identity through the commit
+5. **Collapsing permission changes into generic auth changes** — permission,
+   role, policy, and RBAC paths must also emit `change_permissions`
+6. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
+7. **Skipping barrel export** — always add new exports to `src/index.ts`
+8. **Writing Git config in tests** — pass fixture identity through the commit
    subprocess environment; never mutate contributor repository configuration
 
 ## Roadmap hooks (design for these, don't build yet)

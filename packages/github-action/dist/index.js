@@ -33276,6 +33276,12 @@ var AUTH_PATTERNS = [
   "**/policy/**",
   "**/rbac/**"
 ];
+var PERMISSIONS_PATTERNS = [
+  "**/permissions/**",
+  "**/roles/**",
+  "**/policy/**",
+  "**/rbac/**"
+];
 var SECRET_FILE_PATTERNS = [
   ".env",
   ".env.*",
@@ -33310,6 +33316,7 @@ function classifyFile(filePath) {
     isWorkflow: matchGlobs(WORKFLOW_PATTERNS, filePath),
     isInfra: matchGlobs(INFRA_PATTERNS, filePath),
     isAuth: matchGlobs(AUTH_PATTERNS, filePath),
+    isPermissions: matchGlobs(PERMISSIONS_PATTERNS, filePath),
     isSecret: matchGlobs(SECRET_FILE_PATTERNS, filePath)
   };
 }
@@ -33326,6 +33333,7 @@ function classifyFiles(filePaths) {
     changesWorkflows: classifications.some((c) => c.isWorkflow),
     changesDependencies: classifications.some((c) => c.isDependency),
     changesAuth: classifications.some((c) => c.isAuth),
+    changesPermissions: classifications.some((c) => c.isPermissions),
     changesInfra: classifications.some((c) => c.isInfra),
     secretFilesDetected: classifications.some((c) => c.isSecret),
     files
@@ -33471,6 +33479,7 @@ var DEPENDENCY_PATTERNS2 = [
 ];
 var WORKFLOW_PATTERNS2 = [/^\.github\/workflows\//];
 var AUTH_PATTERNS2 = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
+var PERMISSIONS_PATTERNS2 = [/(^|\/)(permissions?|roles?|policy|rbac)(\/|$)/i];
 var INFRA_PATTERNS2 = [
   /^terraform\//i,
   /\.tf$/,
@@ -33487,13 +33496,23 @@ function classifyFilesLocal(files) {
   if (files.length === 0) return {};
   const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS2.some((p) => p.test(f)));
   const hasAuth = files.some((f) => AUTH_PATTERNS2.some((p) => p.test(f)));
+  const hasPermissions = files.some((f) => PERMISSIONS_PATTERNS2.some((p) => p.test(f)));
   const hasInfra = files.some((f) => INFRA_PATTERNS2.some((p) => p.test(f)));
   const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
   const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS2.some((p) => p.test(f)));
   const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
   const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
   const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
+  return {
+    docsOnly,
+    hasTests,
+    hasDependencies,
+    hasWorkflows,
+    hasAuth: hasAuth || hasPermissions,
+    hasPermissions,
+    hasInfra,
+    hasSecrets
+  };
 }
 function hasClassifiedTests(classification) {
   if (typeof classification["hasTests"] === "boolean") {
@@ -33514,6 +33533,7 @@ function inferFileBasedActions(classification) {
   if (classification.hasDependencies) actions.push("modify_dependencies");
   if (classification.hasWorkflows) actions.push("edit_workflows");
   if (classification.hasAuth) actions.push("modify_auth");
+  if (classification.hasPermissions) actions.push("change_permissions");
   if (classification.hasInfra) actions.push("modify_infra");
   if (classification.hasSecrets) actions.push("touch_secrets");
   return actions;
@@ -33528,6 +33548,7 @@ function inferActions(input) {
     hasDependencies: fc["hasDependencies"] ?? fc["changesDependencies"],
     hasWorkflows: fc["hasWorkflows"] ?? fc["changesWorkflows"],
     hasAuth: fc["hasAuth"] ?? fc["changesAuth"],
+    hasPermissions: fc["hasPermissions"] ?? fc["changesPermissions"],
     hasInfra: fc["hasInfra"] ?? fc["changesInfra"],
     hasSecrets: fc["hasSecrets"] ?? fc["secretFilesDetected"]
   } : changedFiles ? classifyFilesLocal(changedFiles) : {};
@@ -33887,7 +33908,7 @@ function evaluateRule(rule, input) {
     matchedConditions.push("changes_workflows");
   }
   if (when.changes_permissions === true) {
-    if (!filesClassification.changesAuth) return null;
+    if (!filesClassification.changesPermissions) return null;
     matchedConditions.push("changes_permissions");
   }
   if (when.changes_auth === true) {

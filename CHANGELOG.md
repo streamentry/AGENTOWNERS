@@ -36,6 +36,9 @@ semantic versioning.
 
 ### Fixed
 
+- Permission, role, policy, and RBAC paths now emit the documented
+  `change_permissions` action instead of silently bypassing agent-specific
+  permission rules.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

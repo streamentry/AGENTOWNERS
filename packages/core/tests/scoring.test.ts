@@ -9,6 +9,7 @@ function makeClassification(overrides: Partial<FilesClassification> = {}): Files
     changesWorkflows: false,
     changesDependencies: false,
     changesAuth: false,
+    changesPermissions: false,
     changesInfra: false,
     secretFilesDetected: false,
     files: {},

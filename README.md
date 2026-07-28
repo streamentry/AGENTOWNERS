@@ -344,6 +344,11 @@ AGENTOWNERS infers these actions from GitHub events and changed files:
 `modify_tests` `modify_docs` `modify_dependencies` `modify_auth` `modify_infra`
 `touch_secrets` `change_permissions` `merge_pr`
 
+Authentication and security paths emit `modify_auth`. Permission, role, policy,
+and RBAC paths additionally emit `change_permissions`, allowing policies to
+govern authorization changes without treating every login implementation as a
+permission edit.
+
 ---
 
 ## Agent detection

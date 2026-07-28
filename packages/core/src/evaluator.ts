@@ -154,7 +154,7 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
     matchedConditions.push('changes_workflows');
   }
   if (when.changes_permissions === true) {
-    if (!filesClassification.changesAuth) return null;
+    if (!filesClassification.changesPermissions) return null;
     matchedConditions.push('changes_permissions');
   }
   if (when.changes_auth === true) {
