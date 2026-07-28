@@ -126,6 +126,20 @@ defaults:
     await expect(loadPolicyFile(filePath)).rejects.toThrow(/Failed to load policy/)
   })
 
+  it('does not echo malformed YAML source snippets in the public error', () => {
+    const sourceMarker = 'YAML_SNIPPET_SENTINEL'
+
+    try {
+      loadPolicyText(`version: 1\nvalue: [${sourceMarker}`, 'inline policy')
+      expect.fail('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(PolicyLoadError)
+      expect((err as PolicyLoadError).message).not.toContain(sourceMarker)
+      expect((err as PolicyLoadError).message).toMatch(/line \d+, column \d+/)
+      expect((err as PolicyLoadError).cause).toBeDefined()
+    }
+  })
+
   it('throws PolicyLoadError on schema violation', async () => {
     const filePath = path.join(FIXTURES, 'invalid-schema.yml')
     await expect(loadPolicyFile(filePath)).rejects.toThrow(PolicyLoadError)

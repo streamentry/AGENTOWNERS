@@ -36,7 +36,8 @@ Custom error class with `filePath` and `validationErrors` fields.
 Custom error class with `searchedPaths` field.
 
 ## Edge Cases
-- YAML parse error → throw with line/column info
+- YAML parse error → throw with line/column info without echoing source
+  snippets, because malformed policy text may contain secrets
 - Zod validation error → format all errors into readable message
 - File not found → throw PolicyNotFoundError
 - Multiple policy files found → use first, warn to stderr

@@ -96,3 +96,5 @@ under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers. Rule IDs must distinguish matched rules even when their display
 names are identical.
+Policy-load errors must preserve useful line and column diagnostics without
+echoing malformed policy source text.

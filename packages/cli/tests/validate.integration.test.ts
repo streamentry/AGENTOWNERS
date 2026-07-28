@@ -60,4 +60,17 @@ describe('validate command integration', () => {
     expect(stderr).toBe('')
     expect(process.exitCode).toBe(0)
   })
+
+  it('does not print malformed policy source snippets in text errors', async () => {
+    const sourceMarker = 'YAML_SNIPPET_SENTINEL'
+    const policyPath = path.join(tempDir, 'AGENTOWNERS.yml')
+    await writeFile(policyPath, `version: 1\nvalue: [${sourceMarker}`, 'utf8')
+
+    await makeProgram().parseAsync(['node', 'agentowners', 'validate', policyPath])
+
+    expect(process.exitCode).toBe(1)
+    expect(stderr).toContain('Invalid AGENTOWNERS policy:')
+    expect(stderr).toMatch(/line \d+, column \d+/)
+    expect(stderr).not.toContain(sourceMarker)
+  })
 })

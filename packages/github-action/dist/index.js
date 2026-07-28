@@ -33211,8 +33211,8 @@ function parsePolicy(input) {
   return agentOwnersPolicySchema.parse(input);
 }
 var PolicyLoadError = class extends Error {
-  constructor(filePath, cause) {
-    const causeMsg = cause instanceof Error ? cause.message : String(cause);
+  constructor(filePath, cause, safeCauseMessage) {
+    const causeMsg = safeCauseMessage ?? (cause instanceof Error ? cause.message : String(cause));
     super(`Failed to load policy from ${filePath}: ${causeMsg}`);
     this.filePath = filePath;
     this.cause = cause;
@@ -33221,17 +33221,26 @@ var PolicyLoadError = class extends Error {
   filePath;
   cause;
 };
+function yamlErrorMessage(error2) {
+  if (typeof error2 === "object" && error2 !== null) {
+    const mark = error2.mark;
+    if (typeof mark?.line === "number" && typeof mark.column === "number") {
+      return `Invalid YAML syntax at line ${mark.line + 1}, column ${mark.column + 1}.`;
+    }
+  }
+  return "Invalid YAML syntax.";
+}
 function loadPolicyText(raw, source = "policy text") {
   let parsed;
   try {
     parsed = load(raw);
   } catch (err) {
-    throw new PolicyLoadError(source, err);
+    throw new PolicyLoadError(source, err, yamlErrorMessage(err));
   }
   try {
     return parsePolicy(parsed);
   } catch (err) {
-    throw new PolicyLoadError(source, err);
+    throw new PolicyLoadError(source, err, "Policy does not match the AGENTOWNERS schema.");
   }
 }
 var DOCS_PATTERNS = ["**/*.md", "docs/**", "**/*.rst", "**/*.adoc"];

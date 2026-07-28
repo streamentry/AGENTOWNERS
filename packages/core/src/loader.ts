@@ -21,11 +21,22 @@ export class PolicyLoadError extends Error {
   constructor(
     public filePath: string,
     public override cause: unknown,
+    safeCauseMessage?: string,
   ) {
-    const causeMsg = cause instanceof Error ? cause.message : String(cause)
+    const causeMsg = safeCauseMessage ?? (cause instanceof Error ? cause.message : String(cause))
     super(`Failed to load policy from ${filePath}: ${causeMsg}`)
     this.name = 'PolicyLoadError'
   }
+}
+
+function yamlErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const mark = (error as { mark?: { line?: unknown; column?: unknown } }).mark
+    if (typeof mark?.line === 'number' && typeof mark.column === 'number') {
+      return `Invalid YAML syntax at line ${mark.line + 1}, column ${mark.column + 1}.`
+    }
+  }
+  return 'Invalid YAML syntax.'
 }
 
 export async function findPolicyFile(cwd: string): Promise<string | null> {
@@ -70,13 +81,13 @@ export function loadPolicyText(raw: string, source = 'policy text'): AgentOwners
   try {
     parsed = yaml.load(raw)
   } catch (err) {
-    throw new PolicyLoadError(source, err)
+    throw new PolicyLoadError(source, err, yamlErrorMessage(err))
   }
 
   try {
     return parsePolicy(parsed)
   } catch (err) {
-    throw new PolicyLoadError(source, err)
+    throw new PolicyLoadError(source, err, 'Policy does not match the AGENTOWNERS schema.')
   }
 }
 
