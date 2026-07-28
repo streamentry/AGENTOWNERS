@@ -13,7 +13,7 @@ time-sensitive behavior require current evidence.
 - `ecosystem.md`: dated, source-backed control-surface comparison
 - `philosophy.md`: durable design principles
 - `roadmap.md`: ordered product direction
-- `releasing.md`: npm and GitHub Action release contract
+- `releasing.md`: npm, GitHub Action, and Marketplace release contract
 
 ## Diagrams
 
@@ -53,4 +53,6 @@ sequenceDiagram
 - Mark unavailable releases and integrations as unavailable.
 - Keep commands executable and version claims synchronized with manifests.
 - Distinguish local verification from public registry or runtime proof.
+- Distinguish offline Marketplace metadata checks from owner agreement,
+  category, 2FA, and publication proof.
 - Check external claims against primary sources and state their freshness.

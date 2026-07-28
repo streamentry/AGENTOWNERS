@@ -111,6 +111,7 @@ docs/ecosystem.md     — dated control-surface comparison and product boundarie
 scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema
   release-automation.mjs     — fail-closed package and Action tag primitives
+  marketplace-metadata.mjs  — Marketplace metadata and distribution parity gate
   publish-packages.mjs       — idempotent OIDC publication entry point
   update-major-tag.mjs       — stable GitHub Action major-tag update
   verify-release.mjs         — version, export, CLI, and Action bundle checks
@@ -290,6 +291,8 @@ hand. After changing `schema.ts` or `json-schema.ts`, run
 Release automation is documented in `docs/releasing.md`. It must query all
 exact package versions before publishing any tarball, treat only npm `E404` as
 absence, and never move a stable Action major tag for a prerelease.
+Marketplace verification must parse both Action metadata files and require
+parity except for their distribution-specific `author` and `runs.main` values.
 
 ## What NOT to build (v1 non-goals)
 

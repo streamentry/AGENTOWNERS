@@ -3,7 +3,8 @@
 AGENTOWNERS publishes three npm packages and one repository-native GitHub
 Action from the same versioned commit. A release is complete only when the npm
 artifacts, GitHub Release, immutable semantic-version tag, and moving stable
-major tag are all independently verifiable.
+major tag are all independently verifiable and the Action listing is public in
+GitHub Marketplace.
 
 ## Integration status
 
@@ -64,6 +65,33 @@ sequenceDiagram
   Workflow->>GitHub: move stable vX Action tag
 ```
 
+## Marketplace readiness
+
+`pnpm verify:release` parses the root and packaged Action metadata before any
+release. It requires:
+
+1. exactly one readable `action.yml` or `action.yaml` at the repository root;
+2. non-empty listing name, description, author, icon, and color;
+3. the Node 24 runtime and the correct bundle path for each distribution;
+4. root and npm-package metadata parity except for their distribution-specific
+   `author` and `runs.main` values;
+5. a readable committed Action bundle.
+
+These checks prove repository metadata consistency. They do not prove the
+owner-only requirements documented by
+[GitHub Marketplace publication](https://docs.github.com/en/actions/how-tos/create-and-publish-actions/publish-in-github-marketplace):
+
+- the Marketplace action name is still unique at publication time;
+- the repository owner has accepted the Marketplace Developer Agreement;
+- primary and optional secondary categories are selected;
+- the publishing account completes the required 2FA confirmation;
+- the release is actually published with “Publish this Action to the GitHub
+  Marketplace” selected.
+
+Do not publish the Marketplace draft until all npm packages, the immutable
+release tag, the GitHub Release, and the stable major tag are independently
+verified. An offline metadata pass or saved draft is not publication proof.
+
 ## One-time npm bootstrap
 
 npm trusted publishing cannot establish ownership of a package that has never
@@ -80,6 +108,7 @@ been published. An npm maintainer must perform this once for each package:
    permission `npm publish`.
 5. Disallow traditional write tokens after the trusted publishers are proven.
 6. Confirm each package's repository, license, version, and provenance on npm.
+7. Confirm `pnpm verify:release` passes against the exact release commit.
 
 Do not push the public release tag until the workflow integration, all three
 ownership records, and trusted publishers exist. Track the one-time work in
@@ -110,6 +139,10 @@ ownership records, and trusted publishers exist. Track the one-time work in
 6. Verify the GitHub Release and public artifacts from a clean temporary
    directory. For stable releases, verify `vX` resolves to the same commit as
    `vX.Y.Z`.
+7. Edit the verified release, select “Publish this Action to the GitHub
+   Marketplace,” choose the categories, and publish with the owner account.
+8. Open the public Marketplace listing from a logged-out session and verify its
+   installation example resolves to the released stable tag.
 
 ## Recovery boundaries
 

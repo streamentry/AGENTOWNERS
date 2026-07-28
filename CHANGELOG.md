@@ -14,6 +14,8 @@ semantic versioning.
 - Release and isolated-consumer verification.
 - Tested release primitives for all-package registry preflight, exact-version
   recovery, OIDC tarball publication, and stable GitHub Action major tags.
+- A tested Marketplace metadata gate covering YAML validity, listing identity,
+  bundle paths, and root/package metadata parity.
 - Hermetic npm cache isolation for packed-package consumer verification.
 - Deterministic JSON Schema generation, editor integration, package export, and
   CI drift detection.

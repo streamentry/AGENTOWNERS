@@ -10,6 +10,8 @@ execution, and must remain independently testable without network access.
 
 - `release-automation.mjs`: tested publication and tag primitives
 - `release-automation.test.mjs`: failure-ordering and command-boundary tests
+- `marketplace-metadata.mjs`: root/package Action metadata qualification
+- `marketplace-metadata.test.mjs`: isolated metadata drift and failure fixtures
 - `publish-packages.mjs`: release workflow package entry point
 - `update-major-tag.mjs`: stable Action tag entry point
 - `verify-release.mjs`: built artifact and version validation
@@ -21,7 +23,8 @@ execution, and must remain independently testable without network access.
 
 ```mermaid
 flowchart LR
-  Tag --> Verify --> Preflight
+  Tag --> Verify --> MarketplaceMetadata
+  MarketplaceMetadata --> Preflight
   Preflight -->|all exact versions known| Publish
   Preflight -->|ambiguous result| Fail
   Publish --> Release --> MajorTag
@@ -33,6 +36,7 @@ flowchart LR
 flowchart TB
   Entrypoints --> Automation[release-automation.mjs]
   Tests --> Automation
+  MarketplaceTests --> MarketplaceMetadata
   Automation --> npm
   Automation --> pnpm
   Automation --> Git
@@ -58,5 +62,9 @@ sequenceDiagram
 - Use npm 11.5.1 or newer for trusted OIDC publication.
 - Never move a stable major tag for a prerelease.
 - Never pass policy-controlled or user-controlled text through a shell.
+- Root and packaged Action metadata may differ only in distribution-specific
+  `author` and `runs.main` values.
+- Offline metadata checks never imply Marketplace agreement, category, 2FA, or
+  publication completion.
 - Packed-package verification must not read or write the user's global npm
   cache.
