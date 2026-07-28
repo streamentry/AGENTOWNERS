@@ -61,7 +61,7 @@ const SECRET_DIFF_PATTERNS = [
 ];
 
 export function matchGlob(pattern: string, filePath: string): boolean {
-  return picomatch.isMatch(filePath, pattern, { dot: true });
+  return picomatch.isMatch(filePath, pattern, { dot: true, flags: 's' });
 }
 
 export function matchGlobs(patterns: string[], filePath: string): boolean {

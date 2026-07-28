@@ -36,6 +36,9 @@ semantic versioning.
 
 ### Fixed
 
+- CLI Git path ingestion now uses NUL-delimited output, rejects malformed or
+  non-UTF-8 records, and matches legal newline characters, preventing quoted
+  paths from bypassing policy classification.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

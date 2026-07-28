@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
+import { classifyFiles } from '@agent-owners/core';
 import { getChangedFiles, getCommitMessages } from '../src/git.js';
 
 const temporaryDirectories: string[] = [];
@@ -63,5 +64,26 @@ describe('git revision option boundaries', () => {
 
     expect(() => getCommitMessages(`--output=${target}`, 'HEAD', repository)).toThrow();
     expect(existsSync(`${target}..HEAD`)).toBe(false);
+  });
+});
+
+describe('git pathname boundaries', () => {
+  it('preserves an adversarial workflow path for production classification', async () => {
+    const repository = await makeRepository();
+    const workflowDirectory = join(repository, '.github', 'workflows');
+    const workflowPath = '.github/workflows/stealth\n.yml';
+    const env = isolatedGitEnvironment();
+    await mkdir(workflowDirectory, { recursive: true });
+    await writeFile(join(repository, workflowPath), 'name: adversarial path\n');
+    execFileSync('git', ['add', '--', workflowPath], { cwd: repository, env });
+    execFileSync('git', ['commit', '--message', 'add adversarial workflow path'], {
+      cwd: repository,
+      env,
+    });
+
+    const changedFiles = getChangedFiles('HEAD~1', 'HEAD', repository);
+
+    expect(changedFiles).toEqual([workflowPath]);
+    expect(classifyFiles(changedFiles).changesWorkflows).toBe(true);
   });
 });

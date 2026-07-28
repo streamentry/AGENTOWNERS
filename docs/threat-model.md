@@ -34,13 +34,21 @@ executed, evaluated, or interpreted as policy. For pull requests and reviews,
 the policy is fetched from the immutable base commit, so a pull request cannot
 rewrite the policy that judges itself.
 
-### 8. Git option injection
+### 7. Git option injection
 **Threat**: An attacker-controlled ref beginning with `-` is interpreted as a
 Git option even though the CLI uses an argv subprocess API.
 **Protection**: Git ranges are placed after `--end-of-options`, and pathspec
 arguments use the explicit `--` separator.
 
-### 7. Privilege escalation via GitHub Action
+### 8. Git pathname representation bypass
+**Threat**: A legal pathname containing a newline is C-quoted or split before
+classification, causing a protected workflow, authentication, or secret path
+to miss its policy category.
+**Protection**: The CLI requests `git diff --name-only -z`, parses NUL-delimited
+records without trimming, rejects malformed or non-UTF-8 records, and matches
+glob wildcards across newline characters.
+
+### 9. Privilege escalation via GitHub Action
 **Threat**: The AGENTOWNERS action itself is used to perform unauthorized operations.  
 **Protection**: Minimum required permissions (`contents: read`, `pull-requests: write`, `issues: write`). No `secrets:read`, no `administration:write`.
 
