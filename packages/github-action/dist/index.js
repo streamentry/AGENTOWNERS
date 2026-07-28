@@ -33360,9 +33360,20 @@ var AGENT_COMMIT_SIGNATURES = [
 ];
 var AGENT_LABELS = ["ai-generated", "agent", "copilot", "codex", "claude"];
 var PR_BODY_MARKERS = ["\u{1F916} Generated with", "<!-- agentowners"];
-var BOT_CO_AUTHOR_PATTERN = /Co-authored-by:[^\r\n]*\[bot\]/i;
 function isKnownBotActor(actor) {
   return KNOWN_BOT_ACTORS.includes(actor);
+}
+function hasBotCoAuthorMarker(value) {
+  const normalized = value.toLowerCase();
+  let lineStart = 0;
+  while (lineStart <= normalized.length) {
+    const lineEnd = normalized.indexOf("\n", lineStart);
+    const line = normalized.slice(lineStart, lineEnd === -1 ? normalized.length : lineEnd);
+    if (line.includes("co-authored-by:") && line.includes("[bot]")) return true;
+    if (lineEnd === -1) return false;
+    lineStart = lineEnd + 1;
+  }
+  return false;
 }
 function findPolicyAgent(input, policy, mode = "any") {
   if (!policy.agents) return null;
@@ -33483,7 +33494,7 @@ function detectAgent(input) {
       signals.push(`body marker: "${marker}"`);
     }
   }
-  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+  if (bodyTexts.some(hasBotCoAuthorMarker)) {
     signals.push("body co-author [bot] pattern");
   }
   if (signals.length > 0) {
