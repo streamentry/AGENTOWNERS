@@ -9,13 +9,14 @@ import { registerExplain } from './commands/explain.js'
 import { registerFingerprint } from './commands/fingerprint.js'
 import { registerSelfCheck } from './commands/self-check.js'
 import { registerTest } from './commands/test.js'
+import { cliVersion } from './version.js'
 
 const program = new Command()
 
 program
   .name('agentowners')
   .description('CODEOWNERS for AI agents')
-  .version('0.1.0')
+  .version(cliVersion)
 
 registerInit(program)
 registerValidate(program)
