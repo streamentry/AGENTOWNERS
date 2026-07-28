@@ -416,6 +416,20 @@ describe('GitHub Action — integration via mocks', () => {
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
   });
+
+  it('rejects an invalid mode before creating a GitHub client or reading the PR', async () => {
+    setupInputs({ mode: 'silent' });
+
+    const { run } = await import('../src/index.js');
+    await run();
+    const github = await import('@actions/github');
+
+    await vi.waitFor(() => {
+      expect(mockCore.setFailed).toHaveBeenCalledWith(expect.stringContaining('Invalid mode'));
+    });
+    expect(github.getOctokit).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
+  });
 });
 
 // --- Unit tests for comment.ts ---
