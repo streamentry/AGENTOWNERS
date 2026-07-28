@@ -12,7 +12,8 @@ Detect whether a PR, issue, comment, or commit likely came from an AI agent.
 ## Detection Signals (in priority order)
 
 ### 1. Explicit policy match (confirmed)
-Actor matches a configured `agents[name].match.actors` entry.
+Actor, commit email, commit name, or label matches a configured
+`agents[name].match` entry.
 
 ### 2. Known bot actor (confirmed)
 Actor is one of: `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]`
@@ -45,12 +46,18 @@ Malformed configured regular expressions are ignored individually. Detection
 continues with remaining patterns and falls through conservatively if nothing
 valid matches.
 
+Configured actor, commit-author, and label matches are exact comparisons. A
+commit author signal is available to the CLI, portable fixtures, and pull
+request Action adapter; issue and comment events have no commit-author context.
+
 ## Types
 
 ```ts
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   labels?: string[];

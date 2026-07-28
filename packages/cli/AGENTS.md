@@ -9,7 +9,7 @@ from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
-- `src/git.ts`: bounded Git subprocess adapter
+- `src/git.ts`: bounded Git subprocess adapter for files, messages, and commit authors
 - `src/commands/init.ts`: profile installation
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
@@ -98,4 +98,5 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
-Unknown output formats must fail before reading Git.
+Unknown output formats must fail before reading Git. Commit author metadata is
+read with the same `--end-of-options` boundary as commit messages.

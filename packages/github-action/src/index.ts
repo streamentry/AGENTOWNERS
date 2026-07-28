@@ -50,6 +50,8 @@ export async function run(): Promise<void> {
     let diffContent = '';
     let patchesComplete = true;
     let pullRequestBaseSha: string | undefined;
+    let commitEmails: string[] = [];
+    let commitNames: string[] = [];
     let actor = ctx.actor;
     let prTitle: string | undefined;
     let prBody: string | undefined;
@@ -85,6 +87,8 @@ export async function run(): Promise<void> {
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
       pullRequestBaseSha = metadata.baseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       actor = metadata.actor || actor;
       prTitle = metadata.title;
       prBody = metadata.body;
@@ -140,6 +144,8 @@ export async function run(): Promise<void> {
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
       pullRequestBaseSha = metadata.baseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -191,6 +197,8 @@ export async function run(): Promise<void> {
     // Extend policy actors with known-agent-actors input
     const agentDetection = detectAgent({
       actor,
+      commitEmails,
+      commitNames,
       prTitle,
       prBody,
       issueBody,

@@ -58,6 +58,8 @@ Optional:
 
 - `changed_files`, default `[]`
 - `commit_messages`, default `[]`
+- `commit_emails`, default `[]`
+- `commit_names`, default `[]`
 - `labels`, default `[]`
 - `pr_title`
 - `pr_body`
@@ -69,7 +71,8 @@ Optional:
 
 `review_state` is valid only for `pull_request_review.submitted`.
 `changed_files` is valid only for pull-request and pull-request-review events.
-Non-empty `commit_messages`, `diff_lines_count`, and `commits_count` are valid
+Non-empty `commit_messages`, `commit_emails`, `commit_names`,
+`diff_lines_count`, and `commits_count` are valid
 only for pull-request and pull-request-review events. `pr_title` and `pr_body`
 are valid for pull-request, pull-request-review, and issue-comment events
 because an issue comment can target a pull request. `issue_title` and

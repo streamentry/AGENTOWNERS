@@ -33366,11 +33366,21 @@ var BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
 function isKnownBotActor(actor) {
   return KNOWN_BOT_ACTORS.includes(actor);
 }
-function matchesAgentPolicy(actor, policy) {
+function findPolicyAgent(input, policy) {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-    if (agentPolicy.match?.actors?.includes(actor)) {
-      return name;
+    const match = agentPolicy.match;
+    if (match.actors?.includes(input.actor)) {
+      return { name, signal: "actors" };
+    }
+    if (match.commitEmails?.some((email) => input.commitEmails?.includes(email))) {
+      return { name, signal: "commitEmails" };
+    }
+    if (match.commitNames?.some((commitName) => input.commitNames?.includes(commitName))) {
+      return { name, signal: "commitNames" };
+    }
+    if (match.labels?.some((label) => input.labels?.includes(label))) {
+      return { name, signal: "labels" };
     }
   }
   return null;
@@ -33387,6 +33397,8 @@ function detectAgent(input) {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -33399,10 +33411,13 @@ function detectAgent(input) {
     (value) => value !== void 0
   );
   if (policy) {
-    const matchedAgent = matchesAgentPolicy(actor, policy);
-    if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
-      return { agentName: matchedAgent, confidence: "confirmed", signals };
+    const policyMatch = findPolicyAgent(
+      { actor, commitEmails, commitNames, labels },
+      policy
+    );
+    if (policyMatch) {
+      signals.push(`policy match: agents.${policyMatch.name}.match.${policyMatch.signal}`);
+      return { agentName: policyMatch.name, confidence: "confirmed", signals };
     }
     if (policy.agents) {
       for (const [name, agentPolicy] of Object.entries(policy.agents)) {
@@ -34057,6 +34072,8 @@ var fixtureInputSchema = external_exports.object({
   actor: external_exports.string().trim().min(1),
   changed_files: external_exports.array(repositoryPathSchema).refine(uniqueValues, { message: "Expected unique values" }).default([]),
   commit_messages: external_exports.array(external_exports.string()).default([]),
+  commit_emails: external_exports.array(external_exports.string()).default([]),
+  commit_names: external_exports.array(external_exports.string()).default([]),
   labels: external_exports.array(external_exports.string()).default([]),
   pr_title: external_exports.string().optional(),
   pr_body: external_exports.string().optional(),
@@ -34087,6 +34104,15 @@ var fixtureInputSchema = external_exports.object({
       path: ["commit_messages"],
       message: "commit_messages requires a pull request event"
     });
+  }
+  for (const field of ["commit_emails", "commit_names"]) {
+    if (!isPullRequestEvent && input[field].length > 0) {
+      context3.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} requires a pull request event`
+      });
+    }
   }
   for (const field of ["diff_lines_count", "commits_count"]) {
     if (!isPullRequestEvent && input[field] !== void 0) {
@@ -34218,6 +34244,7 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     repo,
     pull_number: pullNumber
   });
+  const commitAuthors = await getPRCommitAuthors(octokit, owner, repo, pullNumber);
   return {
     title: data.title,
     body: data.body ?? "",
@@ -34230,8 +34257,32 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     changedFiles: data.changed_files,
     base: data.base.ref,
     baseSha: data.base.sha,
-    head: data.head.ref
+    head: data.head.ref,
+    commitEmails: commitAuthors.emails,
+    commitNames: commitAuthors.names
   };
+}
+async function getPRCommitAuthors(octokit, owner, repo, pullNumber) {
+  const emails = [];
+  const names = [];
+  let page = 1;
+  while (true) {
+    const response = await octokit.rest.pulls.listCommits({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100,
+      page
+    });
+    for (const commit of response.data) {
+      const author = commit.commit?.author;
+      if (typeof author?.email === "string" && author.email) emails.push(author.email);
+      if (typeof author?.name === "string" && author.name) names.push(author.name);
+    }
+    if (response.data.length < 100) break;
+    page += 1;
+  }
+  return { emails, names };
 }
 async function getIssueMetadata(octokit, owner, repo, issueNumber) {
   const { data } = await octokit.rest.issues.get({
@@ -34340,6 +34391,8 @@ async function run() {
     let diffContent = "";
     let patchesComplete = true;
     let pullRequestBaseSha;
+    let commitEmails = [];
+    let commitNames = [];
     let actor = ctx.actor;
     let prTitle;
     let prBody;
@@ -34371,6 +34424,8 @@ async function run() {
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
       pullRequestBaseSha = metadata.baseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       actor = metadata.actor || actor;
       prTitle = metadata.title;
       prBody = metadata.body;
@@ -34419,6 +34474,8 @@ async function run() {
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
       pullRequestBaseSha = metadata.baseSha;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -34458,6 +34515,8 @@ async function run() {
     });
     const agentDetection = detectAgent({
       actor,
+      commitEmails,
+      commitNames,
       prTitle,
       prBody,
       issueBody,

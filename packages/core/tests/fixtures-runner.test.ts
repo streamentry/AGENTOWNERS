@@ -78,6 +78,8 @@ describe('parsePolicyFixtureSuite', () => {
           input: {
             ...validSuite().cases[0]?.input,
             commit_messages: [],
+            commit_emails: [],
+            commit_names: [],
             labels: [],
           },
         },
@@ -205,6 +207,20 @@ describe('parsePolicyFixtureSuite', () => {
     );
   });
 
+  it.each(['commit_emails', 'commit_names'] as const)(
+    'rejects %s outside pull request events',
+    (field) => {
+      const suite = validSuite();
+      suite.cases[0]!.input.event = 'issues.opened';
+      suite.cases[0]!.input.changed_files = [];
+      Object.assign(suite.cases[0]!.input, { [field]: ['unreachable author'] });
+
+      expect(() => parsePolicyFixtureSuite(suite)).toThrow(
+        `${field} requires a pull request event`,
+      );
+    },
+  );
+
   it('loads and validates a portable YAML suite from disk', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'agentowners-fixtures-'));
     temporaryDirectories.push(directory);
@@ -245,6 +261,31 @@ describe('parsePolicyFixtureSuite', () => {
 });
 
 describe('runPolicyFixtureSuite', () => {
+  it('uses configured commit author signals through the public fixture contract', () => {
+    const authorPolicy = parsePolicy({
+      version: 1,
+      agents: {
+        automation: { match: { commitEmails: ['bot@example.test'] } },
+      },
+    });
+    const suite = parsePolicyFixtureSuite({
+      version: 1,
+      cases: [
+        {
+          name: 'commit email identifies automation',
+          input: {
+            event: 'pull_request.opened',
+            actor: 'human-user',
+            commit_emails: ['bot@example.test'],
+          },
+          expect: { decision: 'require_approval', matched_agent: 'automation' },
+        },
+      ],
+    });
+
+    expect(runPolicyFixtureSuite(authorPolicy, suite).passed).toBe(true);
+  });
+
   it('evaluates complete cases through detection, classification, inference, and policy', () => {
     const suite = parsePolicyFixtureSuite({
       version: 1,

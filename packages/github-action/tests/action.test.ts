@@ -25,6 +25,7 @@ const mockOctokit = {
     },
     pulls: {
       listFiles: vi.fn(),
+      listCommits: vi.fn(),
       get: vi.fn(),
     },
     issues: {
@@ -159,6 +160,7 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
       head: { ref: 'feature-branch' },
     },
   });
+  mockOctokit.rest.pulls.listCommits.mockResolvedValue({ data: [] });
   mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
   mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 1 } });
   mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 1 } });
@@ -519,6 +521,32 @@ describe('getPRFiles', () => {
   });
 });
 
+describe('getPRCommitAuthors', () => {
+  it('paginates commit metadata and returns only available author fields', async () => {
+    const { getPRCommitAuthors } = await import('../src/github.js');
+    const firstPage = Array.from({ length: 100 }, () => ({
+      commit: { author: { email: 'bot@example.test', name: 'Automation Bot' } },
+    }));
+    mockOctokit.rest.pulls.listCommits
+      .mockResolvedValueOnce({ data: firstPage })
+      .mockResolvedValueOnce({
+        data: [{ commit: { author: { email: 'other@example.test', name: 'Other Bot' } } }],
+      });
+
+    await expect(getPRCommitAuthors(mockOctokit as never, 'owner', 'repo', 1)).resolves.toEqual({
+      emails: [...Array.from({ length: 100 }, () => 'bot@example.test'), 'other@example.test'],
+      names: [...Array.from({ length: 100 }, () => 'Automation Bot'), 'Other Bot'],
+    });
+    expect(mockOctokit.rest.pulls.listCommits).toHaveBeenNthCalledWith(2, {
+      owner: 'owner',
+      repo: 'repo',
+      pull_number: 1,
+      per_page: 100,
+      page: 2,
+    });
+  });
+});
+
 describe('getPRMetadata', () => {
   it('maps PR API response to PRMetadata', async () => {
     const { getPRMetadata } = await import('../src/github.js');
@@ -538,6 +566,11 @@ describe('getPRMetadata', () => {
         head: { ref: 'feature' },
       },
     });
+    mockOctokit.rest.pulls.listCommits.mockResolvedValue({
+      data: [
+        { commit: { author: { email: 'bot@example.test', name: 'Automation Bot' } } },
+      ],
+    });
 
     const meta = await getPRMetadata(mockOctokit as never, 'owner', 'repo', 1);
     expect(meta.title).toBe('Test PR');
@@ -545,6 +578,8 @@ describe('getPRMetadata', () => {
     expect(meta.labels).toEqual(['ai-agent']);
     expect(meta.commits).toBe(2);
     expect(meta.baseSha).toBe('base-sha');
+    expect(meta.commitEmails).toEqual(['bot@example.test']);
+    expect(meta.commitNames).toEqual(['Automation Bot']);
   });
 });
 

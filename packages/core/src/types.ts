@@ -137,6 +137,8 @@ export type PolicyFixtureInput = {
   actor: string;
   changed_files: string[];
   commit_messages: string[];
+  commit_emails: string[];
+  commit_names: string[];
   labels: string[];
   pr_title?: string;
   pr_body?: string;

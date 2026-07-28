@@ -3,6 +3,8 @@ import type { AgentDetectionConfidence, AgentDetectionResult, AgentOwnersPolicy 
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   issueBody?: string;
@@ -46,10 +48,29 @@ export function matchesAgentPolicy(
   actor: string,
   policy: AgentOwnersPolicy,
 ): string | null {
+  return findPolicyAgent({ actor }, policy)?.name ?? null;
+}
+
+type PolicyAgentMatch = { name: string; signal: string };
+
+function findPolicyAgent(
+  input: AgentDetectionInput,
+  policy: AgentOwnersPolicy,
+): PolicyAgentMatch | null {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-    if (agentPolicy.match?.actors?.includes(actor)) {
-      return name;
+    const match = agentPolicy.match;
+    if (match.actors?.includes(input.actor)) {
+      return { name, signal: 'actors' };
+    }
+    if (match.commitEmails?.some((email) => input.commitEmails?.includes(email))) {
+      return { name, signal: 'commitEmails' };
+    }
+    if (match.commitNames?.some((commitName) => input.commitNames?.includes(commitName))) {
+      return { name, signal: 'commitNames' };
+    }
+    if (match.labels?.some((label) => input.labels?.includes(label))) {
+      return { name, signal: 'labels' };
     }
   }
   return null;
@@ -68,6 +89,8 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -82,10 +105,13 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
 
   // 1. Policy match (confirmed)
   if (policy) {
-    const matchedAgent = matchesAgentPolicy(actor, policy);
-    if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
-      return { agentName: matchedAgent, confidence: 'confirmed', signals };
+    const policyMatch = findPolicyAgent(
+      { actor, commitEmails, commitNames, labels },
+      policy,
+    );
+    if (policyMatch) {
+      signals.push(`policy match: agents.${policyMatch.name}.match.${policyMatch.signal}`);
+      return { agentName: policyMatch.name, confidence: 'confirmed', signals };
     }
 
     // 6. Configured body patterns (from policy) — checked alongside policy

@@ -50,6 +50,8 @@ const fixtureInputSchema = z
       .refine(uniqueValues, { message: 'Expected unique values' })
       .default([]),
     commit_messages: z.array(z.string()).default([]),
+    commit_emails: z.array(z.string()).default([]),
+    commit_names: z.array(z.string()).default([]),
     labels: z.array(z.string()).default([]),
     pr_title: z.string().optional(),
     pr_body: z.string().optional(),
@@ -83,6 +85,15 @@ const fixtureInputSchema = z
         path: ['commit_messages'],
         message: 'commit_messages requires a pull request event',
       });
+    }
+    for (const field of ['commit_emails', 'commit_names'] as const) {
+      if (!isPullRequestEvent && input[field].length > 0) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field} requires a pull request event`,
+        });
+      }
     }
     for (const field of ['diff_lines_count', 'commits_count'] as const) {
       if (!isPullRequestEvent && input[field] !== undefined) {
@@ -216,6 +227,8 @@ function runFixtureCase(
   const agentDetection = detectAgent({
     actor: fixture.input.actor,
     commitMessages: fixture.input.commit_messages,
+    commitEmails: fixture.input.commit_emails,
+    commitNames: fixture.input.commit_names,
     prTitle: fixture.input.pr_title,
     prBody: fixture.input.pr_body,
     issueBody: fixture.input.issue_body,

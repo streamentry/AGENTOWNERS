@@ -67,6 +67,21 @@ describe('detectAgent', () => {
     expect(result.agentName).toBe('special-copilot');
   });
 
+  it.each([
+    ['commit email', { commitEmails: ['bot@example.test'] }, { commitEmails: ['bot@example.test'] }],
+    ['commit name', { commitNames: ['Automation Bot'] }, { commitNames: ['Automation Bot'] }],
+    ['label', { labels: ['agent-ci'] }, { labels: ['agent-ci'] }],
+  ] as const)('configured %s match is confirmed', (_signal, configured, input) => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: { configured: { match: configured } },
+    };
+
+    const result = detectAgent({ actor: 'human-user', policy, ...input });
+
+    expect(result).toMatchObject({ agentName: 'configured', confidence: 'confirmed' });
+  });
+
   it('github-copilot[bot] → confirmed without policy', () => {
     const result = detectAgent({ actor: 'github-copilot[bot]' });
     expect(result.confidence).toBe('confirmed');

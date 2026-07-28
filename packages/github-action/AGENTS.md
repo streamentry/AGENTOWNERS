@@ -9,7 +9,7 @@ artifact and must be regenerated, never hand-edited.
 ## Key components
 
 - `src/index.ts`: orchestration and outputs
-- `src/github.ts`: event metadata adapter
+- `src/github.ts`: event metadata adapter, including paginated PR commit authors
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
@@ -54,4 +54,5 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
-`pnpm verify:release`.
+`pnpm verify:release`. Pull-request commit-author fields must remain paginated
+and distinct from issue/comment metadata.

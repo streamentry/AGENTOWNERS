@@ -427,9 +427,14 @@ Detection signals:
    - `claude`
    - configured labels
 
-5. Explicit config match:
+5. Commit author metadata may match explicit policy configuration:
 
-   - policy maps a GitHub actor to an agent name
+   - configured commit email
+   - configured commit author name
+
+6. Explicit config match:
+
+   - policy maps an actor, commit author, or label to an agent name
 
 Important: Do not claim certainty unless the actor is explicitly configured or known.
 

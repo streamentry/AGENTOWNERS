@@ -11,7 +11,7 @@ network calls, clocks, randomness, or persistent state.
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
 - `classifier.ts`: path and secret classification
-- `detection.ts`: actor, commit, PR, issue, and comment evidence
+- `detection.ts`: actor, commit-author, label, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
 - `scoring.ts`: deterministic risk score
@@ -84,7 +84,9 @@ sequenceDiagram
 
 ## Verification
 
-Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`. Configured
+actor, commit-author, and label matches must have focused detection or fixture
+coverage; a schema field that the detector ignores is a policy safety defect.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
