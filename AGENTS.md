@@ -116,6 +116,7 @@ scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
+  verify-docs.mjs            — critical Markdown local-link and image-target checks
 
 CHANGELOG.md          — release history and security-relevant changes
 ```
