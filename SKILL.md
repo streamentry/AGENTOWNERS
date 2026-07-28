@@ -11,19 +11,21 @@ description: Implement or review deterministic AI-agent governance changes in AG
    related contributions.
 4. For ecosystem or positioning claims, use dated official sources and state
    what AGENTOWNERS does not control.
-5. Add the cheapest disconfirming test first.
-6. Implement the smallest complete change.
-7. For a safety invariant, prove the new test fails under a temporary relevant
+5. Keep pull request and issue metadata in distinct evaluator fields so
+   event-specific conditions cannot match the wrong event type.
+6. Add the cheapest disconfirming test first.
+7. Implement the smallest complete change.
+8. For a safety invariant, prove the new test fails under a temporary relevant
    mutation, then restore production code exactly.
-8. Regenerate distributions with `pnpm build`; never hand-edit them.
-9. If policy validation changed, run `pnpm generate:schema`.
-10. If decision behavior changed, update a portable fixture that proves the
+9. Regenerate distributions with `pnpm build`; never hand-edit them.
+10. If policy validation changed, run `pnpm generate:schema`.
+11. If decision behavior changed, update a portable fixture that proves the
    repository-facing contract.
-11. Run `pnpm verify`.
-12. Run the explicit `agentowners self-check` contract before opening a pull
+12. Run `pnpm verify`.
+13. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-13. For release-facing changes, run `pnpm verify:packages`.
-14. In the pull request, disclose agent use, overlap, exact evidence, risks,
+14. For release-facing changes, run `pnpm verify:packages`.
+15. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

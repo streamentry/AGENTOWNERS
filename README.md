@@ -297,6 +297,10 @@ rules:
 | `actors` | `string[]` | GitHub actor usernames |
 | `actions` | `AgentAction[]` | Inferred actions |
 | `labels` | `string[]` | PR/issue labels |
+| `pr_title` | `string[]` | PR title substring or regular expression |
+| `pr_body` | `string[]` | PR body substring or regular expression |
+| `issue_title` | `string[]` | Issue title substring or regular expression |
+| `issue_body` | `string[]` | Issue body substring or regular expression |
 | `docs_only` | `boolean` | All changed files are docs |
 | `tests_only` | `boolean` | All changed files are tests |
 | `changes_package_files` | `boolean` | Any dependency file changed |

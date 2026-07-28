@@ -45,6 +45,8 @@ A rule matches when ALL specified conditions in `when` are satisfied:
 - `labels`: PR/issue has any of these labels
 - `pr_title`: PR title matches any pattern (substring or regex)
 - `pr_body`: PR body matches any pattern
+- `issue_title`: issue title matches any pattern (substring or regex)
+- `issue_body`: issue body matches any pattern
 - `diff_lines_over`: diff line count exceeds threshold
 - `commits_over`: commit count exceeds threshold
 - `changes_package_files`: FilesClassification.changesDependencies

@@ -33773,6 +33773,16 @@ function renderAuditJson(context3) {
     requiredReviewers: decision.requiredReviewers
   };
 }
+function matchesTextPattern(value, patterns) {
+  if (!value) return false;
+  return patterns.some((pattern) => {
+    try {
+      return new RegExp(pattern, "i").test(value);
+    } catch {
+      return value.includes(pattern);
+    }
+  });
+}
 function evaluateRule(rule, input) {
   const { when } = rule;
   const {
@@ -33785,6 +33795,8 @@ function evaluateRule(rule, input) {
     actor,
     prTitle,
     prBody,
+    issueTitle,
+    issueBody,
     labels
   } = input;
   const matchedConditions = [];
@@ -33825,28 +33837,20 @@ function evaluateRule(rule, input) {
     matchedConditions.push("labels");
   }
   if (when.pr_title !== void 0) {
-    if (!prTitle) return null;
-    const matches = when.pr_title.some((pattern) => {
-      try {
-        return new RegExp(pattern, "i").test(prTitle);
-      } catch {
-        return prTitle.includes(pattern);
-      }
-    });
-    if (!matches) return null;
+    if (!matchesTextPattern(prTitle, when.pr_title)) return null;
     matchedConditions.push("pr_title");
   }
   if (when.pr_body !== void 0) {
-    if (!prBody) return null;
-    const matches = when.pr_body.some((pattern) => {
-      try {
-        return new RegExp(pattern, "i").test(prBody);
-      } catch {
-        return prBody.includes(pattern);
-      }
-    });
-    if (!matches) return null;
+    if (!matchesTextPattern(prBody, when.pr_body)) return null;
     matchedConditions.push("pr_body");
+  }
+  if (when.issue_title !== void 0) {
+    if (!matchesTextPattern(issueTitle, when.issue_title)) return null;
+    matchedConditions.push("issue_title");
+  }
+  if (when.issue_body !== void 0) {
+    if (!matchesTextPattern(issueBody, when.issue_body)) return null;
+    matchedConditions.push("issue_body");
   }
   if (when.diff_lines_over !== void 0) {
     if (diffLinesCount === void 0 || diffLinesCount <= when.diff_lines_over) return null;
@@ -34291,6 +34295,8 @@ async function run() {
     let actor = ctx.actor;
     let prTitle;
     let prBody;
+    let issueTitle;
+    let issueBody;
     let labels = [];
     let issueNumber;
     let eventType;
@@ -34329,8 +34335,8 @@ async function run() {
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
-      prTitle = metadata.title;
-      prBody = metadata.body;
+      issueTitle = metadata.title;
+      issueBody = metadata.body;
     } else if (eventName === "issue_comment") {
       const issue2 = payload.issue;
       if (!issue2) throw new Error("Missing issue payload for issue_comment");
@@ -34393,8 +34399,8 @@ async function run() {
     });
     const agentDetection = detectAgent({
       actor,
-      prTitle,
-      prBody,
+      prTitle: prTitle ?? issueTitle,
+      prBody: prBody ?? issueBody,
       labels,
       policy
     });
@@ -34411,6 +34417,8 @@ async function run() {
       actor,
       prTitle,
       prBody,
+      issueTitle,
+      issueBody,
       labels
     });
     const verdictBody = renderVerdict(decision, { actor });

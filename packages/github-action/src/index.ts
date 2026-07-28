@@ -53,6 +53,8 @@ async function run(): Promise<void> {
     let actor = ctx.actor;
     let prTitle: string | undefined;
     let prBody: string | undefined;
+    let issueTitle: string | undefined;
+    let issueBody: string | undefined;
     let labels: string[] = [];
     let issueNumber: number | undefined;
     let eventType: GitHubEventType | undefined;
@@ -97,8 +99,8 @@ async function run(): Promise<void> {
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
-      prTitle = metadata.title;
-      prBody = metadata.body;
+      issueTitle = metadata.title;
+      issueBody = metadata.body;
     } else if (eventName === 'issue_comment') {
       const issue = payload.issue;
       if (!issue) throw new Error('Missing issue payload for issue_comment');
@@ -177,8 +179,8 @@ async function run(): Promise<void> {
     // Extend policy actors with known-agent-actors input
     const agentDetection = detectAgent({
       actor,
-      prTitle,
-      prBody,
+      prTitle: prTitle ?? issueTitle,
+      prBody: prBody ?? issueBody,
       labels,
       policy,
     });
@@ -199,6 +201,8 @@ async function run(): Promise<void> {
       actor,
       prTitle,
       prBody,
+      issueTitle,
+      issueBody,
       labels,
     });
 

@@ -33,7 +33,12 @@ const mockOctokit = {
   },
 };
 
-const mockContext = {
+const mockContext: {
+  eventName: string;
+  actor: string;
+  payload: Record<string, unknown>;
+  repo: { owner: string; repo: string };
+} = {
   eventName: 'pull_request',
   actor: 'github-copilot[bot]',
   payload: {
@@ -166,6 +171,36 @@ describe('GitHub Action — integration via mocks', () => {
     mockContext.eventName = 'pull_request';
     mockContext.actor = 'github-copilot[bot]';
     mockContext.payload = { action: 'opened', pull_request: { number: 1 } };
+  });
+
+  it('passes issue title and body to issue-specific rule conditions', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = 'issues';
+    mockContext.actor = 'issue-agent[bot]';
+    mockContext.payload = { action: 'opened', issue: { number: 22 } };
+    mockOctokit.rest.issues.get.mockResolvedValue({
+      data: {
+        title: 'Security report: exposed credential',
+        body: 'The reproduction includes a leaked token.',
+        user: { login: 'issue-agent[bot]' },
+        labels: [{ name: 'security' }],
+        state: 'open',
+      },
+    });
+
+    const core = await import('@agent-owners/core');
+    await import('../src/index.js');
+
+    await vi.waitFor(() => {
+      expect(core.evaluatePolicy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          issueTitle: 'Security report: exposed credential',
+          issueBody: 'The reproduction includes a leaked token.',
+          prTitle: undefined,
+          prBody: undefined,
+        }),
+      );
+    });
   });
 
   it('PR opened → verdict posted, outputs set, no setFailed for allow', async () => {

@@ -44,6 +44,8 @@ semantic versioning.
 - Available pull request patch content now participates in secret detection.
 - Git security fixtures no longer write identity into contributor Git
   configuration.
+- `issue_title` and `issue_body` rule conditions now evaluate against issue
+  metadata instead of being silently ignored.
 
 ## [0.1.0] - 2026-07-28
 

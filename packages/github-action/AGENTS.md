@@ -21,6 +21,8 @@ artifact and must be regenerated, never hand-edited.
 ```mermaid
 flowchart LR
   Event --> Adapter
+  PR[PR metadata] --> Adapter
+  Issue[Issue metadata] --> Adapter
   BaseCommit --> TrustedPolicy
   Adapter --> Core
   TrustedPolicy --> Core
@@ -39,10 +41,10 @@ sequenceDiagram
   participant Core
   participant GitHub
   Runner->>Action: event and token
-  Action->>GitHub: read metadata
+  Action->>GitHub: read distinct PR or issue metadata
   Action->>GitHub: fetch policy at base SHA
   Action->>GitHub: read available file patches
-  Action->>Core: normalized input
+  Action->>Core: distinct PR and issue fields
   Core-->>Action: decision
   Action->>GitHub: verdict and labels
   Action-->>Runner: outputs and status

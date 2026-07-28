@@ -41,7 +41,7 @@ packages/core/src/
   classifier.ts  — file classification, glob matching, secret detection
   detection.ts   — AI agent detection from actor/commit/body signals
   actions.ts     — action inference from GitHub event types
-  evaluator.ts   — rule evaluation, decision logic, default policy
+  evaluator.ts   — event-specific rule evaluation, decision logic, default policy
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
