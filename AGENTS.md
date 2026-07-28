@@ -90,6 +90,11 @@ docs/specs/
   readme.md           — full product specification (canonical requirements)
   f1-policy-schema.md through f11-agent-self-check.md — per-feature specs
 
+docs/ecosystem.md     — dated control-surface comparison and product boundaries
+
+.github/DISCUSSION_TEMPLATE/
+  ideas.yml           — evidence-first feature proposal intake
+
 scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
