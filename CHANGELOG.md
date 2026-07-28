@@ -3,10 +3,18 @@
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and
 semantic versioning.
 
+> `0.1.0` below is a release candidate until the npm packages, provenance
+> records, GitHub Release, and stable Action tag are independently verified.
+> This changelog is not publication evidence.
+
 ## [Unreleased]
 
 ### Added
 
+- A clean-clone contributor bootstrap, explicit PR evidence fields, and feature
+  issue acceptance criteria.
+- A deterministic local Markdown-link gate included in `pnpm verify`.
+- A maintainer-only release runbook separating preparation from publication.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a
@@ -51,7 +59,7 @@ semantic versioning.
 - Issue comments now preserve whether their target is a pull request or issue,
   and their bodies participate in agent detection.
 
-## [0.1.0] - 2026-07-28
+## [0.1.0] - 2026-07-28 (release candidate; not published)
 
 ### Added
 
