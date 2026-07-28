@@ -45,7 +45,6 @@ export async function run(): Promise<void> {
     core.info(`Policy: ${policyPath}`);
     core.info(`Mode: ${mode}`);
 
-    const workspace = process.env['GITHUB_WORKSPACE'] ?? process.cwd();
     let changedFiles: string[] = [];
     let diffContent = '';
     let patchesComplete = true;
@@ -264,7 +263,7 @@ export async function run(): Promise<void> {
       changedFiles,
     });
 
-    const artifactPath = path.join(workspace, 'agentowners-decision.json');
+    const artifactPath = path.resolve('agentowners-decision.json');
     await fs.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), 'utf8');
     core.info(`Audit artifact written to ${artifactPath}`);
 

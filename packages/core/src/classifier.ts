@@ -81,7 +81,7 @@ export function classifyFile(filePath: string): FileClassification {
 }
 
 export function classifyFiles(filePaths: string[]): FilesClassification {
-  const files: Record<string, FileClassification> = {};
+  const files = Object.create(null) as Record<string, FileClassification>;
   for (const fp of filePaths) {
     files[fp] = classifyFile(fp);
   }

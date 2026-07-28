@@ -36,6 +36,14 @@ semantic versioning.
 
 ### Fixed
 
+- Untrusted filenames no longer mutate classification-map prototypes through
+  special object keys.
+- CLI policy initialization now uses an atomic exclusive create unless the
+  local operator explicitly requests overwrite.
+- Bot co-author detection no longer uses a polynomial regular expression on
+  uncontrolled pull request or issue text.
+- The Action writes its fixed audit artifact relative to the runner working
+  directory instead of trusting an environment-provided path.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

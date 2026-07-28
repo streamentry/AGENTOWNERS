@@ -178,6 +178,8 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+| Untrusted object keys | Store attacker-controlled filenames in null-prototype maps |
+| Atomic initialization | Create policy files with exclusive write unless overwrite is explicit |
 
 ## How to add a new feature
 
@@ -300,6 +302,8 @@ These are roadmap items for v2+ (see spec section 27).
 6. **Skipping barrel export** — always add new exports to `src/index.ts`
 7. **Writing Git config in tests** — pass fixture identity through the commit
    subprocess environment; never mutate contributor repository configuration
+8. **Using plain objects for untrusted filenames** — use null-prototype maps so
+   `__proto__` and related keys remain ordinary data
 
 ## Roadmap hooks (design for these, don't build yet)
 

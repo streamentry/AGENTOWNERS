@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as path from 'node:path';
 
 // --- Mock @actions/core ---
 const mockCore = {
@@ -385,6 +386,21 @@ describe('GitHub Action — integration via mocks', () => {
     // Outputs are still set
     mockCore.setOutput('decision', 'allow');
     expect(mockCore.setOutput).toHaveBeenCalledWith('decision', 'allow');
+  });
+
+  it('writes the audit artifact to the action working directory', async () => {
+    setupInputs({ mode: 'dry-run' });
+    setupOctokitPR(['src/index.ts']);
+    process.env['GITHUB_WORKSPACE'] = '/attacker-controlled-path';
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockWriteFile).toHaveBeenLastCalledWith(
+      path.resolve('agentowners-decision.json'),
+      expect.any(String),
+      'utf8',
+    );
   });
 
   it('sticky comment updated on re-run (upsert finds existing comment)', async () => {

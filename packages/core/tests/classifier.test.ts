@@ -90,6 +90,13 @@ describe('classifyFiles', () => {
     const result = classifyFiles(['src/main.ts', 'README.md']);
     expect(result.secretFilesDetected).toBe(false);
   });
+
+  it('stores attacker-controlled filenames without prototype mutation', () => {
+    const result = classifyFiles(['__proto__']);
+
+    expect(Object.getPrototypeOf(result.files)).toBeNull();
+    expect(Object.hasOwn(result.files, '__proto__')).toBe(true);
+  });
 });
 
 describe('detectSecretPatterns', () => {

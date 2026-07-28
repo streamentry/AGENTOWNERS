@@ -99,3 +99,5 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.
+`init` must use atomic exclusive creation by default. The local operator's
+explicit `--force` option is the only supported overwrite authority.
