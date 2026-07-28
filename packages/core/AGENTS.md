@@ -18,6 +18,7 @@ network calls, clocks, randomness, or persistent state.
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
 - `fixtures.ts`: strict portable suites and assertion comparison
+- `sarif.ts`: deterministic SARIF 2.1.0 output
 
 ## Diagrams
 
@@ -49,6 +50,7 @@ flowchart TB
   Fixtures --> Classification
   Fixtures --> Inference
   Fixtures --> Evaluator
+  Evaluator --> SARIF
   Corpus[Adversarial corpus] -. probes .-> Zod
   Corpus -. probes .-> Detection
   Corpus -. probes .-> Classification
@@ -88,3 +90,5 @@ After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
+SARIF output must never contain timestamps, absolute paths, or unstable rule
+identifiers.

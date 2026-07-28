@@ -10,12 +10,12 @@ The roadmap is ordered by user risk removed, not feature count.
 - Machine-readable JSON Schema with editor completion and CI drift detection
 - Versioned agent self-check contract for pre-PR policy decisions
 - Portable executable policy fixtures for repository-owned regression tests
+- Deterministic SARIF 2.1.0 output for code-scanning interoperability
 - Dogfooded policy, contribution templates, and private vulnerability reporting
 - Stable policy examples and migration notes
 
 ## Next: explainability and interoperability
 
-- SARIF output for code-scanning integration
 - Explicit reviewer requests and label lifecycle controls
 
 ## Later: governed expansion

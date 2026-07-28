@@ -188,3 +188,56 @@ export type PolicyFixtureSuiteResult = {
   failedCount: number;
   cases: PolicyFixtureCaseResult[];
 };
+
+export type SarifLevel = 'warning' | 'error';
+
+export type SarifLocation = {
+  physicalLocation: {
+    artifactLocation: {
+      uri: string;
+    };
+  };
+};
+
+export type SarifResult = {
+  ruleId: string;
+  level: SarifLevel;
+  message: { text: string };
+  locations?: SarifLocation[];
+  partialFingerprints: { 'agentowners/v1': string };
+  properties: {
+    decision: Decision['effect'];
+    riskScore: number;
+    riskLevel: RiskLevel;
+    requiredReviewers: string[];
+  };
+};
+
+export type SarifRule = {
+  id: string;
+  name: string;
+  shortDescription: { text: string };
+  fullDescription: { text: string };
+  properties: { tags: ['governance', 'ai-agent'] };
+};
+
+export type SarifLog = {
+  $schema: 'https://json.schemastore.org/sarif-2.1.0.json';
+  version: '2.1.0';
+  runs: Array<{
+    tool: {
+      driver: {
+        name: 'AGENTOWNERS';
+        informationUri: 'https://github.com/streamentry/AGENTOWNERS';
+        rules: SarifRule[];
+      };
+    };
+    results: SarifResult[];
+    properties: {
+      decision: Decision['effect'];
+      riskScore: number;
+      riskLevel: RiskLevel;
+      detectedActions: AgentAction[];
+    };
+  }>;
+};
