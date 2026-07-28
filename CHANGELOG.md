@@ -39,6 +39,8 @@ semantic versioning.
 
 ### Fixed
 
+- SARIF rule identities now preserve distinct matched rules that share a display
+  name, preventing audit descriptors from collapsing together.
 - `inferActions()` now reuses the canonical file classifier, preventing
   standalone callers from drifting from CLI and Action behavior on nested
   documentation and other classified paths.

@@ -29,7 +29,7 @@ function compareText(left: string, right: string): number {
 }
 
 function ruleId(rule: MatchedRule): string {
-  return `AGENTOWNERS/${stableHash(rule.name)}`;
+  return `AGENTOWNERS/${stableHash(`${rule.name}\0${rule.effect}\0${rule.reason}`)}`;
 }
 
 function artifactUri(file: string): string | undefined {

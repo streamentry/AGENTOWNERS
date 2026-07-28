@@ -94,4 +94,5 @@ generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
-identifiers.
+identifiers. Rule IDs must distinguish matched rules even when their display
+names are identical.
