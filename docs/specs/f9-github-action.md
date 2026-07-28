@@ -1,16 +1,20 @@
 # F9: GitHub Action
 
 ## Objective
+
 Implement the AGENTOWNERS GitHub Action that runs on PR/issue/review events.
 
 ## Package
+
 `packages/github-action/`
 
 ## Files
+
 - `packages/github-action/action.yml` — action definition
 - `packages/github-action/src/index.ts` — main entrypoint
 - `packages/github-action/src/github.ts` — GitHub API helpers
 - `packages/github-action/src/comment.ts` — sticky comment management
+- `packages/github-action/src/governance.ts` — reviewer requests and label lifecycle
 - `packages/github-action/tests/` — unit tests with mocked @actions/github
 
 ## action.yml Definition
@@ -24,40 +28,40 @@ inputs:
   github-token:
     required: false
     default: ${{ github.token }}
-    description: "GitHub token for metadata, verdict comments, and labels"
+    description: 'GitHub token for metadata, verdict comments, and labels'
   policy-path:
     required: false
-    default: ".github/AGENTOWNERS.yml"
-    description: "Path to AGENTOWNERS policy file"
+    default: '.github/AGENTOWNERS.yml'
+    description: 'Path to AGENTOWNERS policy file'
   mode:
     required: false
-    default: "comment"
-    description: "comment | check | both | dry-run"
+    default: 'comment'
+    description: 'comment | check | both | dry-run'
   fail-on-block:
     required: false
-    default: "true"
-    description: "Fail CI when decision is block"
+    default: 'true'
+    description: 'Fail CI when decision is block'
   fail-on-require-approval:
     required: false
-    default: "false"
-    description: "Fail CI when decision is require_approval"
+    default: 'false'
+    description: 'Fail CI when decision is require_approval'
   add-labels:
     required: false
-    default: "true"
-    description: "Apply suggested labels to PR/issue"
+    default: 'true'
+    description: 'Apply labels and replace stale AGENTOWNERS risk labels'
   known-agent-actors:
     required: false
-    description: "Comma-separated list of known agent actor names"
+    description: 'Comma-separated list of known agent actor names'
 
 outputs:
   decision:
-    description: "allow | require_approval | block"
+    description: 'allow | require_approval | block'
   risk-score:
-    description: "0-100"
+    description: '0-100'
   risk-level:
-    description: "low | medium | high | critical"
+    description: 'low | medium | high | critical'
   matched-rules:
-    description: "JSON array of matched rules"
+    description: 'JSON array of matched rules'
 
 runs:
   using: node24
@@ -65,6 +69,7 @@ runs:
 ```
 
 ## Required GitHub Permissions
+
 - `contents: read`
 - `pull-requests: write` (for comments and labels)
 - `issues: write` (for issue comments)
@@ -87,9 +92,10 @@ runs:
 8. Evaluate policy
 9. Render verdict
 10. Post/update sticky comment (if mode includes "comment")
-11. Apply labels (if add-labels: true)
-12. Set outputs
-13. Fail if needed
+11. Reconcile labels (if add-labels: true)
+12. Request missing reviewers explicitly named by matched rules
+13. Set outputs
+14. Fail if needed
 ```
 
 ## Sticky Comment
@@ -97,19 +103,32 @@ runs:
 Marker: `<!-- agentowners-verdict -->`
 
 Logic:
+
 1. List existing PR comments
 2. Find comment containing the marker
 3. If found → update it (PATCH)
 4. If not found → create new comment (POST)
 
-## Label Application
-Apply `labelsToApply` from Decision to the PR/issue.
-Create labels if they don't exist (with sensible colors).
+## Label Lifecycle
+
+Apply `labelsToApply` from Decision to the PR/issue and create missing labels.
+Remove stale labels only from the reserved `risk-low`, `risk-medium`,
+`risk-high`, and `risk-critical` set. Never remove policy-defined or user
+labels.
+
+## Reviewer Requests
+
+Reviewer requests run only when matched rules explicitly name reviewers and
+only on non-dry-run pull-request events. Accept `@login` users and
+`@owner/team` teams. Reject teams outside the repository organization, skip
+the pull-request author, and request only reviewers not already pending.
 
 ## Audit Artifact
+
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 
 ## Tests (`packages/github-action/tests/`)
+
 - PR opened event → fetches files, evaluates, posts comment
 - Block decision → fails action when fail-on-block is true
 - Block decision → does not fail when fail-on-block is false
@@ -117,8 +136,11 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Sticky comment updated on re-run
 - Audit JSON written correctly
 - Labels applied to PR
+- Stale reserved labels removed without touching user labels
+- Missing users and same-organization teams requested exactly once
 
 ## Security Requirements
+
 - Never print secret patterns from diff content
 - Treat all PR content as untrusted input
 - Do not execute content from policy as code

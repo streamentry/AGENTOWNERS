@@ -13,6 +13,7 @@ artifact and must be regenerated, never hand-edited.
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
+- `src/governance.ts`: reviewer request and managed-label lifecycle
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 
@@ -30,8 +31,18 @@ flowchart LR
   Core --> Decision
   Decision --> Comment
   Decision --> Labels
+  Decision --> Reviewers
   Decision --> Outputs
   Decision --> Status
+```
+
+```mermaid
+flowchart TB
+  Entrypoint[index.ts] --> Adapter[github.ts]
+  Entrypoint --> Comment[comment.ts]
+  Entrypoint --> Governance[governance.ts]
+  Governance --> ReviewRequests[GitHub review requests]
+  Governance --> ManagedLabels[Reserved risk labels]
 ```
 
 ```mermaid
@@ -47,7 +58,7 @@ sequenceDiagram
   Action->>Core: distinct PR and issue fields
   Action->>Core: comment body as detection evidence
   Core-->>Action: decision
-  Action->>GitHub: verdict and labels
+  Action->>GitHub: verdict, labels, and reviewer requests
   Action-->>Runner: outputs and status
 ```
 

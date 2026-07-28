@@ -161,6 +161,13 @@ jobs:
 Open an agent-generated PR and inspect the verdict before switching from
 observation to enforcement.
 
+Reviewer requests are activated only by reviewers explicitly named in matched
+policy rules. User reviewers use `@login`; organization teams use
+`@owner/team`. AGENTOWNERS requests only missing reviewers, never requests the
+pull-request author, and replaces only its reserved `risk-low`, `risk-medium`,
+`risk-high`, and `risk-critical` labels. Policy-defined and user labels are
+never removed.
+
 ---
 
 ## Example verdict

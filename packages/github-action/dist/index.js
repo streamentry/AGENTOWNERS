@@ -34284,6 +34284,126 @@ function requireGitHubToken(environmentToken, inputToken) {
   return token;
 }
 
+// src/governance.ts
+var USER_REVIEWER = /^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i;
+var TEAM_REVIEWER = /^[a-z\d](?:[a-z\d-]{0,98}[a-z\d])?$/i;
+var MANAGED_RISK_LABELS = /* @__PURE__ */ new Set(["risk-low", "risk-medium", "risk-high", "risk-critical"]);
+var LABEL_COLORS = {
+  "ai-agent": "a2eeef",
+  "risk-low": "0e8a16",
+  "risk-medium": "fbca04",
+  "risk-high": "e4e669",
+  "risk-critical": "d73a4a"
+};
+function shouldRequestReviewers(eventName, isDryRun, issueNumber, reviewerCount) {
+  return eventName === "pull_request" && !isDryRun && issueNumber !== void 0 && reviewerCount > 0;
+}
+function parseReviewerTargets(references, repositoryOwner, pullAuthor) {
+  const reviewers = /* @__PURE__ */ new Set();
+  const teamReviewers = /* @__PURE__ */ new Set();
+  for (const reference of references) {
+    const normalized = reference.startsWith("@") ? reference.slice(1) : reference;
+    const parts = normalized.split("/");
+    if (parts.length === 2) {
+      addTeamReviewer(parts, repositoryOwner, reference, teamReviewers);
+    } else if (parts.length === 1 && USER_REVIEWER.test(normalized)) {
+      if (normalized.toLowerCase() !== pullAuthor.toLowerCase()) {
+        reviewers.add(normalized.toLowerCase());
+      }
+    } else {
+      throw new Error(`Invalid reviewer reference: ${reference}`);
+    }
+  }
+  return {
+    reviewers: [...reviewers].sort(),
+    teamReviewers: [...teamReviewers].sort()
+  };
+}
+function addTeamReviewer(parts, repositoryOwner, reference, target) {
+  const [organization = "", team = ""] = parts;
+  if (organization.toLowerCase() !== repositoryOwner.toLowerCase()) {
+    throw new Error(`Reviewer team must belong to @${repositoryOwner}: ${reference}`);
+  }
+  if (!TEAM_REVIEWER.test(team)) {
+    throw new Error(`Invalid reviewer reference: ${reference}`);
+  }
+  target.add(team.toLowerCase());
+}
+async function requestDecisionReviewers(octokit, owner, repo, pullNumber, requiredReviewers, pullAuthor) {
+  const targets = parseReviewerTargets(requiredReviewers, owner, pullAuthor);
+  if (targets.reviewers.length === 0 && targets.teamReviewers.length === 0) return targets;
+  const response = await octokit.rest.pulls.listRequestedReviewers({
+    owner,
+    repo,
+    pull_number: pullNumber
+  });
+  const requestedUsers = new Set(response.data.users.map((user) => user.login.toLowerCase()));
+  const requestedTeams = new Set(response.data.teams.map((team) => team.slug.toLowerCase()));
+  const missing = {
+    reviewers: targets.reviewers.filter((reviewer) => !requestedUsers.has(reviewer)),
+    teamReviewers: targets.teamReviewers.filter((team) => !requestedTeams.has(team))
+  };
+  if (missing.reviewers.length > 0 || missing.teamReviewers.length > 0) {
+    await octokit.rest.pulls.requestReviewers({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      reviewers: missing.reviewers,
+      team_reviewers: missing.teamReviewers
+    });
+  }
+  return missing;
+}
+async function syncDecisionLabels(octokit, owner, repo, issueNumber, currentLabels, desiredLabels) {
+  const desired = [...new Set(desiredLabels)].sort();
+  const stale = currentLabels.filter((label) => MANAGED_RISK_LABELS.has(label) && !desired.includes(label)).sort();
+  for (const label of stale) {
+    await removeLabelIfPresent(octokit, owner, repo, issueNumber, label);
+  }
+  for (const label of desired) {
+    await ensureLabel(octokit, owner, repo, label);
+  }
+  if (desired.length > 0) {
+    await octokit.rest.issues.addLabels({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      labels: desired
+    });
+  }
+}
+async function ensureLabel(octokit, owner, repo, name) {
+  try {
+    await octokit.rest.issues.getLabel({ owner, repo, name });
+  } catch (error2) {
+    if (!hasStatus(error2, 404)) throw error2;
+    await createLabel(octokit, owner, repo, name);
+  }
+}
+async function createLabel(octokit, owner, repo, name) {
+  try {
+    await octokit.rest.issues.createLabel({
+      owner,
+      repo,
+      name,
+      color: LABEL_COLORS[name] ?? "ededed"
+    });
+  } catch (error2) {
+    if (!hasStatus(error2, 422)) throw error2;
+    await octokit.rest.issues.getLabel({ owner, repo, name });
+  }
+}
+async function removeLabelIfPresent(octokit, owner, repo, issueNumber, name) {
+  try {
+    await octokit.rest.issues.removeLabel({ owner, repo, issue_number: issueNumber, name });
+  } catch (error2) {
+    if (!hasStatus(error2, 404)) throw error2;
+  }
+}
+function hasStatus(error2, status) {
+  return typeof error2 === "object" && error2 !== null && "status" in error2 && error2.status === status;
+}
+
 // src/policy.ts
 var import_node_path = __toESM(require("path"));
 function selectTrustedPolicyRef(eventName, pullRequestBaseSha, defaultBranch) {
@@ -34339,6 +34459,7 @@ async function run() {
     let commentBody;
     let labels = [];
     let issueNumber;
+    let pullAuthor = "";
     let eventType;
     let reviewState;
     const eventName = ctx.eventName;
@@ -34363,6 +34484,7 @@ async function run() {
       patchesComplete = prFiles.patchesComplete;
       pullRequestBaseSha = metadata.baseSha;
       actor = metadata.actor || actor;
+      pullAuthor = metadata.actor;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -34410,6 +34532,7 @@ async function run() {
       diffContent = prFiles.diffContent;
       patchesComplete = prFiles.patchesComplete;
       pullRequestBaseSha = metadata.baseSha;
+      pullAuthor = metadata.actor;
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
@@ -34483,8 +34606,27 @@ async function run() {
       await upsertVerdictComment(octokit, owner, repo, issueNumber, verdictBody);
       info("Verdict comment posted/updated.");
     }
-    if (addLabels && issueNumber !== void 0 && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+    if (addLabels && issueNumber !== void 0 && !isDryRun) {
+      await syncDecisionLabels(octokit, owner, repo, issueNumber, labels, decision.labelsToApply);
+    }
+    let requested = { reviewers: [], teamReviewers: [] };
+    if (issueNumber !== void 0 && shouldRequestReviewers(
+      eventName,
+      isDryRun,
+      issueNumber,
+      decision.requiredReviewers.length
+    )) {
+      requested = await requestDecisionReviewers(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        decision.requiredReviewers,
+        pullAuthor
+      );
+      info(
+        `Requested reviewers: ${[...requested.reviewers, ...requested.teamReviewers].join(", ") || "none"}`
+      );
     }
     setOutput("decision", decision.effect);
     setOutput("risk-score", String(decision.riskScore));
@@ -34521,32 +34663,6 @@ async function run() {
   } catch (error2) {
     setFailed(error2 instanceof Error ? error2.message : String(error2));
   }
-}
-async function applyLabels(octokit, owner, repo, issueNumber, labels) {
-  const labelColors = {
-    "ai-agent": "a2eeef",
-    "risk-low": "0e8a16",
-    "risk-medium": "fbca04",
-    "risk-high": "e4e669",
-    "risk-critical": "d73a4a"
-  };
-  for (const label of labels) {
-    try {
-      await octokit.rest.issues.getLabel({ owner, repo, name: label });
-    } catch {
-      const color = labelColors[label] ?? "ededed";
-      try {
-        await octokit.rest.issues.createLabel({ owner, repo, name: label, color });
-      } catch {
-      }
-    }
-  }
-  await octokit.rest.issues.addLabels({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    labels
-  });
 }
 run();
 // Annotate the CommonJS export names for ESM import in node:
