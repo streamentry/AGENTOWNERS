@@ -32,4 +32,6 @@ moving major-version tag.
 
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes `agentowners-decision.json` for downstream audit
-artifact upload.
+artifact upload. The audit record includes identity trust so reviewers can
+distinguish authenticated actors from spoofable commit, label, title, and body
+evidence.

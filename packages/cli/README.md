@@ -53,6 +53,10 @@ agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 agentowners fingerprint --commit HEAD
 ```
 
+`fingerprint` reports detection confidence and identity trust separately. A
+matching commit author or label is useful evidence, but it is not an
+authenticated actor and cannot grant privileged policy actions.
+
 Git refs are passed directly to Git as arguments, never interpolated into a
 shell command. Invalid refs fail closed instead of producing an empty,
 potentially misleading decision.

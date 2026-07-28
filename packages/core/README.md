@@ -39,6 +39,9 @@ and evaluation without Git, GitHub, network access, or hidden state.
 - `block > require_approval > allow`.
 - Unknown agents require approval by default.
 - Workflow and secret-file changes block by default.
+- Detection confidence is separate from identity trust. Only `verified` actor
+  identity may use an agent-specific allowlist or `known_agent` default;
+  commit metadata, labels, titles, and bodies are `unverified` evidence.
 - Unknown policy fields fail validation.
 - No model, network, shell, database, clock, or persistent state.
 
