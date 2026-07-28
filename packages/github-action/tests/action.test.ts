@@ -613,6 +613,16 @@ describe('getIssueMetadata', () => {
 
 // --- Action logic unit tests (pure logic, no async) ---
 describe('Action logic — pure unit tests', () => {
+  it('accepts only the documented action modes', async () => {
+    const { parseActionMode } = await import('../src/config.js');
+
+    expect(parseActionMode('comment')).toBe('comment');
+    expect(parseActionMode('check')).toBe('check');
+    expect(parseActionMode('both')).toBe('both');
+    expect(parseActionMode('dry-run')).toBe('dry-run');
+    expect(() => parseActionMode('silent')).toThrow('Invalid mode');
+  });
+
   it('fails closed when no GitHub token is configured', async () => {
     const { requireGitHubToken } = await import('../src/config.js');
 

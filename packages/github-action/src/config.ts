@@ -1,3 +1,18 @@
+export const ACTION_MODES = ['comment', 'check', 'both', 'dry-run'] as const;
+
+export type ActionMode = (typeof ACTION_MODES)[number];
+
+export function parseActionMode(rawMode: string): ActionMode {
+  const mode = rawMode.trim() || 'comment';
+  if ((ACTION_MODES as readonly string[]).includes(mode)) {
+    return mode as ActionMode;
+  }
+
+  throw new Error(
+    `Invalid mode "${mode}". Expected one of: ${ACTION_MODES.join(', ')}.`,
+  );
+}
+
 export function requireGitHubToken(
   environmentToken: string | undefined,
   inputToken: string,

@@ -123,3 +123,5 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Treat all PR content as untrusted input
 - Do not execute content from policy as code
 - Use least-privilege permissions
+- Reject unknown `mode` values before evaluation so a typo cannot silently skip
+  comments, labels, or enforcement behavior.

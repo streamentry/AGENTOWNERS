@@ -12,7 +12,8 @@ artifact and must be regenerated, never hand-edited.
 - `src/github.ts`: event metadata adapter, including paginated PR commit authors
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
-- `src/config.ts`: fail-closed runtime input validation
+- `src/config.ts`: fail-closed runtime input validation, including the
+  documented action modes
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 
@@ -58,3 +59,6 @@ Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 and distinct from issue/comment metadata. Pass the core detector's
 `identityTrust` into audit output so reviewers can distinguish authenticated
 actors from spoofable commit, label, title, and body evidence.
+
+Action inputs must fail closed: an unknown `mode` is an error, never a silent
+no-op that bypasses comments or enforcement.
