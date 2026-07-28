@@ -37,7 +37,8 @@ Deterministic classification of changed files into categories used for action in
 ### Secrets diff patterns (strings to detect in diff content)
 `AWS_SECRET_ACCESS_KEY`, `AWS_ACCESS_KEY_ID`, `GITHUB_TOKEN`,
 `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PRIVATE_KEY`, `SECRET_KEY`,
-`PASSWORD=`, `TOKEN=`
+`PASSWORD=`, `TOKEN=`, and `PEM_PRIVATE_KEY` for standard PEM private-key
+headers. The detector returns pattern names only, never key material.
 
 ## Types
 

@@ -192,7 +192,7 @@ These are immutable safety rules. Never change them:
 | Trusted policy | Pull requests use `pull_request.base.sha` from the webhook event, never a later mutable metadata response |
 | Sticky comment ownership | Action updates only complete verdict markers authored by the configured `comment-author` |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
-| Inference parity | `inferActions` derives omitted classifications through the canonical classifier; diff secret matches add `touch_secrets` without exposing values |
+| Inference parity | `inferActions` derives omitted classifications through the canonical classifier; diff secret matches, including PEM private-key headers, add `touch_secrets` without exposing values |
 | Fixture fidelity | Portable `diff_content` cases are pull-request-only and mirror the Action's redacted secret scan before evaluation |
 | Adapter parity | CLI `check` and `self-check` scan zero-context Git diffs with external diff drivers disabled, matching the Action's redacted secret boundary |
 

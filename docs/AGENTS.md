@@ -31,6 +31,8 @@ The portable-fixture specification must keep `diff_content` restricted to
 pull-request events and route it through the same redacted scan as the Action.
 The CLI specification must keep local `check` and `self-check` diff scanning
 equivalent to the Action's secret boundary.
+The file-classifier specification must keep PEM private-key headers in the
+redacted diff-content secret boundary; only the pattern name may be returned.
 
 ## Diagrams
 

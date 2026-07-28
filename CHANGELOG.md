@@ -86,6 +86,8 @@ semantic versioning.
   scanning without exposing matched values in results.
 - CLI `check` and `self-check` now scan bounded Git diff content for secrets,
   keeping local preflight aligned with Action enforcement.
+- Diff-content secret scanning now recognizes standard PEM private-key headers,
+  including OpenSSH keys, without returning key material.
 
 ## [0.1.0] - 2026-07-28 (release candidate; not published)
 
