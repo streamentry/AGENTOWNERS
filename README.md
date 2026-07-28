@@ -257,6 +257,11 @@ agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
 ```
 
+Using Dependabot or Renovate? Copy the
+[`dependency-bots` example](examples/dependency-bots/AGENTOWNERS.yml) to require
+human approval for dependency updates while blocking workflow, authentication,
+permission, and secret-file changes.
+
 ---
 
 ## Policy format

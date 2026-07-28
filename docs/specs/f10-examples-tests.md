@@ -17,6 +17,12 @@ Monorepo policy — separate rules per package directory.
 ### security-sensitive/AGENTOWNERS.yml
 Security-sensitive policy from spec section 18.3.
 
+### dependency-bots/AGENTOWNERS.yml
+
+Copy-paste policy for exact `dependabot[bot]` and `renovate[bot]` actors.
+Dependency updates require approval. Workflow, authentication, permission, and
+secret-file changes are blocked.
+
 ## Integration Test Fixtures (`packages/core/tests/fixtures/`)
 
 ### docs-only-pr/
@@ -58,6 +64,9 @@ Security-sensitive policy from spec section 18.3.
 
 `packages/core/tests/integration.test.ts` runs directory fixtures.
 `packages/core/tests/adversarial-corpus.test.ts` runs the table-driven corpus.
+`packages/core/tests/examples.test.ts` discovers every example directory,
+requires one canonical `AGENTOWNERS.yml`, parses each policy through the public
+API, and verifies the dependency-bot behavior contract.
 
 For each fixture:
 1. Load policy from fixture
