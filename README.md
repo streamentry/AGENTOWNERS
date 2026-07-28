@@ -78,6 +78,30 @@ node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
 artifact smoke tests.
 
+## Prove the policy boundary in 60 seconds
+
+After installing dependencies, run one local, network-free command:
+
+```bash
+pnpm demo
+```
+
+The demo builds the production packages and executes the strict open-source
+policy against three portable fixtures:
+
+```text
+PASS documentation requires approval
+PASS workflow changes are blocked
+PASS dependency changes require approval
+
+3 passed, 0 failed
+```
+
+These are assertions, not canned output. Temporarily changing the policy's
+expected approval or block behavior makes the command fail with the mismatched
+field, expected value, actual value, and a nonzero exit status. The same core
+evaluator and CLI runner power repository-owned policy regression suites.
+
 ## Configure a policy
 
 Add `.github/AGENTOWNERS.yml`:
