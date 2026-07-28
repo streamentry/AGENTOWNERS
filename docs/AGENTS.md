@@ -14,6 +14,7 @@ time-sensitive behavior require current evidence.
 - `philosophy.md`: durable design principles
 - `roadmap.md`: ordered product direction
 - `releasing.md`: npm and GitHub Action release contract
+- `assets/`: maintained documentation and social-preview media
 
 ## Diagrams
 
