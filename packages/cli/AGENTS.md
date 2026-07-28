@@ -37,6 +37,7 @@ sequenceDiagram
   participant Git
   participant Core
   User->>CLI: check --base --head
+  CLI->>CLI: validate output and mode
   CLI->>Git: argv with option boundary
   Git-->>CLI: files and commits
   CLI->>Core: evaluation input
@@ -99,3 +100,5 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.
+Unknown enforcement modes must fail with usage exit code `64` before loading
+policy or reading Git; never let a typo degrade enforcement to advisory mode.

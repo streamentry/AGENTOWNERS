@@ -19,7 +19,7 @@ type CheckOptions = {
   head: string;
   actor?: string;
   output: string;
-  mode: 'advisory' | 'enforcement' | 'dry-run';
+  mode: string;
 };
 
 type GitInputs = {
@@ -27,9 +27,18 @@ type GitInputs = {
   commitMessages: string[];
 };
 
+const CHECK_MODES = ['advisory', 'enforcement', 'dry-run'] as const;
+
 function validateOutput(output: string): boolean {
   if (['text', 'json', 'sarif'].includes(output)) return true;
   process.stderr.write('Output format must be one of: text, json, sarif.\n');
+  process.exit(64);
+  return false;
+}
+
+function validateMode(mode: string): boolean {
+  if (CHECK_MODES.some((validMode) => validMode === mode)) return true;
+  process.stderr.write(`Mode must be one of: ${CHECK_MODES.join(', ')}.\n`);
   process.exit(64);
   return false;
 }
@@ -93,6 +102,7 @@ function writeDecision(decision: Decision, output: string, actor: string): void 
 
 async function executeCheck(options: CheckOptions): Promise<void> {
   if (!validateOutput(options.output)) return;
+  if (!validateMode(options.mode)) return;
   const policy = await loadPolicy(options);
   if (!policy) return;
   const inputs = readGit(options);
