@@ -53,6 +53,8 @@ const fixtureInputSchema = z
     labels: z.array(z.string()).default([]),
     pr_title: z.string().optional(),
     pr_body: z.string().optional(),
+    issue_title: z.string().optional(),
+    issue_body: z.string().optional(),
     review_state: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED']).optional(),
     diff_lines_count: z.number().int().nonnegative().optional(),
     commits_count: z.number().int().nonnegative().optional(),
@@ -101,6 +103,26 @@ const fixtureInputSchema = z
           message: `${field} requires a pull request context`,
         });
       }
+    }
+    const hasIssueMetadata =
+      input.event.startsWith('issues.') || input.event.startsWith('issue_comment.');
+    for (const field of ['issue_title', 'issue_body'] as const) {
+      if (!hasIssueMetadata && input[field] !== undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field} requires an issue context`,
+        });
+      }
+    }
+    const hasPrFields = input.pr_title !== undefined || input.pr_body !== undefined;
+    const hasIssueFields = input.issue_title !== undefined || input.issue_body !== undefined;
+    if (input.event.startsWith('issue_comment.') && hasPrFields && hasIssueFields) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message: 'issue comments cannot contain both pull request and issue metadata',
+      });
     }
   });
 
@@ -196,6 +218,7 @@ function runFixtureCase(
     commitMessages: fixture.input.commit_messages,
     prTitle: fixture.input.pr_title,
     prBody: fixture.input.pr_body,
+    issueBody: fixture.input.issue_body,
     labels: fixture.input.labels,
     policy,
   });
@@ -216,6 +239,8 @@ function runFixtureCase(
     actor: fixture.input.actor,
     prTitle: fixture.input.pr_title,
     prBody: fixture.input.pr_body,
+    issueTitle: fixture.input.issue_title,
+    issueBody: fixture.input.issue_body,
     labels: fixture.input.labels,
   });
   const failures = compareExpectation(fixture.expect, decision);

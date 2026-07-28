@@ -32,6 +32,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // ../../node_modules/.pnpm/tunnel@0.0.6/node_modules/tunnel/lib/tunnel.js
 var require_tunnel = __commonJS({
@@ -21506,6 +21507,13 @@ var require_picomatch2 = __commonJS({
   }
 });
 
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  run: () => run
+});
+module.exports = __toCommonJS(index_exports);
+
 // ../../node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/command.js
 var os = __toESM(require("os"), 1);
 
@@ -33376,8 +33384,20 @@ function matchesConfiguredPattern(value, pattern) {
   }
 }
 function detectAgent(input) {
-  const { actor, commitMessages = [], prTitle, prBody, labels = [], policy } = input;
+  const {
+    actor,
+    commitMessages = [],
+    prTitle,
+    prBody,
+    issueBody,
+    commentBody,
+    labels = [],
+    policy
+  } = input;
   const signals = [];
+  const bodyTexts = [prBody, issueBody, commentBody].filter(
+    (value) => value !== void 0
+  );
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
@@ -33389,7 +33409,7 @@ function detectAgent(input) {
         const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
         const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
         for (const pattern of bodyPatterns) {
-          if (matchesConfiguredPattern(prBody, pattern)) {
+          if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
             signals.push(`policy body pattern match: agents.${name}`);
             return { agentName: name, confidence: "confirmed", signals };
           }
@@ -33407,21 +33427,19 @@ function detectAgent(input) {
     signals.push(`known bot actor: ${actor}`);
     return { confidence: "confirmed", signals };
   }
-  const allText = [...commitMessages, prBody ?? ""].join("\n");
+  const allText = [...commitMessages, ...bodyTexts].join("\n");
   for (const sig of AGENT_COMMIT_SIGNATURES) {
     if (allText.includes(sig)) {
       signals.push(`commit/body signature: "${sig}"`);
     }
   }
-  if (prBody) {
-    for (const marker of PR_BODY_MARKERS) {
-      if (prBody.includes(marker)) {
-        signals.push(`PR body marker: "${marker}"`);
-      }
+  for (const marker of PR_BODY_MARKERS) {
+    if (bodyTexts.some((body) => body.includes(marker))) {
+      signals.push(`body marker: "${marker}"`);
     }
-    if (BOT_CO_AUTHOR_PATTERN.test(prBody)) {
-      signals.push("PR body co-author [bot] pattern");
-    }
+  }
+  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+    signals.push("body co-author [bot] pattern");
   }
   if (signals.length > 0) {
     return { confidence: "likely", signals };
@@ -33773,6 +33791,16 @@ function renderAuditJson(context3) {
     requiredReviewers: decision.requiredReviewers
   };
 }
+function matchesTextPattern(value, patterns) {
+  if (!value) return false;
+  return patterns.some((pattern) => {
+    try {
+      return new RegExp(pattern, "i").test(value);
+    } catch {
+      return value.includes(pattern);
+    }
+  });
+}
 function evaluateRule(rule, input) {
   const { when } = rule;
   const {
@@ -33785,6 +33813,8 @@ function evaluateRule(rule, input) {
     actor,
     prTitle,
     prBody,
+    issueTitle,
+    issueBody,
     labels
   } = input;
   const matchedConditions = [];
@@ -33825,28 +33855,20 @@ function evaluateRule(rule, input) {
     matchedConditions.push("labels");
   }
   if (when.pr_title !== void 0) {
-    if (!prTitle) return null;
-    const matches = when.pr_title.some((pattern) => {
-      try {
-        return new RegExp(pattern, "i").test(prTitle);
-      } catch {
-        return prTitle.includes(pattern);
-      }
-    });
-    if (!matches) return null;
+    if (!matchesTextPattern(prTitle, when.pr_title)) return null;
     matchedConditions.push("pr_title");
   }
   if (when.pr_body !== void 0) {
-    if (!prBody) return null;
-    const matches = when.pr_body.some((pattern) => {
-      try {
-        return new RegExp(pattern, "i").test(prBody);
-      } catch {
-        return prBody.includes(pattern);
-      }
-    });
-    if (!matches) return null;
+    if (!matchesTextPattern(prBody, when.pr_body)) return null;
     matchedConditions.push("pr_body");
+  }
+  if (when.issue_title !== void 0) {
+    if (!matchesTextPattern(issueTitle, when.issue_title)) return null;
+    matchedConditions.push("issue_title");
+  }
+  if (when.issue_body !== void 0) {
+    if (!matchesTextPattern(issueBody, when.issue_body)) return null;
+    matchedConditions.push("issue_body");
   }
   if (when.diff_lines_over !== void 0) {
     if (diffLinesCount === void 0 || diffLinesCount <= when.diff_lines_over) return null;
@@ -34038,6 +34060,8 @@ var fixtureInputSchema = external_exports.object({
   labels: external_exports.array(external_exports.string()).default([]),
   pr_title: external_exports.string().optional(),
   pr_body: external_exports.string().optional(),
+  issue_title: external_exports.string().optional(),
+  issue_body: external_exports.string().optional(),
   review_state: external_exports.enum(["APPROVED", "CHANGES_REQUESTED", "COMMENTED"]).optional(),
   diff_lines_count: external_exports.number().int().nonnegative().optional(),
   commits_count: external_exports.number().int().nonnegative().optional()
@@ -34082,6 +34106,25 @@ var fixtureInputSchema = external_exports.object({
         message: `${field} requires a pull request context`
       });
     }
+  }
+  const hasIssueMetadata = input.event.startsWith("issues.") || input.event.startsWith("issue_comment.");
+  for (const field of ["issue_title", "issue_body"]) {
+    if (!hasIssueMetadata && input[field] !== void 0) {
+      context3.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} requires an issue context`
+      });
+    }
+  }
+  const hasPrFields = input.pr_title !== void 0 || input.pr_body !== void 0;
+  const hasIssueFields = input.issue_title !== void 0 || input.issue_body !== void 0;
+  if (input.event.startsWith("issue_comment.") && hasPrFields && hasIssueFields) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: [],
+      message: "issue comments cannot contain both pull request and issue metadata"
+    });
   }
 });
 var fixtureExpectationSchema = external_exports.object({
@@ -34291,6 +34334,9 @@ async function run() {
     let actor = ctx.actor;
     let prTitle;
     let prBody;
+    let issueTitle;
+    let issueBody;
+    let commentBody;
     let labels = [];
     let issueNumber;
     let eventType;
@@ -34329,8 +34375,8 @@ async function run() {
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
-      prTitle = metadata.title;
-      prBody = metadata.body;
+      issueTitle = metadata.title;
+      issueBody = metadata.body;
     } else if (eventName === "issue_comment") {
       const issue2 = payload.issue;
       if (!issue2) throw new Error("Missing issue payload for issue_comment");
@@ -34339,7 +34385,17 @@ async function run() {
       eventType = `issue_comment.${commentAction}`;
       const comment = payload.comment;
       actor = comment?.user?.login || actor;
+      commentBody = comment?.body ?? void 0;
       labels = (issue2.labels ?? []).map((l) => l.name);
+      const targetTitle = issue2.title ?? void 0;
+      const targetBody = issue2.body ?? void 0;
+      if (issue2.pull_request) {
+        prTitle = targetTitle;
+        prBody = targetBody;
+      } else {
+        issueTitle = targetTitle;
+        issueBody = targetBody;
+      }
     } else if (eventName === "pull_request_review") {
       const pr = payload.pull_request;
       if (!pr) throw new Error("Missing pull_request payload for review");
@@ -34395,6 +34451,8 @@ async function run() {
       actor,
       prTitle,
       prBody,
+      issueBody,
+      commentBody,
       labels,
       policy
     });
@@ -34411,6 +34469,8 @@ async function run() {
       actor,
       prTitle,
       prBody,
+      issueTitle,
+      issueBody,
       labels
     });
     const verdictBody = renderVerdict(decision, { actor });
@@ -34489,6 +34549,10 @@ async function applyLabels(octokit, owner, repo, issueNumber, labels) {
   });
 }
 run();
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  run
+});
 /*! Bundled license information:
 
 undici/lib/web/fetch/body.js:

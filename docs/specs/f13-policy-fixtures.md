@@ -61,6 +61,8 @@ Optional:
 - `labels`, default `[]`
 - `pr_title`
 - `pr_body`
+- `issue_title`
+- `issue_body`
 - `review_state`
 - `diff_lines_count`
 - `commits_count`
@@ -70,7 +72,10 @@ Optional:
 Non-empty `commit_messages`, `diff_lines_count`, and `commits_count` are valid
 only for pull-request and pull-request-review events. `pr_title` and `pr_body`
 are valid for pull-request, pull-request-review, and issue-comment events
-because an issue comment can target a pull request.
+because an issue comment can target a pull request. `issue_title` and
+`issue_body` are valid for issue and issue-comment events. An issue-comment
+fixture cannot provide both pull-request and issue metadata because one comment
+has only one target.
 Paths must be repository-relative Git paths with `/` separators. Absolute
 paths, drive prefixes, backslashes, empty segments, `.` segments, `..`
 segments, and NUL bytes are invalid.

@@ -5,6 +5,8 @@ export type AgentDetectionInput = {
   commitMessages?: string[];
   prTitle?: string;
   prBody?: string;
+  issueBody?: string;
+  commentBody?: string;
   labels?: string[];
   policy?: AgentOwnersPolicy;
 };
@@ -63,8 +65,20 @@ function matchesConfiguredPattern(value: string | undefined, pattern: string): b
 }
 
 export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
-  const { actor, commitMessages = [], prTitle, prBody, labels = [], policy } = input;
+  const {
+    actor,
+    commitMessages = [],
+    prTitle,
+    prBody,
+    issueBody,
+    commentBody,
+    labels = [],
+    policy,
+  } = input;
   const signals: string[] = [];
+  const bodyTexts = [prBody, issueBody, commentBody].filter(
+    (value): value is string => value !== undefined,
+  );
 
   // 1. Policy match (confirmed)
   if (policy) {
@@ -80,7 +94,7 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
         const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
         const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
         for (const pattern of bodyPatterns) {
-          if (matchesConfiguredPattern(prBody, pattern)) {
+          if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
             signals.push(`policy body pattern match: agents.${name}`);
             return { agentName: name, confidence: 'confirmed', signals };
           }
@@ -102,23 +116,21 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   }
 
   // 3. Commit message signatures (likely)
-  const allText = [...commitMessages, prBody ?? ''].join('\n');
+  const allText = [...commitMessages, ...bodyTexts].join('\n');
   for (const sig of AGENT_COMMIT_SIGNATURES) {
     if (allText.includes(sig)) {
       signals.push(`commit/body signature: "${sig}"`);
     }
   }
 
-  // 4. PR body markers (likely)
-  if (prBody) {
-    for (const marker of PR_BODY_MARKERS) {
-      if (prBody.includes(marker)) {
-        signals.push(`PR body marker: "${marker}"`);
-      }
+  // 4. PR or comment body markers (likely)
+  for (const marker of PR_BODY_MARKERS) {
+    if (bodyTexts.some((body) => body.includes(marker))) {
+      signals.push(`body marker: "${marker}"`);
     }
-    if (BOT_CO_AUTHOR_PATTERN.test(prBody)) {
-      signals.push('PR body co-author [bot] pattern');
-    }
+  }
+  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+    signals.push('body co-author [bot] pattern');
   }
 
   if (signals.length > 0) {

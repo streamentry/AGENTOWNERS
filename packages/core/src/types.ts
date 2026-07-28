@@ -140,6 +140,8 @@ export type PolicyFixtureInput = {
   labels: string[];
   pr_title?: string;
   pr_body?: string;
+  issue_title?: string;
+  issue_body?: string;
   review_state?: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED';
   diff_lines_count?: number;
   commits_count?: number;

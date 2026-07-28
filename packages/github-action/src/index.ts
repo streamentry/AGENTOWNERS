@@ -19,7 +19,7 @@ import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
@@ -53,6 +53,9 @@ async function run(): Promise<void> {
     let actor = ctx.actor;
     let prTitle: string | undefined;
     let prBody: string | undefined;
+    let issueTitle: string | undefined;
+    let issueBody: string | undefined;
+    let commentBody: string | undefined;
     let labels: string[] = [];
     let issueNumber: number | undefined;
     let eventType: GitHubEventType | undefined;
@@ -97,8 +100,8 @@ async function run(): Promise<void> {
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
-      prTitle = metadata.title;
-      prBody = metadata.body;
+      issueTitle = metadata.title;
+      issueBody = metadata.body;
     } else if (eventName === 'issue_comment') {
       const issue = payload.issue;
       if (!issue) throw new Error('Missing issue payload for issue_comment');
@@ -109,7 +112,18 @@ async function run(): Promise<void> {
 
       const comment = payload.comment;
       actor = (comment?.user?.login as string) || actor;
+      commentBody = (comment?.body as string | undefined) ?? undefined;
       labels = ((issue.labels ?? []) as Array<{ name: string }>).map((l) => l.name);
+
+      const targetTitle = (issue.title as string | undefined) ?? undefined;
+      const targetBody = (issue.body as string | undefined) ?? undefined;
+      if (issue.pull_request) {
+        prTitle = targetTitle;
+        prBody = targetBody;
+      } else {
+        issueTitle = targetTitle;
+        issueBody = targetBody;
+      }
     } else if (eventName === 'pull_request_review') {
       const pr = payload.pull_request;
       if (!pr) throw new Error('Missing pull_request payload for review');
@@ -179,6 +193,8 @@ async function run(): Promise<void> {
       actor,
       prTitle,
       prBody,
+      issueBody,
+      commentBody,
       labels,
       policy,
     });
@@ -199,6 +215,8 @@ async function run(): Promise<void> {
       actor,
       prTitle,
       prBody,
+      issueTitle,
+      issueBody,
       labels,
     });
 
