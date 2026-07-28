@@ -77,7 +77,8 @@ Behavior:
 7. Render verdict
 
 SARIF output follows `f12-sarif-output.md`. Unsupported output formats and
-modes exit `64` before reading Git.
+modes exit `64` before reading Git. Human-readable verdict output strips
+terminal control sequences; JSON and SARIF remain structured machine output.
 
 Exit codes:
 

@@ -18,6 +18,7 @@ import {
   getCommitNames,
   getCurrentActor,
 } from '../git.js';
+import { sanitizeTerminalText } from '../terminal.js';
 
 type CheckOptions = {
   policy: string;
@@ -108,7 +109,7 @@ function writeDecision(decision: Decision, output: string, actor: string): void 
   } else if (output === 'sarif') {
     process.stdout.write(`${JSON.stringify(renderSarif(decision), null, 2)}\n`);
   } else {
-    process.stdout.write(`${renderVerdict(decision, { actor })}\n`);
+    process.stdout.write(`${sanitizeTerminalText(renderVerdict(decision, { actor }))}\n`);
   }
 }
 

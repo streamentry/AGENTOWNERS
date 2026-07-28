@@ -115,9 +115,10 @@ single commit subprocess environment. Never use `git config` in tests.
 The fingerprint command must expose `identityTrust` separately from detection
 confidence so spoofable commit metadata and labels are not presented as
 authenticated agent identity.
-The `explain` command must validate the complete saved decision shape before
-reading fields and strip terminal control sequences from untrusted decision
-text; malformed input must fail nonzero instead of crashing or spoofing the
-terminal.
+The human-readable `check` and `explain` commands must strip terminal control
+sequences from untrusted text; `explain` must also validate the complete saved
+decision shape before reading fields. Malformed input must fail nonzero instead
+of crashing or spoofing the terminal. JSON and SARIF output must remain
+structured and unsanitized.
 Unknown output formats must fail before reading Git. Commit author metadata is
 read with the same `--end-of-options` boundary as commit messages.

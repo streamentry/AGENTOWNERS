@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
-import { evaluatePolicy, loadPolicyFile, renderSarif, type Decision } from '@agent-owners/core';
+import {
+  evaluatePolicy,
+  loadPolicyFile,
+  renderSarif,
+  renderVerdict,
+  type Decision,
+} from '@agent-owners/core';
 import { getChangedFiles, getCommitMessages } from '../src/git.js';
 import { registerCheck } from '../src/commands/check.js';
 
@@ -11,6 +17,7 @@ vi.mock('@agent-owners/core', async () => {
     evaluatePolicy: vi.fn(),
     loadPolicyFile: vi.fn(),
     renderSarif: vi.fn(),
+    renderVerdict: vi.fn(),
   };
 });
 
@@ -82,6 +89,15 @@ describe('check command SARIF output', () => {
     expect(renderSarif).toHaveBeenCalledWith(approval);
     expect(JSON.parse(stdout)).toEqual(sarif);
     expect(stderr).toBe('');
+  });
+
+  it('sanitizes human-readable verdict output', async () => {
+    vi.mocked(renderVerdict).mockReturnValue('\u001b[31munsafe\u001b[0m\nForged line');
+
+    await program().parseAsync(['node', 'agentowners', 'check', '--actor', 'agent']);
+
+    expect(stdout).toBe('unsafe\nForged line\n');
+    expect(stdout).not.toContain('\u001b[31m');
   });
 
   it('fails loudly for an unsupported output format before reading Git', async () => {
