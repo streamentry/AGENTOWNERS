@@ -40,6 +40,8 @@ semantic versioning.
 - Spoofable agent markers no longer receive known-agent defaults.
 - CLI Git refs can no longer inject options into diff or log commands.
 - Available pull request patch content now participates in secret detection.
+- Git security fixtures no longer write identity into contributor Git
+  configuration.
 
 ## [0.1.0] - 2026-07-28
 

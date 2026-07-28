@@ -22,6 +22,7 @@ from interpreting a ref that begins with `-` as an option.
 ```mermaid
 flowchart LR
   Args --> Command --> Git
+  TestFixture --> PerProcessIdentity
   Git --> Core
   Policy --> Core
   Core --> Output
@@ -71,3 +72,5 @@ stateDiagram-v2
 
 Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
+Temporary Git fixtures must pass author and committer identity through the
+single commit subprocess environment. Never use `git config` in tests.
