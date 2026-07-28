@@ -7,6 +7,7 @@ import { registerValidate } from './commands/validate.js'
 import { registerCheck } from './commands/check.js'
 import { registerExplain } from './commands/explain.js'
 import { registerFingerprint } from './commands/fingerprint.js'
+import { registerSelfCheck } from './commands/self-check.js'
 
 const program = new Command()
 
@@ -20,5 +21,6 @@ registerValidate(program)
 registerCheck(program)
 registerExplain(program)
 registerFingerprint(program)
+registerSelfCheck(program)
 
 program.parse(process.argv)

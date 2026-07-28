@@ -8,12 +8,12 @@ The roadmap is ordered by user risk removed, not feature count.
 - Bundled, directly consumable Node 24 GitHub Action
 - Release smoke tests for ESM, CommonJS, CLI, and Action entry points
 - Machine-readable JSON Schema with editor completion and CI drift detection
+- Versioned agent self-check contract for pre-PR policy decisions
 - Dogfooded policy, contribution templates, and private vulnerability reporting
 - Stable policy examples and migration notes
 
 ## Next: explainability and interoperability
 
-- `agentowners self-check` for agents before they open a pull request
 - SARIF output for code-scanning integration
 - Explicit reviewer requests and label lifecycle controls
 - Policy fixtures that can be shared across repositories

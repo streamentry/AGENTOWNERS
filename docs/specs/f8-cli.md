@@ -1,7 +1,8 @@
 # F8: CLI Commands
 
 ## Objective
-Implement the `agentowners` CLI with four commands: init, validate, check, explain, fingerprint.
+Implement the `agentowners` CLI commands: init, validate, check, explain,
+fingerprint, and self-check.
 
 ## Package
 `packages/cli/src/`
@@ -85,6 +86,12 @@ Options:
 
 Output:
 ```
+
+### `agentowners self-check`
+
+Provides the versioned, machine-readable pre-PR contract defined in
+`docs/specs/f11-agent-self-check.md`. Policy, base, head, and actor are explicit
+inputs. The command never calls a model, network, or GitHub API.
 Agent detection result:
   Confidence: likely
   Signals:
@@ -106,6 +113,7 @@ Agent detection result:
 - `packages/cli/src/commands/check.ts`
 - `packages/cli/src/commands/explain.ts`
 - `packages/cli/src/commands/fingerprint.ts`
+- `packages/cli/src/commands/self-check.ts`
 - `packages/cli/src/git.ts` — git helper functions
 - `packages/cli/tests/` — unit tests for each command
 
@@ -116,3 +124,4 @@ Agent detection result:
 - `validate` exits 1 with error messages on invalid policy
 - `check` returns correct exit code by mode
 - `fingerprint` detects Co-Authored-By signals
+- `self-check` covers every public exit code and hostile Git refs

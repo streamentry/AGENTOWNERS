@@ -2,7 +2,21 @@
 
 ## For AI agents
 
-Read [AGENTS.md](AGENTS.md) first. It has everything you need: repo map, invariants, commands, and common mistakes.
+Read [AGENTS.md](AGENTS.md) first. It has everything you need: repo map,
+invariants, commands, and common mistakes. Before opening a pull request, run:
+
+```bash
+node packages/cli/dist/index.js self-check \
+  --policy .github/AGENTOWNERS.yml \
+  --base origin/main \
+  --head HEAD \
+  --actor <your-agent-name>
+```
+
+Exit `0` may proceed, exit `10` requires human approval, and exit `20` requires
+revising the change. Input and environment failures use exits `64` through
+`70`; the complete contract is in
+[F11](docs/specs/f11-agent-self-check.md).
 
 ## For humans
 
