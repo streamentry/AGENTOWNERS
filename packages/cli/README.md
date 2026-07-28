@@ -2,7 +2,18 @@
 
 Local, deterministic governance checks for AI-agent contributions.
 
+> **Pre-release:** this package is not published yet. The install command and
+> CLI below describe the intended `0.1.0` contract. Evaluate the current source
+> from the [AGENTOWNERS repository](https://github.com/streamentry/AGENTOWNERS);
+> do not depend on an unpublished registry artifact.
+
+Use the CLI for local Git ranges, policy validation, portable fixtures, SARIF,
+and machine-readable agent preflight. Use `@agent-owners/core` when embedding
+the engine, or the repository Action for GitHub event enforcement.
+
 ## Install
+
+Available after the first public release:
 
 ```bash
 npm install --global @agent-owners/cli

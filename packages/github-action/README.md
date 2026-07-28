@@ -3,8 +3,14 @@
 The bundled JavaScript Action used by
 [AGENTOWNERS](https://github.com/streamentry/AGENTOWNERS).
 
+> **Pre-release:** this npm package and the stable `v0` Action tag are not
+> published yet. The workflow below documents the intended release contract.
+> Evaluate from the
+> [AGENTOWNERS repository](https://github.com/streamentry/AGENTOWNERS) and do
+> not pin a production workflow to `main`.
+
 Most repositories should consume the GitHub Action directly, not install this
-npm package:
+npm package. After the first public release:
 
 ```yaml
 permissions:

@@ -2,12 +2,23 @@
 
 Deterministic policy evaluation for AI-agent contributions.
 
+> **Pre-release:** this package is not published yet. The install command and
+> API below describe the intended `0.1.0` contract. Evaluate the current source
+> from the [AGENTOWNERS repository](https://github.com/streamentry/AGENTOWNERS);
+> do not depend on an unpublished registry artifact.
+
 This is the pure engine behind
 [AGENTOWNERS](https://github.com/streamentry/AGENTOWNERS). It validates
 `AGENTOWNERS.yml`, detects agent signals, classifies changed files, infers
 actions, resolves policy rules, scores risk, and renders auditable decisions.
 
+Use this package when embedding the deterministic engine in another tool. Use
+[`@agent-owners/cli`](https://github.com/streamentry/AGENTOWNERS/tree/main/packages/cli)
+for local Git checks, or the repository Action for GitHub enforcement.
+
 ## Install
+
+Available after the first public release:
 
 ```bash
 npm install @agent-owners/core
