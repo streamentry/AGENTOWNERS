@@ -104,9 +104,13 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/
   ideas.yml           — evidence-first feature proposal intake
+
+CONTRIBUTING.md       — contribution lanes, review contract, and required evidence matrix
+SKILL.md              — compact execution workflow for compatible coding agents
 
 scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema
