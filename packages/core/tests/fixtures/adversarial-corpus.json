@@ -341,6 +341,50 @@
     }
   },
   {
+    "id": "negative-diff-threshold",
+    "invariant": "A negative diff threshold is rejected instead of matching every normal event.",
+    "outcome": "validation_error",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Invalid negative diff threshold",
+          "when": {
+            "diff_lines_over": -1
+          },
+          "effect": "require_approval",
+          "reason": "Thresholds must be nonnegative."
+        }
+      ]
+    },
+    "expected": {
+      "issuePath": ["rules", 0, "when", "diff_lines_over"],
+      "messageIncludes": "greater than or equal to 0"
+    }
+  },
+  {
+    "id": "negative-commit-threshold",
+    "invariant": "A negative commit threshold is rejected instead of matching every normal event.",
+    "outcome": "validation_error",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Invalid negative commit threshold",
+          "when": {
+            "commits_over": -1
+          },
+          "effect": "require_approval",
+          "reason": "Thresholds must be nonnegative."
+        }
+      ]
+    },
+    "expected": {
+      "issuePath": ["rules", 0, "when", "commits_over"],
+      "messageIncludes": "greater than or equal to 0"
+    }
+  },
+  {
     "id": "compounded-risk-cap",
     "invariant": "Compounded dependency, workflow, auth, infrastructure, secret, size, and unknown-agent risk remains capped at 100.",
     "outcome": "decision",
