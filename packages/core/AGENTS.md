@@ -14,6 +14,7 @@ network calls, clocks, randomness, or persistent state.
 - `detection.ts`: actor, commit-author, label, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
+- `evaluatePolicy.ts`: simplified event wrapper that must preserve action inference
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
@@ -99,6 +100,9 @@ Action-scoped allow rules may match any listed action, but must enumerate every
 detected action before contributing `allow`; block and approval rules retain
 any-action matching. Keep this boundary covered by the evaluator test and
 adversarial corpus.
+The simplified `evaluatePolicy.ts` wrapper must infer actions from its event
+and changed files before delegating to the canonical evaluator; an empty action
+list silently bypasses action-scoped rules.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails

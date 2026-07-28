@@ -104,6 +104,11 @@ export type MatchedRule = {
 
 Main evaluation function. Returns full Decision object.
 
+The repository also keeps a simplified compatibility wrapper in
+`packages/core/src/evaluatePolicy.ts` for callers with `{ policy, changedFiles,
+event }`. It must classify files, infer event/file actions, and then delegate
+to the canonical evaluator; it must never pass an empty action list.
+
 ### `evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | null`
 
 Evaluate a single rule. Return MatchedRule if it matches, null otherwise.

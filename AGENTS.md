@@ -46,6 +46,7 @@ packages/core/src/
   detection.ts   — AI agent detection from actor/commit/body signals
   actions.ts     — action inference from GitHub event types
   evaluator.ts   — event-specific rule evaluation, decision logic, default policy
+  evaluatePolicy.ts — simplified event wrapper that preserves inferred actions
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
@@ -63,6 +64,7 @@ packages/core/tests/
   detection.test.ts  — agent detection signals
   actions.test.ts    — action inference
   evaluator.test.ts  — rule evaluation
+  evaluatePolicy-wrapper.test.ts — simplified wrapper action preservation
   scoring.test.ts    — risk scoring
   renderer.test.ts   — verdict rendering
   sarif.test.ts      — SARIF stability, severity, and safe locations

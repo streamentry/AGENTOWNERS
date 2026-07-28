@@ -51,6 +51,8 @@ semantic versioning.
 
 - CLI human-readable output now strips terminal control sequences; the decision
   explainer also validates saved JSON before reading it.
+- The simplified core evaluation wrapper now preserves inferred event and file
+  actions instead of silently evaluating an empty action set.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
