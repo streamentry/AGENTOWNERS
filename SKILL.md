@@ -11,7 +11,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 4. Implement the smallest complete change.
 5. Regenerate distributions with `pnpm build`; never hand-edit them.
 6. Run `pnpm verify`.
-7. In the pull request, disclose agent use, exact evidence, risks, and rollback.
+7. For release-facing changes, run `pnpm verify:packages`.
+8. In the pull request, disclose agent use, exact evidence, risks, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted

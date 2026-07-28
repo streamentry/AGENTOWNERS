@@ -1,4 +1,4 @@
-import { minimatch } from 'minimatch';
+import picomatch from 'picomatch';
 
 export type FileClassification = {
   isDocs: boolean;
@@ -61,7 +61,7 @@ const SECRET_DIFF_PATTERNS = [
 ];
 
 export function matchGlob(pattern: string, filePath: string): boolean {
-  return minimatch(filePath, pattern, { dot: true });
+  return picomatch.isMatch(filePath, pattern, { dot: true });
 }
 
 export function matchGlobs(patterns: string[], filePath: string): boolean {

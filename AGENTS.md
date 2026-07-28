@@ -84,7 +84,10 @@ docs/specs/
   f1-policy-schema.md through f10-examples-tests.md — per-feature specs
 
 scripts/
-  verify-release.mjs  — smoke-tests package exports and the bundled Action entry
+  verify-release.mjs         — version, export, CLI, and Action bundle checks
+  verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
+
+CHANGELOG.md          — release history and security-relevant changes
 ```
 
 ## Architecture diagrams

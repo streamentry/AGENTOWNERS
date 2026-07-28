@@ -25,6 +25,9 @@ jobs:
       - name: Verify repository
         run: pnpm verify
 
+      - name: Verify packed packages
+        run: pnpm verify:packages
+
       - name: Coverage (core only)
         run: pnpm --filter @agent-owners/core test -- --coverage
 

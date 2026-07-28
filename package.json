@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
     "verify:release": "node scripts/verify-release.mjs",
+    "verify:packages": "node scripts/verify-packed-packages.mjs",
     "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm verify:release"
   },
   "devDependencies": {

@@ -1,6 +1,5 @@
 // Policy rule evaluation — spec sections 14 and F6
 
-import { minimatch } from 'minimatch';
 import type {
   AgentDetectionResult,
   AgentOwnersPolicy,
@@ -8,7 +7,7 @@ import type {
   MatchedRule,
   Rule,
 } from './types.js';
-import type { FilesClassification } from './classifier.js';
+import { matchGlob, type FilesClassification } from './classifier.js';
 import { computeRiskScore } from './scoring.js';
 
 export type EvaluationInput = {
@@ -70,7 +69,7 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   // files condition — any changed file matches any glob pattern
   if (when.files !== undefined) {
     const matched = changedFiles.filter((f) =>
-      when.files!.some((pattern) => minimatch(f, pattern, { dot: true })),
+      when.files!.some((pattern) => matchGlob(pattern, f)),
     );
     if (matched.length === 0) return null;
     fileMatches.push(...matched);
@@ -80,7 +79,7 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   // files_not condition — no changed file matches any glob pattern
   if (when.files_not !== undefined) {
     const forbidden = changedFiles.some((f) =>
-      when.files_not!.some((pattern) => minimatch(f, pattern, { dot: true })),
+      when.files_not!.some((pattern) => matchGlob(pattern, f)),
     );
     if (forbidden) return null;
     matchedConditions.push('files_not');

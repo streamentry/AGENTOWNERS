@@ -31,6 +31,9 @@ jobs:
       - name: Verify repository and release artifacts
         run: pnpm verify
 
+      - name: Verify packed packages
+        run: pnpm verify:packages
+
       - name: Publish @agent-owners/core
         run: pnpm --filter @agent-owners/core publish --provenance --access public --no-git-checks
 

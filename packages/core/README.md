@@ -1,0 +1,67 @@
+# @agent-owners/core
+
+Deterministic policy evaluation for AI-agent contributions.
+
+This is the pure engine behind
+[AGENTOWNERS](https://github.com/streamentry/AGENTOWNERS). It validates
+`AGENTOWNERS.yml`, detects agent signals, classifies changed files, infers
+actions, resolves policy rules, scores risk, and renders auditable decisions.
+
+## Install
+
+```bash
+npm install @agent-owners/core
+```
+
+## Contract
+
+- Same input produces the same decision.
+- `block > require_approval > allow`.
+- Unknown agents require approval by default.
+- Workflow and secret-file changes block by default.
+- Unknown policy fields fail validation.
+- No model, network, shell, database, clock, or persistent state.
+
+```ts
+import {
+  classifyFiles,
+  detectAgent,
+  evaluatePolicy,
+  inferActions,
+  parsePolicy,
+} from '@agent-owners/core'
+
+const policy = parsePolicy({
+  version: 1,
+  defaults: {
+    unknown_agent: 'require_approval',
+    workflows: 'block',
+    secrets: 'block',
+  },
+})
+
+const changedFiles = ['docs/guide.md']
+const filesClassification = classifyFiles(changedFiles)
+const agentDetection = detectAgent({
+  actor: 'github-copilot[bot]',
+  policy,
+})
+const detectedActions = inferActions({
+  eventType: 'pull_request.opened',
+  changedFiles,
+  filesClassification,
+})
+
+const decision = evaluatePolicy({
+  policy,
+  agentDetection,
+  detectedActions,
+  changedFiles,
+  filesClassification,
+  actor: 'github-copilot[bot]',
+})
+```
+
+Read the [policy specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/readme.md)
+and [security policy](https://github.com/streamentry/AGENTOWNERS/security/policy)
+before enforcing decisions in a sensitive repository.
