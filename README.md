@@ -78,6 +78,8 @@ artifact smoke tests.
 Add `.github/AGENTOWNERS.yml`:
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/streamentry/AGENTOWNERS/main/packages/core/agentowners.schema.json
+
 version: 1
 
 defaults:
@@ -108,6 +110,12 @@ rules:
     reason: "Dependency changes require maintainer review."
 ```
 
+The first-line schema directive gives compatible YAML editors completion and
+validation against the same Zod contract used at runtime. The generated
+[JSON Schema](packages/core/agentowners.schema.json) rejects unknown fields,
+empty `match` and `when` objects, and actions assigned to conflicting policy
+lists.
+
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the
 convenience form:
@@ -134,7 +142,7 @@ jobs:
   agentowners:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: ".github/AGENTOWNERS.yml"

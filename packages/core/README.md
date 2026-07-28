@@ -13,6 +13,11 @@ actions, resolves policy rules, scores risk, and renders auditable decisions.
 npm install @agent-owners/core
 ```
 
+The package exports its generated authoring schema as
+`@agent-owners/core/schema.json`. The checked-in
+[schema artifact](./agentowners.schema.json) is generated from the runtime Zod
+validator and verified for drift in CI.
+
 ## Contract
 
 - Same input produces the same decision.

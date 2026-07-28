@@ -7,6 +7,7 @@ The roadmap is ordered by user risk removed, not feature count.
 - Reproducible npm packages with provenance
 - Bundled, directly consumable Node 24 GitHub Action
 - Release smoke tests for ESM, CommonJS, CLI, and Action entry points
+- Machine-readable JSON Schema with editor completion and CI drift detection
 - Dogfooded policy, contribution templates, and private vulnerability reporting
 - Stable policy examples and migration notes
 
@@ -16,7 +17,6 @@ The roadmap is ordered by user risk removed, not feature count.
 - SARIF output for code-scanning integration
 - Explicit reviewer requests and label lifecycle controls
 - Policy fixtures that can be shared across repositories
-- Machine-readable JSON Schema for editor completion
 
 ## Later: governed expansion
 

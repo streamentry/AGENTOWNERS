@@ -8,6 +8,8 @@ semantic versioning.
 ### Added
 
 - Release and isolated-consumer verification.
+- Deterministic JSON Schema generation, editor integration, package export, and
+  CI drift detection.
 
 ### Changed
 

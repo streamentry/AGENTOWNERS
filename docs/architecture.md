@@ -15,6 +15,9 @@ flowchart LR
   D --> F
   E --> F
   P[AGENTOWNERS.yml] --> F
+  Z[Zod policy schema] --> P
+  Z --> S[Generated JSON Schema]
+  S --> P
   F --> G[Deterministic decision]
   G --> H[Markdown verdict]
   G --> I[Audit JSON]
@@ -29,6 +32,7 @@ flowchart TB
   ACTION["@agent-owners/github-action<br/>GitHub API adapter"]
   CORE["@agent-owners/core<br/>Pure policy engine"]
   POLICY["AGENTOWNERS.yml"]
+  SCHEMA["Generated JSON Schema<br/>Editor and agent authoring"]
   GIT["Local Git"]
   GH["GitHub API"]
 
@@ -36,6 +40,7 @@ flowchart TB
   GH --> ACTION
   POLICY --> CLI
   POLICY --> ACTION
+  SCHEMA -. validates authoring .-> POLICY
   CLI --> CORE
   ACTION --> CORE
   CORE -. no network, shell, or state .-> CORE

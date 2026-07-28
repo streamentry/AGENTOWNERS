@@ -9,6 +9,7 @@ network calls, clocks, randomness, or persistent state.
 
 - `types.ts`: public contract
 - `schema.ts`: untrusted YAML validation
+- `json-schema.ts`: deterministic authoring schema derived from Zod
 - `classifier.ts`: path and secret classification
 - `detection.ts`: agent evidence
 - `actions.ts`: event-to-action inference
@@ -41,3 +42,5 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+After changing policy validation, run `pnpm generate:schema` and commit the
+generated `agentowners.schema.json`.
