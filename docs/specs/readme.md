@@ -165,7 +165,7 @@ Required libraries:
 - TypeScript
 - zod for schema validation
 - js-yaml for YAML parsing
-- minimatch for glob matching
+- picomatch for glob matching
 - commander for CLI
 - @actions/core for GitHub Action
 - @actions/github for GitHub context
