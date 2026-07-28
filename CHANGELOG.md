@@ -12,6 +12,9 @@ semantic versioning.
   CI drift detection.
 - Versioned `agentowners self-check` JSON and exit-code contract for agent
   preflight.
+- Mutation-sensitive adversarial corpus covering precedence, conservative
+  fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
+  caps.
 
 ### Changed
 

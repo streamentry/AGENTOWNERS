@@ -48,6 +48,7 @@ packages/core/src/
   index.ts       — barrel export (all public API)
 
 packages/core/tests/
+  adversarial-corpus.test.ts — table-driven safety regression corpus
   schema.test.ts     — Zod schema validation
   json-schema.test.ts — generated-schema parity and drift protection
   loader.test.ts     — YAML loading and file resolution
@@ -59,7 +60,7 @@ packages/core/tests/
   renderer.test.ts   — verdict rendering
   profiles.test.ts   — built-in profiles parse correctly
   integration.test.ts — end-to-end pipeline with fixtures
-  fixtures/           — YAML policies + event payloads + expected outputs
+  fixtures/           — policies, events, exact outcomes, and corpus guidance
 
 packages/cli/src/
   index.ts           — commander entry point
