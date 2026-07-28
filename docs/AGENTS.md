@@ -10,6 +10,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `specs/`: canonical product and feature requirements
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
+- `reviewing.md`: independent reviewer sequence, boundary checks, and disposition template
 - `philosophy.md`: durable design principles
 - `roadmap.md`: explicit future scope
 - `assets/`: maintained documentation and social-preview media

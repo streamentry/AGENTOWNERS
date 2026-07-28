@@ -93,6 +93,8 @@ packages/github-action/src/
   adversarial-reviewer.agent.md — read-only falsification specialist
 
 examples/
+  AGENTS.md          — directory-level example-policy instructions and diagrams
+  README.md          — profile chooser, trade-offs, and validation commands
   minimal/            — permissive starting point for new projects
   strict-oss/         — strict open-source project policy
   security-sensitive/ — maximum restriction for security-critical repos
@@ -104,6 +106,7 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/reviewing.md     — independent review sequence and disposition template
 docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/

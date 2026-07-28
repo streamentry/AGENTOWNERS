@@ -255,6 +255,10 @@ code scanning is available.
 | `security-sensitive` | `block` for unknown | Security-critical repositories     |
 | `monorepo`           | Per-package rules   | Large monorepos                    |
 
+Use the [policy-example chooser](examples/README.md) to compare the checked-in
+profiles, validate them locally, and understand the trade-offs before copying
+one into `.github/AGENTOWNERS.yml`.
+
 ```bash
 agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
@@ -447,6 +451,8 @@ Design principles:
 The repository is designed for both human and agent contributors:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) defines the evidence and PR contract.
+- [Reviewing changes](docs/reviewing.md) gives independent maintainers a
+  bounded security and release review sequence.
 - [Good first issues](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22good+first+issue%22)
   provide bounded entry work that does not change enforcement semantics.
 - [Help wanted](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22help+wanted%22)

@@ -82,6 +82,19 @@ If an issue lacks a bounded contract, use
 writing code. Comment on an issue before starting substantial work when
 parallel implementation is likely.
 
+### Review before implementation
+
+Technical reviewers are contributors too. The
+[review queue](https://github.com/streamentry/AGENTOWNERS/discussions/27)
+lists the highest-value open security, release, and adversarial-test lanes with
+their current heads and cheapest disconfirming tests. A useful review names
+the invariant, failure mechanism, and exact evidence; it does not need merge
+permission. AI-assisted review prepares evidence, but never substitutes for
+independent human approval.
+
+Use the [reviewing playbook](docs/reviewing.md) when you need a bounded review
+sequence, surface-specific checks, or a copyable disposition template.
+
 ### Maintainer review contract
 
 Every reviewed contribution should receive one explicit disposition:
