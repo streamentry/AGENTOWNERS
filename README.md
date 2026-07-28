@@ -142,9 +142,11 @@ The first-line schema directive gives compatible YAML editors completion and
 validation against the same Zod contract used at runtime. The generated
 [JSON Schema](packages/core/agentowners.schema.json) rejects unknown fields,
 empty `match` and `when` objects, and actions assigned to conflicting policy
-lists. Configured actor, commit-author, and label matches are exact and
-confirmed; `prTitlePatterns` and `bodyPatterns` provide regex-based policy
-signals.
+lists. Configured matches are exact policy signals. Actor matches are the only
+non-spoofable identity signal; commit authors, labels, titles, and bodies are
+attacker-controlled metadata and must not be used alone to grant privileged
+actions. Use `prTitlePatterns` and `bodyPatterns` for conservative routing,
+with `unknown_agent: require_approval` or `block` as the safety boundary.
 
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the

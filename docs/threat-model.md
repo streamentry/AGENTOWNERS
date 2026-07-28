@@ -23,9 +23,12 @@ a substitute for dedicated secret scanning.
 
 ### 5. Impersonation of non-agent actors
 **Threat**: An agent claims to be a human contributor to bypass policy.  
-**Protection**: Configured actor matches produce confirmed identity. Spoofable
-body and commit markers remain unconfirmed and receive the unknown-agent
-default.
+**Protection**: Configured actor matches produce the only non-spoofable
+identity signal. Commit authors, labels, pull-request titles, and bodies are
+attacker-controlled metadata: the policy engine can route on exact configured
+matches, but they do not authenticate the actor. Repositories must keep
+`unknown_agent` at `require_approval` or `block` and must not use these weak
+signals alone to grant privileged actions.
 
 ### 6. Policy injection via PR content
 **Threat**: A malicious PR body contains instructions that change how AGENTOWNERS evaluates the policy.  
