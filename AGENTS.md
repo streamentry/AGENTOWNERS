@@ -181,6 +181,7 @@ These are immutable safety rules. Never change them:
 | Least privilege | GitHub Action never requests `repo:admin` or `secrets:read` permissions |
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Identity trust | Commit metadata, labels, titles, and bodies are unverified evidence; only authenticated actors may use `known_agent` privileges |
+| Complete allow coverage | An action-scoped `allow` rule must list every detected action; block and approval rules may match any listed action |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
 

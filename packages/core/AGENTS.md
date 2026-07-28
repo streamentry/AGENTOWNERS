@@ -95,6 +95,10 @@ also cannot satisfy an allow rule for sensitive actions unless the rule names
 an explicit trusted actor or verified agent. Missing trust from a legacy
 adapter is also treated as unverified at the evaluator boundary.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
+Action-scoped allow rules may match any listed action, but must enumerate every
+detected action before contributing `allow`; block and approval rules retain
+any-action matching. Keep this boundary covered by the evaluator test and
+adversarial corpus.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails

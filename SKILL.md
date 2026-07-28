@@ -38,7 +38,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
 19. When agent detection uses commit metadata, labels, titles, or bodies, keep
    `identityTrust: unverified` separate from `confirmed` detection confidence;
    unverified evidence must not grant privileged allow decisions.
-20. In the pull request, disclose agent use, overlap, exact evidence, risks,
+20. When a rule scopes on `actions`, allow only when the condition enumerates
+   every detected action; preserve any-action matching for block and approval.
+21. In the pull request, disclose agent use, overlap, exact evidence, risks,
    attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

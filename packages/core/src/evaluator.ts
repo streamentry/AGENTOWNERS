@@ -116,6 +116,14 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   if (when.actions !== undefined) {
     const hasAction = when.actions.some((a) => detectedActions.includes(a));
     if (!hasAction) return null;
+    // A rule may trigger on any listed action, but an allow cannot silently
+    // authorize additional actions that the rule does not enumerate.
+    if (
+      rule.effect === 'allow' &&
+      detectedActions.some((action) => !when.actions!.includes(action))
+    ) {
+      return null;
+    }
     matchedConditions.push('actions');
   }
 

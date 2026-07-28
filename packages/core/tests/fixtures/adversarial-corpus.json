@@ -158,6 +158,40 @@
     }
   },
   {
+    "id": "action-rule-cannot-drop-unlisted-action",
+    "invariant": "An allow rule that names only one detected action cannot authorize an additional unlisted action.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "rules": [
+        {
+          "name": "Allow pull request creation",
+          "when": {
+            "actions": ["open_pr"]
+          },
+          "effect": "allow",
+          "reason": "Opening a pull request is routine."
+        }
+      ],
+      "defaults": {
+        "known_agent": "require_approval",
+        "unknown_agent": "require_approval"
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unknown-user",
+      "changedFiles": ["package.json"]
+    },
+    "expected": {
+      "effect": "require_approval",
+      "riskScore": 50,
+      "riskLevel": "high",
+      "detectedActions": ["open_pr", "modify_dependencies"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
     "id": "dotfile-secret",
     "invariant": "A nested environment dotfile is classified as secret and blocked.",
     "outcome": "decision",

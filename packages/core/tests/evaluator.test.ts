@@ -235,6 +235,22 @@ describe('evaluateRule', () => {
     expect(noMatch).toBeNull();
   });
 
+  it('does not let an action-scoped allow authorize unlisted actions', () => {
+    const rule: Rule = {
+      name: 'Allow pull request creation',
+      when: { actions: ['open_pr'] },
+      effect: 'allow',
+      reason: 'Opening a pull request is routine.',
+    };
+
+    const result = evaluateRule(
+      rule,
+      baseInput({ detectedActions: ['open_pr', 'modify_dependencies'] }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('files_not condition blocks when a file matches the exclusion pattern', () => {
     const rule: Rule = {
       name: 'No secrets',

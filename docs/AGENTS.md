@@ -15,6 +15,10 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `releasing.md`: maintainer-only release gates and publication evidence
 - `assets/`: maintained documentation and social-preview media
 
+The evaluator specification must state that action-scoped allow rules cannot
+drop unlisted detected actions, while block and approval rules may match any
+listed action.
+
 ## Diagrams
 
 ```mermaid

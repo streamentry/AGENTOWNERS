@@ -33907,6 +33907,9 @@ function evaluateRule(rule, input) {
   if (when.actions !== void 0) {
     const hasAction = when.actions.some((a) => detectedActions.includes(a));
     if (!hasAction) return null;
+    if (rule.effect === "allow" && detectedActions.some((action) => !when.actions.includes(action))) {
+      return null;
+    }
     matchedConditions.push("actions");
   }
   if (when.files !== void 0) {
