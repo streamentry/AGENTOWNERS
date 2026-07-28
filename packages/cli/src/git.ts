@@ -3,9 +3,24 @@
 
 import { execFileSync } from 'child_process';
 
+const REPOSITORY_REDIRECT_ENVIRONMENT = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+  'GIT_COMMON_DIR',
+  'GIT_NAMESPACE',
+] as const;
+
 function exec(cmd: string, args: string[], cwd?: string): string {
+  const environment = { ...process.env };
+  for (const name of REPOSITORY_REDIRECT_ENVIRONMENT) {
+    delete environment[name];
+  }
   const result = execFileSync(cmd, args, {
     cwd,
+    env: environment,
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe'],
   });
