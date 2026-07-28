@@ -104,6 +104,7 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/
   ideas.yml           — evidence-first feature proposal intake

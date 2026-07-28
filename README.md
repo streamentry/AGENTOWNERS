@@ -4,6 +4,8 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node 22+](https://img.shields.io/badge/node-%3E%3D22-339933.svg)](package.json)
 
+![AGENTOWNERS policy boundary routing agent actions to repository decisions](docs/assets/agentowners-social-preview.png)
+
 **CODEOWNERS for AI agents.**
 
 `AGENTS.md` tells agents how to work. `AGENTOWNERS.yml` defines what they are
