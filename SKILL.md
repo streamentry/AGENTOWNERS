@@ -30,6 +30,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
 16. For release-facing changes, run `pnpm verify:packages`.
 17. For release automation, read `docs/releasing.md` and prove registry failures
     stop before mutation.
+17. For Marketplace changes, prove root and packaged Action metadata remain in
+    parity outside explicit distribution identity and bundle paths, then
+    disclose every owner-only publication gate that remains.
 18. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 

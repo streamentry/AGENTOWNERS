@@ -20,7 +20,7 @@
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
     "generate:schema": "pnpm build && node scripts/generate-json-schema.mjs",
     "verify:schema": "node scripts/generate-json-schema.mjs --check",
-    "test:release": "node --test scripts/release-automation.test.mjs",
+    "test:release": "node --test scripts/*.test.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "verify:packages": "node scripts/verify-packed-packages.mjs",
     "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm verify:schema && pnpm test && pnpm test:release && pnpm verify:release"

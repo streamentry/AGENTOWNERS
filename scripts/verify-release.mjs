@@ -5,6 +5,8 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { verifyMarketplaceMetadata } from './marketplace-metadata.mjs';
+
 const root = resolve(import.meta.dirname, '..');
 const require = createRequire(import.meta.url);
 const packageDirectories = ['core', 'cli', 'github-action'];
@@ -38,18 +40,6 @@ async function verifyCorePackage() {
   if (typeof required.evaluatePolicy !== 'function') {
     throw new Error('CommonJS package export does not expose evaluatePolicy');
   }
-}
-
-async function verifyAction() {
-  const action = await readFile(resolve(root, 'action.yml'), 'utf8');
-  const mainMatch = action.match(/^\s*main:\s*(.+)\s*$/m);
-
-  if (!mainMatch) throw new Error('action.yml does not declare runs.main');
-  if (!/^\s*using:\s*node24\s*$/m.test(action)) {
-    throw new Error('action.yml must use the supported Node 24 runtime');
-  }
-
-  await assertFile(mainMatch[1].trim());
 }
 
 async function verifyCli() {
@@ -106,6 +96,11 @@ function verifyCommittedActionBundle() {
   }
 }
 
-await Promise.all([verifyCorePackage(), verifyAction(), verifyCli(), verifyPackageMetadata()]);
+await Promise.all([
+  verifyCorePackage(),
+  verifyMarketplaceMetadata(root),
+  verifyCli(),
+  verifyPackageMetadata(),
+]);
 verifyCommittedActionBundle();
 process.stdout.write('Release artifacts verified.\n');
