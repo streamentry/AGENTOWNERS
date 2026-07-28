@@ -1,0 +1,1565 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/streamentry/AGENTOWNERS/main/packages/core/agentowners.schema.json",
+  "title": "AGENTOWNERS policy",
+  "description": "Deterministic governance policy for AI-agent contributions.",
+  "$ref": "#/definitions/AgentOwnersPolicy",
+  "definitions": {
+    "AgentOwnersPolicy": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "agents": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "match": {
+                "type": "object",
+                "properties": {
+                  "actors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "commitEmails": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "commitNames": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "prTitlePatterns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "bodyPatterns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false,
+                "minProperties": 1
+              },
+              "allowed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "open_pr",
+                    "update_pr",
+                    "comment",
+                    "review_comment",
+                    "approve_pr",
+                    "request_changes",
+                    "label_issue",
+                    "close_issue",
+                    "reopen_issue",
+                    "assign_issue",
+                    "edit_workflows",
+                    "modify_tests",
+                    "modify_docs",
+                    "modify_dependencies",
+                    "modify_auth",
+                    "modify_infra",
+                    "touch_secrets",
+                    "change_permissions",
+                    "merge_pr"
+                  ]
+                }
+              },
+              "requires_approval": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AgentOwnersPolicy/properties/agents/additionalProperties/properties/allowed/items"
+                }
+              },
+              "blocked": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AgentOwnersPolicy/properties/agents/additionalProperties/properties/allowed/items"
+                }
+              }
+            },
+            "required": [
+              "match"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_pr"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "update_pr"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "update_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "comment"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "comment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "review_comment"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "review_comment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "approve_pr"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "approve_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "request_changes"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "request_changes"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "label_issue"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "label_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "close_issue"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "close_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "reopen_issue"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "reopen_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "assign_issue"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "assign_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "edit_workflows"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "edit_workflows"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_tests"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_tests"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_docs"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_docs"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_dependencies"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_dependencies"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_auth"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_auth"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_infra"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_infra"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "touch_secrets"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "touch_secrets"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "change_permissions"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "change_permissions"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "merge_pr"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "merge_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "update_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "update_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "comment"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "comment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "review_comment"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "review_comment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "approve_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "approve_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "request_changes"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "request_changes"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "label_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "label_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "close_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "close_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "reopen_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "reopen_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "assign_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "assign_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "edit_workflows"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "edit_workflows"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_tests"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_tests"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_docs"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_docs"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_dependencies"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_dependencies"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_auth"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_auth"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_infra"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_infra"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "touch_secrets"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "touch_secrets"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "change_permissions"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "change_permissions"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "merge_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "merge_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "update_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "update_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "comment"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "comment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "review_comment"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "review_comment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "approve_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "approve_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "request_changes"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "request_changes"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "label_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "label_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "close_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "close_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "reopen_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "reopen_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "assign_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "assign_issue"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "edit_workflows"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "edit_workflows"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_tests"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_tests"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_docs"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_docs"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_dependencies"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_dependencies"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_auth"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_auth"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_infra"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "modify_infra"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "touch_secrets"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "touch_secrets"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "change_permissions"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "change_permissions"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "merge_pr"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "merge_pr"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "unknown_agent": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "require_approval",
+                "block"
+              ]
+            },
+            "known_agent": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "require_approval",
+                "block"
+              ]
+            },
+            "docs_only": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "require_approval",
+                "block"
+              ]
+            },
+            "workflows": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "require_approval",
+                "block"
+              ]
+            },
+            "secrets": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "require_approval",
+                "block"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "when": {
+                "type": "object",
+                "properties": {
+                  "agents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "actors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/AgentOwnersPolicy/properties/agents/additionalProperties/properties/allowed/items"
+                    }
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "files_not": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "pr_title": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "pr_body": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "issue_title": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "issue_body": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "diff_lines_over": {
+                    "type": "number"
+                  },
+                  "commits_over": {
+                    "type": "number"
+                  },
+                  "changes_package_files": {
+                    "type": "boolean"
+                  },
+                  "changes_workflows": {
+                    "type": "boolean"
+                  },
+                  "changes_permissions": {
+                    "type": "boolean"
+                  },
+                  "changes_auth": {
+                    "type": "boolean"
+                  },
+                  "changes_infra": {
+                    "type": "boolean"
+                  },
+                  "docs_only": {
+                    "type": "boolean"
+                  },
+                  "tests_only": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "minProperties": 1
+              },
+              "effect": {
+                "type": "string",
+                "enum": [
+                  "allow",
+                  "require_approval",
+                  "block"
+                ]
+              },
+              "reviewers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "when",
+              "effect",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "audit": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "output": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

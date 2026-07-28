@@ -3,6 +3,7 @@
 
 export * from './types.js';
 export * from './schema.js';
+export * from './json-schema.js';
 export * from './loader.js';
 export * from './classifier.js';
 export * from './detection.js';

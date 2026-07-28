@@ -4,7 +4,8 @@
 Implement the TypeScript types and Zod schema for the AGENTOWNERS policy format.
 
 ## Package
-`packages/core/src/schema.ts` and `packages/core/src/types.ts`
+`packages/core/src/schema.ts`, `packages/core/src/json-schema.ts`, and
+`packages/core/src/types.ts`
 
 ## Types to implement
 
@@ -119,9 +120,16 @@ All fields from spec section 11.5.
 - Empty rule conditions throw ZodError
 - Conflicting agent action assignments throw ZodError
 - Missing required fields throw ZodError
+- Generated JSON Schema is byte-for-byte deterministic
+- Generated JSON Schema rejects unknown fields and empty `match` or `when`
+- Generated JSON Schema rejects conflicting agent action assignments
+- Checked-in JSON Schema matches a fresh generation
 
 ## Files
 - `packages/core/src/types.ts` — TypeScript types (no runtime code)
 - `packages/core/src/schema.ts` — Zod schema + `parsePolicy(yaml: unknown): AgentOwnersPolicy`
+- `packages/core/src/json-schema.ts` — deterministic JSON Schema generation from Zod
+- `packages/core/agentowners.schema.json` — generated editor and tooling artifact
 - `packages/core/src/index.ts` — barrel export
 - `packages/core/tests/schema.test.ts` — vitest unit tests
+- `packages/core/tests/json-schema.test.ts` — generator parity and drift tests

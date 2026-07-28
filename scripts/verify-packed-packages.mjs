@@ -68,6 +68,14 @@ try {
     ],
     consumerDirectory,
   );
+  run(
+    process.execPath,
+    [
+      '-e',
+      "const schema=require('@agent-owners/core/schema.json'); if(schema.title!=='AGENTOWNERS policy') process.exit(1)",
+    ],
+    consumerDirectory,
+  );
 
   const fixtureDirectory = resolve(consumerDirectory, 'fixture');
   await mkdir(fixtureDirectory);

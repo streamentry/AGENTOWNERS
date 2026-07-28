@@ -20,11 +20,13 @@ async function assertFile(relativePath) {
 async function verifyCorePackage() {
   const packageJson = await readJson('packages/core/package.json');
   const exports = packageJson.exports['.'];
+  const schemaExport = packageJson.exports['./schema.json'];
 
   await Promise.all([
     assertFile(`packages/core/${exports.types}`),
     assertFile(`packages/core/${exports.import}`),
     assertFile(`packages/core/${exports.require}`),
+    assertFile(`packages/core/${schemaExport}`),
   ]);
 
   const imported = await import(pathToFileURL(resolve(root, 'packages/core', exports.import)).href);

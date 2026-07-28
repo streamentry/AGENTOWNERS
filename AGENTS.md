@@ -36,6 +36,7 @@ pnpm verify
 packages/core/src/
   types.ts       — all TypeScript types (no runtime code, canonical source of truth)
   schema.ts      — Zod schema + parsePolicy() function
+  json-schema.ts — deterministic JSON Schema generation from Zod
   loader.ts      — YAML file loading, resolution order, error types
   classifier.ts  — file classification, glob matching, secret detection
   detection.ts   — AI agent detection from actor/commit/body signals
@@ -48,6 +49,7 @@ packages/core/src/
 
 packages/core/tests/
   schema.test.ts     — Zod schema validation
+  json-schema.test.ts — generated-schema parity and drift protection
   loader.test.ts     — YAML loading and file resolution
   classifier.test.ts — file classification
   detection.test.ts  — agent detection signals
@@ -84,6 +86,7 @@ docs/specs/
   f1-policy-schema.md through f10-examples-tests.md — per-feature specs
 
 scripts/
+  generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
 
@@ -230,6 +233,10 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 GitHub executes JavaScript Actions directly from the repository. Never edit it
 by hand. Run `pnpm build`, then `pnpm verify:release`, and include the regenerated
 bundle whenever Action source changes.
+
+`packages/core/agentowners.schema.json` is also generated. Never edit it by
+hand. After changing `schema.ts` or `json-schema.ts`, run
+`pnpm generate:schema`; `pnpm verify:schema` fails on drift.
 
 ## What NOT to build (v1 non-goals)
 
