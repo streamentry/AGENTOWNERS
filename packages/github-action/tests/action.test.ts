@@ -489,7 +489,12 @@ describe('upsertVerdictComment', () => {
     const { upsertVerdictComment } = await import('../src/comment.js');
 
     mockOctokit.rest.issues.listComments.mockResolvedValue({
-      data: [{ id: 55, body: '<!-- agentowners-verdict -->\nOld content' }],
+      data: [
+        {
+          id: 55,
+          body: '<!-- agentowners-verdict -->\nOld content\n<!-- /agentowners-verdict -->',
+        },
+      ],
     });
     mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 55 } });
 
@@ -510,7 +515,12 @@ describe('upsertVerdictComment', () => {
     mockOctokit.rest.issues.listComments
       .mockResolvedValueOnce({ data: firstPage })
       .mockResolvedValueOnce({
-        data: [{ id: 201, body: '<!-- agentowners-verdict -->\nOld content' }],
+        data: [
+          {
+            id: 201,
+            body: '<!-- agentowners-verdict -->\nOld content\n<!-- /agentowners-verdict -->',
+          },
+        ],
       });
 
     await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
@@ -533,6 +543,25 @@ describe('upsertVerdictComment', () => {
       expect.objectContaining({ comment_id: 201, body: 'new body' }),
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite a quoted or incomplete marker comment', async () => {
+    const { upsertVerdictComment } = await import('../src/comment.js');
+
+    mockOctokit.rest.issues.listComments.mockResolvedValue({
+      data: [
+        { id: 77, body: 'A user quoted <!-- agentowners-verdict --> in a discussion.' },
+        { id: 78, body: '<!-- agentowners-verdict -->\nIncomplete' },
+      ],
+    });
+    mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 79 } });
+
+    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+
+    expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
+      expect.objectContaining({ issue_number: 1, body: 'new body' }),
+    );
   });
 });
 

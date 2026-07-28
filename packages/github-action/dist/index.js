@@ -34390,6 +34390,12 @@ async function getIssueMetadata(octokit, owner, repo, issueNumber) {
 
 // src/comment.ts
 var MARKER = "<!-- agentowners-verdict -->";
+var MARKER_CLOSE2 = "<!-- /agentowners-verdict -->";
+function isVerdictComment(body) {
+  return body?.startsWith(`${MARKER}
+`) === true && body.includes(`
+${MARKER_CLOSE2}`);
+}
 async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
   let page = 1;
   let existing;
@@ -34402,7 +34408,7 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
       page
     });
     existing = comments.data.find(
-      (c) => c.body?.includes(MARKER)
+      (c) => isVerdictComment(c.body)
     );
     if (existing || comments.data.length < 100) break;
     page += 1;

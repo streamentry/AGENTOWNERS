@@ -95,11 +95,13 @@ runs:
 
 ## Sticky Comment
 
-Marker: `<!-- agentowners-verdict -->`
+Markers: `<!-- agentowners-verdict -->` and
+`<!-- /agentowners-verdict -->`
 
 Logic:
 1. List existing PR comments
-2. Find comment containing the marker
+2. Find a comment that starts with the opening marker and contains the closing
+   marker. Quoted or incomplete markers are not owned verdicts.
 3. If found → update it (PATCH)
 4. If not found → create new comment (POST)
 
@@ -119,6 +121,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Block decision → does not fail when fail-on-block is false
 - Dry-run mode → no comment posted, no labels
 - Sticky comment updated on re-run
+- Quoted or incomplete marker comments are never overwritten
 - Audit JSON written correctly
 - Labels applied to PR
 - Unsupported pull request, issue, comment, and review actions are skipped

@@ -3,6 +3,11 @@
 import type { Octokit } from './github.js';
 
 export const MARKER = '<!-- agentowners-verdict -->';
+export const MARKER_CLOSE = '<!-- /agentowners-verdict -->';
+
+function isVerdictComment(body: string | null | undefined): boolean {
+  return body?.startsWith(`${MARKER}\n`) === true && body.includes(`\n${MARKER_CLOSE}`);
+}
 
 export async function upsertVerdictComment(
   octokit: Octokit,
@@ -23,7 +28,7 @@ export async function upsertVerdictComment(
       page,
     });
     existing = comments.data.find((c: { id: number; body?: string | null }) =>
-      c.body?.includes(MARKER),
+      isVerdictComment(c.body),
     );
     if (existing || comments.data.length < 100) break;
     page += 1;
