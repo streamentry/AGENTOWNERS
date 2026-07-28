@@ -45,5 +45,7 @@ sequenceDiagram
 
 ## Verification
 
-Run `pnpm verify`, check every external link against its primary source, and
-separate current product facts from roadmap claims.
+Run `pnpm verify` to catch broken local Markdown targets, check every external
+link against its primary source, and separate current product facts from
+roadmap claims. `pnpm verify:docs` is the focused network-free documentation
+gate when only prose or links change.

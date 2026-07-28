@@ -68,7 +68,7 @@ above. Add the smallest focused proof for each surface the change touches:
 | GitHub Action adapter | Focused Action test, then `pnpm build` | Commit the regenerated bundle and show that base-policy loading and least privilege remain intact |
 | Package metadata or dependencies | `pnpm verify:packages` | Include isolated install, runtime smoke tests, and production dependency audit results |
 | Example policy | Parse the policy and run its portable fixture suite | Assert exact decisions and detected actions; do not rely on prose examples |
-| Documentation only | Validate every command, path, version, and link changed by the PR | State which product behavior is unchanged and cite dated primary sources for ecosystem claims |
+| Documentation only | Run `pnpm verify:docs`; validate every command, path, version, and link changed by the PR | State which product behavior is unchanged and cite dated primary sources for ecosystem claims |
 
 Evidence is scoped. A green full suite does not replace the focused proof that
 reaches the changed branch. A focused test does not justify a repository-wide
