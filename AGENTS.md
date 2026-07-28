@@ -80,6 +80,7 @@ packages/cli/src/
 
 packages/cli/tests/
   check.test.ts      — SARIF output and invalid-format boundaries
+  validate.integration.test.ts — real policy-file validation contract
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
 
