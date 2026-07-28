@@ -80,6 +80,10 @@ packages/github-action/src/
   github.ts   — GitHub API helpers (PR files, PR metadata)
   comment.ts  — sticky comment upsert (VERDICT_MARKER)
 
+.github/agents/
+  policy-engineer.agent.md — tests-first implementation specialist
+  adversarial-reviewer.agent.md — read-only falsification specialist
+
 examples/
   minimal/            — permissive starting point for new projects
   strict-oss/         — strict open-source project policy

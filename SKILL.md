@@ -29,3 +29,7 @@ policy data, leaks secret matches, introduces hidden state, or lets untrusted
 input reach a shell. For GitHub pull requests, load policy from the immutable
 base commit. For CLI Git operations, treat refs as hostile options and use
 `--end-of-options`.
+
+During review, report only findings that identify the violated invariant, exact
+mechanism, and cheapest disconfirming test. AI-assisted review prepares evidence
+for a human; it never satisfies independent approval.

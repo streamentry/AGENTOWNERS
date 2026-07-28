@@ -9,6 +9,8 @@ semantic versioning.
 
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
+- A manually invoked, read-only adversarial reviewer custom agent with a
+  falsifiable finding contract.
 - Release and isolated-consumer verification.
 - Deterministic JSON Schema generation, editor integration, package export, and
   CI drift detection.
