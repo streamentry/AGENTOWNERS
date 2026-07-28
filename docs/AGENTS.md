@@ -10,6 +10,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `specs/`: canonical product and feature requirements
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
+- `policy-reference.md`: end-user schema, condition, action, and trust contract
 - `philosophy.md`: durable design principles
 - `roadmap.md`: explicit future scope
 - `releasing.md`: maintainer-only release gates and publication evidence
@@ -25,8 +26,10 @@ listed action.
 flowchart LR
   OfficialSources --> Ecosystem
   Specs --> Architecture
+  Schema[Runtime schema] --> PolicyReference
   Philosophy --> Specs
   Architecture --> README
+  PolicyReference --> README
   Ecosystem --> README
 ```
 

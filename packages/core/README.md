@@ -104,6 +104,7 @@ const decision = evaluatePolicy({
 const sarif = renderSarif(decision);
 ```
 
-Read the [policy specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/readme.md)
+Read the [policy reference](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/policy-reference.md),
+[policy specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/readme.md),
 and [security policy](https://github.com/streamentry/AGENTOWNERS/security/policy)
 before enforcing decisions in a sensitive repository.

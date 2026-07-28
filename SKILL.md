@@ -6,6 +6,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 # Contribute to AGENTOWNERS
 
 1. Read `AGENTS.md`, the nearest package `AGENTS.md`, and the relevant spec.
+   Use `docs/policy-reference.md` when a change depends on policy syntax,
+   condition semantics, action inference, or identity trust.
 2. Refresh `origin/main`; inspect open and recently merged work for overlap.
 3. State the invariant, expected behavior, and any distinct value retained from
    related contributions.

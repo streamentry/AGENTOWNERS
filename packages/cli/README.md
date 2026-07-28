@@ -81,5 +81,6 @@ versioned machine result. See the
 SARIF output is deterministic and contains only non-allow policy results.
 Approval decisions are warnings and blocked decisions are errors.
 
-See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
-and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).
+See the [policy reference](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/policy-reference.md),
+[full documentation](https://github.com/streamentry/AGENTOWNERS#readme), and
+[policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

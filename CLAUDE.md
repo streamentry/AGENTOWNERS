@@ -119,9 +119,14 @@ Scope: core cli github-action examples docs
 ## Documentation map
 
 - `docs/specs/readme.md` — canonical product spec (sections 1–31)
-- `docs/specs/f1-f10.md` — per-feature implementation specs
+- `docs/specs/f1-f13.md` — per-feature implementation specs
 - `docs/policy-reference.md` — end-user policy format reference
+- `docs/architecture.md` — components and trust boundaries
+- `docs/ecosystem.md` — dated control-surface comparison
 - `docs/philosophy.md` — why the project exists
 - `docs/threat-model.md` — what it protects against
+- `docs/releasing.md` — maintainer-only publication gates
+- `docs/roadmap.md` — current and future scope
+- `examples/README.md` — copyable policy profiles and fixture commands
 - `AGENTS.md` — agent contribution guide (you are here)
 - `CONTRIBUTING.md` — human contribution guide

@@ -17,6 +17,7 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/fingerprint.ts`: agent-signal inspection
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
 - `src/commands/test.ts`: portable policy fixture execution
+- `README.md`: CLI contract, exit codes, and policy-reference entry point
 
 ## Diagrams
 

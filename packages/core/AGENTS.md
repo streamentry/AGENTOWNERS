@@ -20,6 +20,7 @@ network calls, clocks, randomness, or persistent state.
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
 - `fixtures.ts`: strict portable suites and assertion comparison
 - `sarif.ts`: deterministic SARIF 2.1.0 output
+- `README.md`: package API contract and links to the end-user policy reference
 
 ## Diagrams
 

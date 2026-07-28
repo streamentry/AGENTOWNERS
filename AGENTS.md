@@ -110,6 +110,7 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/policy-reference.md — end-user schema, condition, action, and trust reference
 docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/

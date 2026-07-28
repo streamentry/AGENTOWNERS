@@ -507,6 +507,8 @@ The repository is designed for both human and agent contributors:
 - [SKILL.md](SKILL.md) gives compatible agents a compact execution workflow.
 - [Policy examples](examples/README.md) compare the copyable profiles and show
   how to execute the portable contract.
+- [Policy reference](docs/policy-reference.md) documents every schema field,
+  condition, action, fallback, and trust boundary.
 - [Architecture](docs/architecture.md) documents components and trust boundaries.
 - [Ecosystem boundaries](docs/ecosystem.md) distinguishes guidance, runtime
   controls, repository governance, and audit evidence.
