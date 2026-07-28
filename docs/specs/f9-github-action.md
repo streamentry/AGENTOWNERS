@@ -76,7 +76,8 @@ runs:
 2. Get GitHub context (event, payload)
 3. Load policy file
 4. Branch on event type:
-   - pull_request → fetchPRFiles, fetchPRMetadata
+   - pull_request → fetchPRFiles, retaining rename source and destination paths,
+     then fetchPRMetadata
    - issues → inspect actor/title/body/labels
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
@@ -111,6 +112,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 
 ## Tests (`packages/github-action/tests/`)
 - PR opened event → fetches files, evaluates, posts comment
+- Renamed sensitive source → source and destination paths both reach evaluation
 - Block decision → fails action when fail-on-block is true
 - Block decision → does not fail when fail-on-block is false
 - Dry-run mode → no comment posted, no labels

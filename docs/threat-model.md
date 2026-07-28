@@ -21,6 +21,10 @@ Patterns are never emitted. File names like `.env` are also flagged. GitHub
 may omit patches for binary or oversized changes, so this is a guardrail, not
 a substitute for dedicated secret scanning.
 
+For renamed files, the Action retains both GitHub's destination `filename` and
+the source `previous_filename`. This prevents a rename from erasing a sensitive
+source-path classification when patch content is unavailable.
+
 ### 5. Impersonation of non-agent actors
 **Threat**: An agent claims to be a human contributor to bypass policy.  
 **Protection**: Configured actor matches produce confirmed identity. Spoofable

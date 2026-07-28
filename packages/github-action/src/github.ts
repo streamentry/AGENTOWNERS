@@ -74,7 +74,7 @@ export async function getPRFiles(
   repo: string,
   pullNumber: number,
 ): Promise<PRFiles> {
-  const files: string[] = [];
+  const files = new Set<string>();
   const patches: string[] = [];
   let patchesComplete = true;
   let page = 1;
@@ -89,7 +89,15 @@ export async function getPRFiles(
     });
 
     for (const file of response.data) {
-      files.push(file.filename);
+      files.add(file.filename);
+      if (
+        file.status === 'renamed' &&
+        typeof file.previous_filename === 'string' &&
+        file.previous_filename.length > 0 &&
+        file.previous_filename !== file.filename
+      ) {
+        files.add(file.previous_filename);
+      }
       if (typeof file.patch === 'string') {
         patches.push(file.patch);
       } else {
@@ -104,7 +112,7 @@ export async function getPRFiles(
   }
 
   return {
-    files,
+    files: [...files],
     diffContent: patches.join('\n'),
     patchesComplete,
   };

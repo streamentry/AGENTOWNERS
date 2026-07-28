@@ -34181,7 +34181,7 @@ async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {
   return Buffer.from(data.content.replaceAll("\n", ""), "base64").toString("utf8");
 }
 async function getPRFiles(octokit, owner, repo, pullNumber) {
-  const files = [];
+  const files = /* @__PURE__ */ new Set();
   const patches = [];
   let patchesComplete = true;
   let page = 1;
@@ -34194,7 +34194,10 @@ async function getPRFiles(octokit, owner, repo, pullNumber) {
       page
     });
     for (const file of response.data) {
-      files.push(file.filename);
+      files.add(file.filename);
+      if (file.status === "renamed" && typeof file.previous_filename === "string" && file.previous_filename.length > 0 && file.previous_filename !== file.filename) {
+        files.add(file.previous_filename);
+      }
       if (typeof file.patch === "string") {
         patches.push(file.patch);
       } else {
@@ -34207,7 +34210,7 @@ async function getPRFiles(octokit, owner, repo, pullNumber) {
     page++;
   }
   return {
-    files,
+    files: [...files],
     diffContent: patches.join("\n"),
     patchesComplete
   };

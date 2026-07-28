@@ -36,6 +36,8 @@ semantic versioning.
 
 ### Fixed
 
+- Pull request renames now preserve both source and destination paths so moving
+  a sensitive file cannot erase its original classification boundary.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
