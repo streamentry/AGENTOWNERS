@@ -28,6 +28,8 @@ flowchart LR
   Policy --> Core
   Core --> Output
   Core --> ExitCode
+  DecisionFile --> Explain
+  Explain --> Output
 ```
 
 ```mermaid
@@ -42,6 +44,18 @@ sequenceDiagram
   CLI->>Core: evaluation input
   Core-->>CLI: decision
   CLI-->>User: Markdown, JSON, or SARIF and exit code
+```
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Explain
+  participant DecisionFile
+  User->>Explain: explain --decision path
+  Explain->>DecisionFile: read untrusted JSON
+  DecisionFile-->>Explain: bytes
+  Explain->>Explain: validate shape and sanitize terminal text
+  Explain-->>User: human-readable explanation or exit 1
 ```
 
 `test` reads explicit policy and fixture paths. It does not inspect Git state
@@ -101,5 +115,9 @@ single commit subprocess environment. Never use `git config` in tests.
 The fingerprint command must expose `identityTrust` separately from detection
 confidence so spoofable commit metadata and labels are not presented as
 authenticated agent identity.
+The `explain` command must validate the complete saved decision shape before
+reading fields and strip terminal control sequences from untrusted decision
+text; malformed input must fail nonzero instead of crashing or spoofing the
+terminal.
 Unknown output formats must fail before reading Git. Commit author metadata is
 read with the same `--end-of-options` boundary as commit messages.

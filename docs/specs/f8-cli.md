@@ -93,7 +93,10 @@ Options:
 
 - `--decision <path>` — path to decision JSON file
 
-Output: Human-readable explanation of how the decision was reached.
+The JSON input is validated against the decision contract before any field is
+read. Malformed or incomplete decisions exit `1`. Human-readable output strips
+terminal control sequences from decision text so an untrusted audit file cannot
+spoof the terminal.
 
 ### `agentowners fingerprint`
 

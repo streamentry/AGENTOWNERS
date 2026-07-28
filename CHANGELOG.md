@@ -49,6 +49,8 @@ semantic versioning.
 
 ### Fixed
 
+- The CLI decision explainer now validates saved JSON before reading it and
+  strips terminal control sequences from untrusted decision text.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

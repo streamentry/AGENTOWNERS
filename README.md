@@ -259,6 +259,9 @@ agentowners check --base main --head HEAD
 # Produce deterministic SARIF 2.1.0 for code-scanning upload
 agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 
+# Explain a saved decision for a human reviewer
+agentowners explain --decision agentowners-decision.json
+
 # Give an agent a versioned pre-PR decision contract
 agentowners self-check \
   --policy .github/AGENTOWNERS.yml \

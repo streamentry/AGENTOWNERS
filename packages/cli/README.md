@@ -49,6 +49,9 @@ agentowners check --base main --head HEAD --mode enforcement
 # Emit SARIF 2.1.0 for standard code-scanning tools
 agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 
+# Explain a saved decision without trusting arbitrary JSON shape
+agentowners explain --decision agentowners-decision.json
+
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
 ```
