@@ -69,6 +69,10 @@ packages/cli/src/
   commands/check.ts  — agentowners check
   commands/explain.ts — agentowners explain
   commands/fingerprint.ts — agentowners fingerprint
+  commands/self-check.ts — versioned pre-PR machine contract
+
+packages/cli/tests/
+  self-check.test.ts — output contract, exit codes, and hostile-ref coverage
 
 packages/github-action/src/
   index.ts    — main action entry
@@ -83,7 +87,7 @@ examples/
 
 docs/specs/
   readme.md           — full product specification (canonical requirements)
-  f1-policy-schema.md through f10-examples-tests.md — per-feature specs
+  f1-policy-schema.md through f11-agent-self-check.md — per-feature specs
 
 scripts/
   generate-json-schema.mjs   — regenerate or check the authoring schema

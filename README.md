@@ -201,9 +201,21 @@ agentowners validate .github/AGENTOWNERS.yml
 # Check local diff against policy
 agentowners check --base main --head HEAD
 
+# Give an agent a versioned pre-PR decision contract
+agentowners self-check \
+  --policy .github/AGENTOWNERS.yml \
+  --base origin/main \
+  --head HEAD \
+  --actor coding-agent[bot]
+
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
 ```
+
+`self-check` always uses explicit policy, refs, and actor inputs. It returns
+stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
+and a bounded next action. It makes no model or GitHub API calls and never
+modifies the repository.
 
 ---
 

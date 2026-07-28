@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 
@@ -80,8 +80,40 @@ try {
   const fixtureDirectory = resolve(consumerDirectory, 'fixture');
   await mkdir(fixtureDirectory);
   run('git', ['init'], fixtureDirectory);
+  run('git', ['config', 'user.name', 'Package verifier'], fixtureDirectory);
+  run('git', ['config', 'user.email', 'verifier@example.invalid'], fixtureDirectory);
   run(cliPath, ['init', '--profile', 'minimal'], fixtureDirectory);
   run(cliPath, ['validate', '.github/AGENTOWNERS.yml'], fixtureDirectory);
+  run('git', ['add', '.github/AGENTOWNERS.yml'], fixtureDirectory);
+  run('git', ['commit', '-m', 'chore: initialize policy'], fixtureDirectory);
+  await writeFile(resolve(fixtureDirectory, 'README.md'), '# Fixture\n');
+  run('git', ['add', 'README.md'], fixtureDirectory);
+  run('git', ['commit', '-m', 'docs: add readme'], fixtureDirectory);
+
+  const selfCheck = JSON.parse(
+    run(
+      cliPath,
+      [
+        'self-check',
+        '--policy',
+        '.github/AGENTOWNERS.yml',
+        '--base',
+        'HEAD~1',
+        '--head',
+        'HEAD',
+        '--actor',
+        'package-verifier',
+      ],
+      fixtureDirectory,
+    ),
+  );
+  if (
+    selfCheck.schemaVersion !== 1 ||
+    selfCheck.status !== 'complete' ||
+    selfCheck.decision !== 'allow'
+  ) {
+    throw new Error('Packed CLI self-check returned an unexpected contract');
+  }
 
   process.stdout.write('Packed packages install and execute successfully.\n');
 } finally {
