@@ -11,7 +11,8 @@ from interpreting a ref that begins with `-` as an option.
 
 - `src/git.ts`: bounded Git subprocess adapter
 - `src/commands/init.ts`: profile installation
-- `src/commands/validate.ts`: schema diagnostics
+- `src/commands/validate.ts`: schema diagnostics with text and versioned JSON
+  output; JSON errors must not echo policy contents or absolute paths
 - `src/commands/check.ts`: local policy evaluation
 - `src/commands/explain.ts`: decision explanation
 - `src/commands/fingerprint.ts`: agent-signal inspection
@@ -47,6 +48,10 @@ sequenceDiagram
 `test` reads explicit policy and fixture paths. It does not inspect Git state
 or infer missing inputs.
 
+`validate --output json` is a side-effect-free machine contract: valid results
+go to stdout, invalid results go to stderr, and unsupported formats fail before
+the policy loader runs.
+
 ```mermaid
 stateDiagram-v2
   [*] --> ValidateFixtureArgs
@@ -65,6 +70,18 @@ stateDiagram-v2
   PolicyError --> [*]: exit 65
   FixtureError --> [*]: exit 66
   InternalError --> [*]: exit 70
+```
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Validate
+  participant Loader
+  User->>Validate: validate --output json
+  Validate->>Validate: validate output format
+  Validate->>Loader: load policy
+  Loader-->>Validate: valid policy or diagnostics
+  Validate-->>User: versioned JSON on stdout or stderr
 ```
 
 `self-check` follows the same sequence but requires explicit policy, base,

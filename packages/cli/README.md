@@ -17,6 +17,9 @@ agentowners init --profile strict-oss
 # Reject malformed or misspelled policy fields
 agentowners validate .github/AGENTOWNERS.yml
 
+# Consume the deterministic validation contract in CI or another tool
+agentowners validate .github/AGENTOWNERS.yml --output json
+
 # Evaluate a Git range
 agentowners check --base main --head HEAD
 
@@ -50,6 +53,13 @@ potentially misleading decision.
 (`0`), approval (`10`), block (`20`), invalid input (`64`), invalid policy
 (`65`), invalid Git range (`66`), and internal failure (`70`). See the
 [self-check specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f11-agent-self-check.md).
+
+`validate --output json` emits a versioned result without policy contents or
+absolute filesystem paths. Valid policies write a `status: "complete"` result
+to stdout and exit `0`; invalid policies write a `status: "error"` result to
+stderr and exit `1`. Unsupported output formats fail before loading policy and
+exit `64`. The JSON contract is documented in the
+[CLI specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f8-cli.md).
 
 `test` exits `0` when every case passes, `1` for assertion failures, `64` for
 invalid command input, `65` for invalid policy data, `66` for invalid fixture

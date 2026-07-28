@@ -7,6 +7,9 @@ semantic versioning.
 
 ### Added
 
+- Versioned `agentowners validate --output json` results for deterministic CI
+  and agent integrations, with text output preserved as the default.
+
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a

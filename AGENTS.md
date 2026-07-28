@@ -71,7 +71,7 @@ packages/cli/src/
   index.ts           — commander entry point
   git.ts             — shell-free Git adapter (getChangedFiles, getCommitMessages)
   commands/init.ts   — agentowners init
-  commands/validate.ts — agentowners validate
+  commands/validate.ts — agentowners validate (text or versioned JSON)
   commands/check.ts  — agentowners check
   commands/explain.ts — agentowners explain
   commands/fingerprint.ts — agentowners fingerprint
