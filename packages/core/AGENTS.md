@@ -11,7 +11,7 @@ network calls, clocks, randomness, or persistent state.
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
 - `classifier.ts`: path and secret classification
-- `detection.ts`: agent evidence
+- `detection.ts`: actor, commit, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
 - `scoring.ts`: deterministic risk score
@@ -60,7 +60,7 @@ flowchart TB
 sequenceDiagram
   participant Adapter
   participant Core
-  Adapter->>Core: normalized PR or issue input
+  Adapter->>Core: normalized PR, issue, or comment input
   Core->>Core: match event-specific metadata
   Core->>Core: pure evaluation
   Core-->>Adapter: immutable decision

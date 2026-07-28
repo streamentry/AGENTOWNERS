@@ -19,7 +19,7 @@ import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
@@ -55,6 +55,7 @@ async function run(): Promise<void> {
     let prBody: string | undefined;
     let issueTitle: string | undefined;
     let issueBody: string | undefined;
+    let commentBody: string | undefined;
     let labels: string[] = [];
     let issueNumber: number | undefined;
     let eventType: GitHubEventType | undefined;
@@ -111,7 +112,18 @@ async function run(): Promise<void> {
 
       const comment = payload.comment;
       actor = (comment?.user?.login as string) || actor;
+      commentBody = (comment?.body as string | undefined) ?? undefined;
       labels = ((issue.labels ?? []) as Array<{ name: string }>).map((l) => l.name);
+
+      const targetTitle = (issue.title as string | undefined) ?? undefined;
+      const targetBody = (issue.body as string | undefined) ?? undefined;
+      if (issue.pull_request) {
+        prTitle = targetTitle;
+        prBody = targetBody;
+      } else {
+        issueTitle = targetTitle;
+        issueBody = targetBody;
+      }
     } else if (eventName === 'pull_request_review') {
       const pr = payload.pull_request;
       if (!pr) throw new Error('Missing pull_request payload for review');
@@ -181,6 +193,7 @@ async function run(): Promise<void> {
       actor,
       prTitle: prTitle ?? issueTitle,
       prBody: prBody ?? issueBody,
+      commentBody,
       labels,
       policy,
     });

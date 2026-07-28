@@ -45,6 +45,7 @@ sequenceDiagram
   Action->>GitHub: fetch policy at base SHA
   Action->>GitHub: read available file patches
   Action->>Core: distinct PR and issue fields
+  Action->>Core: comment body as detection evidence
   Core-->>Action: decision
   Action->>GitHub: verdict and labels
   Action-->>Runner: outputs and status

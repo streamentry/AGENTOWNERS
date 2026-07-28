@@ -203,6 +203,77 @@ describe('GitHub Action — integration via mocks', () => {
     });
   });
 
+  it('maps issue comments to issue metadata and inspects the comment body', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = 'issue_comment';
+    mockContext.actor = 'fallback-actor';
+    mockContext.payload = {
+      action: 'created',
+      issue: {
+        number: 23,
+        title: 'Dependency bot policy example',
+        body: 'The issue requests a new example policy.',
+        labels: [{ name: 'help wanted' }],
+      },
+      comment: {
+        body: '🤖 Generated with Codex',
+        user: { login: 'comment-agent[bot]' },
+      },
+    };
+
+    const core = await import('@agent-owners/core');
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(core.detectAgent).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        actor: 'comment-agent[bot]',
+        commentBody: '🤖 Generated with Codex',
+      }),
+    );
+    expect(core.evaluatePolicy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        issueTitle: 'Dependency bot policy example',
+        issueBody: 'The issue requests a new example policy.',
+        prTitle: undefined,
+        prBody: undefined,
+      }),
+    );
+  });
+
+  it('maps pull request comments to PR metadata without leaking into issue conditions', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = 'issue_comment';
+    mockContext.actor = 'fallback-actor';
+    mockContext.payload = {
+      action: 'edited',
+      issue: {
+        number: 25,
+        title: 'fix(core): evaluate issue rule conditions',
+        body: 'Pull request description',
+        labels: [{ name: 'core-review' }],
+        pull_request: { url: 'https://api.github.test/pulls/25' },
+      },
+      comment: {
+        body: 'Updated review response',
+        user: { login: 'comment-agent[bot]' },
+      },
+    };
+
+    const core = await import('@agent-owners/core');
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(core.evaluatePolicy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        prTitle: 'fix(core): evaluate issue rule conditions',
+        prBody: 'Pull request description',
+        issueTitle: undefined,
+        issueBody: undefined,
+      }),
+    );
+  });
+
   it('PR opened → verdict posted, outputs set, no setFailed for allow', async () => {
     setupInputs();
     setupOctokitPR(['src/index.ts']);

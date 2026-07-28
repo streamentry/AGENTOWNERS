@@ -32,6 +32,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // ../../node_modules/.pnpm/tunnel@0.0.6/node_modules/tunnel/lib/tunnel.js
 var require_tunnel = __commonJS({
@@ -21506,6 +21507,13 @@ var require_picomatch2 = __commonJS({
   }
 });
 
+// src/index.ts
+var index_exports = {};
+__export(index_exports, {
+  run: () => run
+});
+module.exports = __toCommonJS(index_exports);
+
 // ../../node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/command.js
 var os = __toESM(require("os"), 1);
 
@@ -33376,8 +33384,9 @@ function matchesConfiguredPattern(value, pattern) {
   }
 }
 function detectAgent(input) {
-  const { actor, commitMessages = [], prTitle, prBody, labels = [], policy } = input;
+  const { actor, commitMessages = [], prTitle, prBody, commentBody, labels = [], policy } = input;
   const signals = [];
+  const bodyTexts = [prBody, commentBody].filter((value) => value !== void 0);
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
@@ -33389,7 +33398,7 @@ function detectAgent(input) {
         const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
         const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
         for (const pattern of bodyPatterns) {
-          if (matchesConfiguredPattern(prBody, pattern)) {
+          if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
             signals.push(`policy body pattern match: agents.${name}`);
             return { agentName: name, confidence: "confirmed", signals };
           }
@@ -33407,21 +33416,19 @@ function detectAgent(input) {
     signals.push(`known bot actor: ${actor}`);
     return { confidence: "confirmed", signals };
   }
-  const allText = [...commitMessages, prBody ?? ""].join("\n");
+  const allText = [...commitMessages, ...bodyTexts].join("\n");
   for (const sig of AGENT_COMMIT_SIGNATURES) {
     if (allText.includes(sig)) {
       signals.push(`commit/body signature: "${sig}"`);
     }
   }
-  if (prBody) {
-    for (const marker of PR_BODY_MARKERS) {
-      if (prBody.includes(marker)) {
-        signals.push(`PR body marker: "${marker}"`);
-      }
+  for (const marker of PR_BODY_MARKERS) {
+    if (bodyTexts.some((body) => body.includes(marker))) {
+      signals.push(`body marker: "${marker}"`);
     }
-    if (BOT_CO_AUTHOR_PATTERN.test(prBody)) {
-      signals.push("PR body co-author [bot] pattern");
-    }
+  }
+  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+    signals.push("body co-author [bot] pattern");
   }
   if (signals.length > 0) {
     return { confidence: "likely", signals };
@@ -34297,6 +34304,7 @@ async function run() {
     let prBody;
     let issueTitle;
     let issueBody;
+    let commentBody;
     let labels = [];
     let issueNumber;
     let eventType;
@@ -34345,7 +34353,17 @@ async function run() {
       eventType = `issue_comment.${commentAction}`;
       const comment = payload.comment;
       actor = comment?.user?.login || actor;
+      commentBody = comment?.body ?? void 0;
       labels = (issue2.labels ?? []).map((l) => l.name);
+      const targetTitle = issue2.title ?? void 0;
+      const targetBody = issue2.body ?? void 0;
+      if (issue2.pull_request) {
+        prTitle = targetTitle;
+        prBody = targetBody;
+      } else {
+        issueTitle = targetTitle;
+        issueBody = targetBody;
+      }
     } else if (eventName === "pull_request_review") {
       const pr = payload.pull_request;
       if (!pr) throw new Error("Missing pull_request payload for review");
@@ -34401,6 +34419,7 @@ async function run() {
       actor,
       prTitle: prTitle ?? issueTitle,
       prBody: prBody ?? issueBody,
+      commentBody,
       labels,
       policy
     });
@@ -34497,6 +34516,10 @@ async function applyLabels(octokit, owner, repo, issueNumber, labels) {
   });
 }
 run();
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  run
+});
 /*! Bundled license information:
 
 undici/lib/web/fetch/body.js:

@@ -46,6 +46,8 @@ semantic versioning.
   configuration.
 - `issue_title` and `issue_body` rule conditions now evaluate against issue
   metadata instead of being silently ignored.
+- Issue comments now preserve whether their target is a pull request or issue,
+  and their bodies participate in agent detection.
 
 ## [0.1.0] - 2026-07-28
 
