@@ -5,9 +5,25 @@ Action from the same versioned commit. A release is complete only when the npm
 artifacts, GitHub Release, immutable semantic-version tag, and moving stable
 major tag are all independently verifiable.
 
-## Trust model
+## Integration status
 
-The `release.yml` workflow runs only for semantic-version-shaped tags. It uses
+The tested release entry points in `scripts/` are ready, but the current
+`release.yml` workflow does not invoke them. Repository policy hard-blocks
+agent-authored workflow changes. A human maintainer must make and review the
+workflow integration before pushing the first release tag:
+
+1. narrow the tag trigger so moving major tags do not start releases;
+2. disable package-manager caching for the release job;
+3. replace the three unconditional publish commands with
+   `node scripts/publish-packages.mjs`;
+4. after GitHub Release creation, run `node scripts/update-major-tag.mjs`.
+
+Until those four changes are live on `main`, the release workflow is not
+idempotent and no release tag should be pushed.
+
+## Target trust model
+
+The integrated `release.yml` workflow runs only for semantic-version-shaped tags. It uses
 the GitHub `release` environment and npm trusted publishing, with
 `id-token: write` and no long-lived npm write token.
 
@@ -65,8 +81,8 @@ been published. An npm maintainer must perform this once for each package:
 5. Disallow traditional write tokens after the trusted publishers are proven.
 6. Confirm each package's repository, license, version, and provenance on npm.
 
-Do not push the public release tag until all three ownership records and trusted
-publishers exist. Track the one-time work in
+Do not push the public release tag until the workflow integration, all three
+ownership records, and trusted publishers exist. Track the one-time work in
 [issue #7](https://github.com/streamentry/AGENTOWNERS/issues/7).
 
 ## Normal release

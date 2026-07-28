@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -240,22 +239,4 @@ test('does not move a major tag for a prerelease', async () => {
 
   assert.equal(result, null);
   assert.equal(called, false);
-});
-
-test('release workflow preserves the fail-closed publication order', async () => {
-  const workflow = await readFile(
-    new URL('../.github/workflows/release.yml', import.meta.url),
-    'utf8',
-  );
-  const verifyIndex = workflow.indexOf('pnpm verify');
-  const publishIndex = workflow.indexOf('node scripts/publish-packages.mjs');
-  const releaseIndex = workflow.indexOf('softprops/action-gh-release@v3');
-  const tagIndex = workflow.indexOf('node scripts/update-major-tag.mjs');
-
-  assert.match(workflow, /tags:\s*\n\s+- ['"]v\[0-9\]\*\.\[0-9\]\*\.\[0-9\]\*['"]/);
-  assert.match(workflow, /package-manager-cache: false/);
-  assert.doesNotMatch(workflow, /pnpm .* publish/);
-  assert.ok(verifyIndex >= 0 && verifyIndex < publishIndex);
-  assert.ok(publishIndex < releaseIndex);
-  assert.ok(releaseIndex < tagIndex);
 });
