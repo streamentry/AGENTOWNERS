@@ -24,6 +24,10 @@ function stableHash(value: string): string {
   return hash.toString(16).padStart(16, '0');
 }
 
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function ruleId(rule: MatchedRule): string {
   return `AGENTOWNERS/${stableHash(rule.name)}`;
 }
@@ -42,7 +46,11 @@ function artifactUri(file: string): string | undefined {
   if (segments.some((segment) => segment === '..' || segment === '.' || segment === '')) {
     return undefined;
   }
-  return segments.map(encodeURIComponent).join('/');
+  try {
+    return segments.map(encodeURIComponent).join('/');
+  } catch {
+    return undefined;
+  }
 }
 
 function location(uri: string): SarifLocation {
@@ -112,9 +120,9 @@ function actionableEntries(decision: Decision): RuleEntry[] {
     entries.push({ id: DEFAULT_RULE_ID, rule: syntheticRule(decision) });
   }
   return entries.sort((left, right) => {
-    const idOrder = left.id.localeCompare(right.id);
+    const idOrder = compareText(left.id, right.id);
     if (idOrder !== 0) return idOrder;
-    return left.rule.reason.localeCompare(right.rule.reason);
+    return compareText(left.rule.reason, right.rule.reason);
   });
 }
 
@@ -126,11 +134,11 @@ export function renderSarif(decision: Decision): SarifLog {
       ruleResults(decision, entry, entry.rule.effect === 'block' ? 'error' : 'warning'),
     )
     .sort((left, right) => {
-      const idOrder = left.ruleId.localeCompare(right.ruleId);
+      const idOrder = compareText(left.ruleId, right.ruleId);
       if (idOrder !== 0) return idOrder;
       const leftUri = left.locations?.[0].physicalLocation.artifactLocation.uri ?? '';
       const rightUri = right.locations?.[0].physicalLocation.artifactLocation.uri ?? '';
-      return leftUri.localeCompare(rightUri);
+      return compareText(leftUri, rightUri);
     });
 
   return {

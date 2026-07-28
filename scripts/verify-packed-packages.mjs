@@ -55,7 +55,7 @@ try {
     process.execPath,
     [
       '-e',
-      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function') process.exit(1)",
+      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -64,7 +64,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "import { evaluatePolicy,parsePolicyFixtureSuite,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function') process.exit(1)",
+      "import { evaluatePolicy,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -113,6 +113,34 @@ try {
     selfCheck.decision !== 'allow'
   ) {
     throw new Error('Packed CLI self-check returned an unexpected contract');
+  }
+
+  const sarifResult = JSON.parse(
+    run(
+      cliPath,
+      [
+        'check',
+        '--policy',
+        '.github/AGENTOWNERS.yml',
+        '--base',
+        'HEAD~1',
+        '--head',
+        'HEAD',
+        '--actor',
+        'package-verifier',
+        '--output',
+        'sarif',
+      ],
+      fixtureDirectory,
+    ),
+  );
+  if (
+    sarifResult.$schema !== 'https://json.schemastore.org/sarif-2.1.0.json' ||
+    sarifResult.version !== '2.1.0' ||
+    sarifResult.runs?.[0]?.properties?.decision !== 'allow' ||
+    sarifResult.runs?.[0]?.results?.length !== 0
+  ) {
+    throw new Error('Packed CLI SARIF output returned an unexpected contract');
   }
 
   await writeFile(

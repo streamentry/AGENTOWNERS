@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderSarif } from '../src/sarif.js';
 import type { Decision } from '../src/types.js';
 
@@ -178,6 +178,7 @@ describe('renderSarif', () => {
               'C:\\secret.txt',
               'src\\file.ts',
               'src/./file.ts',
+              'src/\ud800.ts',
             ],
           },
         ],
@@ -186,6 +187,39 @@ describe('renderSarif', () => {
 
     expect(output.runs[0].results).toHaveLength(1);
     expect(output.runs[0].results[0].locations).toBeUndefined();
+  });
+
+  it('does not depend on host-locale collation', () => {
+    const localeCompare = vi
+      .spyOn(String.prototype, 'localeCompare')
+      .mockImplementation(() => {
+        throw new Error('host locale must not affect SARIF ordering');
+      });
+
+    try {
+      expect(() =>
+        renderSarif(
+          decision({
+            matchedRules: [
+              {
+                name: 'Rule B',
+                effect: 'require_approval',
+                reason: 'B.',
+                matchedFiles: ['z.ts', 'a.ts'],
+              },
+              {
+                name: 'Rule A',
+                effect: 'require_approval',
+                reason: 'A.',
+                matchedFiles: ['b.ts'],
+              },
+            ],
+          }),
+        ),
+      ).not.toThrow();
+    } finally {
+      localeCompare.mockRestore();
+    }
   });
 
   it('sorts rules and files so input ordering does not change output', () => {
