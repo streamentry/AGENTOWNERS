@@ -1,0 +1,101 @@
+name: Implementation task
+description: Turn a bounded, reviewable problem into an implementation-ready issue
+title: "task: "
+labels:
+  - help wanted
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for work with a known contract. If the problem or
+        solution is still exploratory, open a Design discussion instead.
+        Never include secrets, private repository content, or live credentials.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Concrete problem and evidence
+      description: Describe the observed failure or missing capability and link reproducible evidence.
+      placeholder: |
+        Current behavior:
+        Expected behavior:
+        Evidence (test, command, or public report):
+    validations:
+      required: true
+
+  - type: textarea
+    id: invariant
+    attributes:
+      label: Invariant and user-visible contract
+      description: State what must remain true and the exact inputs, outputs, or decisions this task changes.
+      placeholder: "Given ..., the repository must ... because ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Exact scope
+      description: List the files or modules that may change and name adjacent surfaces that must remain untouched.
+      placeholder: |
+        In scope:
+        Out of scope:
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance evidence
+      description: List observable outcomes, focused tests or fixtures, and the repository gate that proves completion.
+      placeholder: |
+        - [ ] Focused test or fixture:
+        - [ ] Mutation or counterexample proof:
+        - [ ] Full verification command:
+        - [ ] Documentation or generated-artifact update:
+    validations:
+      required: true
+
+  - type: textarea
+    id: disconfirming
+    attributes:
+      label: Cheapest disconfirming test
+      description: Name the smallest test or observation that could prove this task unnecessary or incorrectly scoped.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: review-lane
+    attributes:
+      label: Review lane
+      description: Choose the narrowest review queue. Labels route attention; they do not replace human approval.
+      options:
+        - documentation
+        - core-review
+        - security-review
+        - dependency-review
+        - governance
+    validations:
+      required: true
+
+  - type: input
+    id: overlap
+    attributes:
+      label: Related issue, pull request, or discussion
+      description: Link related work, or write "none found" after searching all open and recently merged work.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope-check
+    attributes:
+      label: Safety and scope checks
+      options:
+        - label: This task does not require a database, SaaS dashboard, auto-merge, or administrative permissions.
+          required: true
+        - label: The proposed change preserves block > require_approval > allow and fail-closed defaults.
+          required: true
+        - label: I separated confirmed evidence from inference or speculation.
+          required: true
+        - label: I searched existing issues, pull requests, discussions, and the roadmap.
+          required: true

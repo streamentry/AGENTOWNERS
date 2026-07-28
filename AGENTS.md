@@ -108,6 +108,8 @@ docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/
   ideas.yml           — evidence-first feature proposal intake
+.github/ISSUE_TEMPLATE/
+  task.yml            — implementation-ready task intake with scope and evidence gates
 
 CONTRIBUTING.md       — contribution lanes, review contract, and required evidence matrix
 SKILL.md              — compact execution workflow for compatible coding agents

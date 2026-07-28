@@ -6,7 +6,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
 # Contribute to AGENTOWNERS
 
 1. Read `AGENTS.md`, the nearest package `AGENTS.md`, and the relevant spec.
-2. Refresh `origin/main`; inspect open and recently merged work for overlap.
+2. Refresh `origin/main`; inspect open and recently merged work for overlap. If
+   a bounded task does not exist, use the repository's implementation task form;
+   use Discussions for proposals whose contract is not yet falsifiable.
 3. State the invariant, expected behavior, and any distinct value retained from
    related contributions.
 4. Use the contribution evidence matrix in `CONTRIBUTING.md` to select the
