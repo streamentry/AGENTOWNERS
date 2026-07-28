@@ -34384,6 +34384,13 @@ function parseActionMode(rawMode) {
     `Invalid mode "${mode}". Expected one of: ${ACTION_MODES.join(", ")}.`
   );
 }
+function parseBooleanInput(rawValue, name, defaultValue) {
+  const value = rawValue.trim();
+  if (!value) return defaultValue;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  throw new Error(`Invalid ${name} input. Expected "true" or "false".`);
+}
 function requireGitHubToken(environmentToken, inputToken) {
   const token = environmentToken ?? inputToken;
   if (!token) {
@@ -34422,9 +34429,13 @@ async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
     const mode = parseActionMode(getInput("mode"));
-    const failOnBlock = getInput("fail-on-block") !== "false";
-    const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
-    const addLabels = getInput("add-labels") !== "false";
+    const failOnBlock = parseBooleanInput(getInput("fail-on-block"), "fail-on-block", true);
+    const failOnRequireApproval = parseBooleanInput(
+      getInput("fail-on-require-approval"),
+      "fail-on-require-approval",
+      false
+    );
+    const addLabels = parseBooleanInput(getInput("add-labels"), "add-labels", true);
     const knownAgentActorsRaw = getInput("known-agent-actors");
     const knownAgentActors = knownAgentActorsRaw ? knownAgentActorsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
     const token = requireGitHubToken(process.env["GITHUB_TOKEN"], getInput("github-token"));

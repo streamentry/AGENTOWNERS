@@ -13,6 +13,14 @@ export function parseActionMode(rawMode: string): ActionMode {
   );
 }
 
+export function parseBooleanInput(rawValue: string, name: string, defaultValue: boolean): boolean {
+  const value = rawValue.trim();
+  if (!value) return defaultValue;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  throw new Error(`Invalid ${name} input. Expected "true" or "false".`);
+}
+
 export function requireGitHubToken(
   environmentToken: string | undefined,
   inputToken: string,

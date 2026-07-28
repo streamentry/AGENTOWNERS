@@ -60,5 +60,5 @@ and distinct from issue/comment metadata. Pass the core detector's
 `identityTrust` into audit output so reviewers can distinguish authenticated
 actors from spoofable commit, label, title, and body evidence.
 
-Action inputs must fail closed: an unknown `mode` is an error, never a silent
-no-op that bypasses comments or enforcement.
+Action inputs must fail closed: an unknown `mode` or boolean value is an error,
+never a silent no-op that bypasses comments or enforcement.

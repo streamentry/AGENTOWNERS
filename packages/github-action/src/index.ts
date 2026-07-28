@@ -16,7 +16,7 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
-import { parseActionMode, requireGitHubToken } from './config.js';
+import { parseActionMode, parseBooleanInput, requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
 export async function run(): Promise<void> {
@@ -24,9 +24,13 @@ export async function run(): Promise<void> {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
     const mode = parseActionMode(core.getInput('mode'));
-    const failOnBlock = core.getInput('fail-on-block') !== 'false';
-    const failOnRequireApproval = core.getInput('fail-on-require-approval') === 'true';
-    const addLabels = core.getInput('add-labels') !== 'false';
+    const failOnBlock = parseBooleanInput(core.getInput('fail-on-block'), 'fail-on-block', true);
+    const failOnRequireApproval = parseBooleanInput(
+      core.getInput('fail-on-require-approval'),
+      'fail-on-require-approval',
+      false,
+    );
+    const addLabels = parseBooleanInput(core.getInput('add-labels'), 'add-labels', true);
     const knownAgentActorsRaw = core.getInput('known-agent-actors');
     const knownAgentActors = knownAgentActorsRaw
       ? knownAgentActorsRaw
