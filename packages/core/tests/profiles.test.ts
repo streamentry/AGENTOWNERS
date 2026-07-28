@@ -1,13 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import * as yaml from 'js-yaml';
-import { PROFILES, getProfile } from '../src/profiles.js';
+import { PROFILE_NAMES, PROFILES, getProfile } from '../src/profiles.js';
 import { parsePolicy } from '../src/schema.js';
 
 describe('PROFILES', () => {
-  it('exports minimal, strict-oss, and security-sensitive profiles', () => {
+  it('exports every documented starter profile', () => {
     expect(PROFILES).toHaveProperty('minimal');
     expect(PROFILES).toHaveProperty('strict-oss');
     expect(PROFILES).toHaveProperty('security-sensitive');
+    expect(PROFILES).toHaveProperty('monorepo');
+    expect(PROFILES).toHaveProperty('dependency-bots');
+  });
+
+  it('publishes profile names from the same source used by the CLI', () => {
+    expect(PROFILE_NAMES).toEqual([
+      'minimal',
+      'strict-oss',
+      'security-sensitive',
+      'monorepo',
+      'dependency-bots',
+    ]);
   });
 
   for (const [name, yamlStr] of Object.entries(PROFILES)) {
@@ -25,10 +37,14 @@ describe('PROFILES', () => {
       expect(parsed.version).toBe(1);
     });
 
-    it(`profile "${name}" has at least one rule`, () => {
-      const parsed = yaml.load(yamlStr) as { rules?: unknown[] };
-      expect(Array.isArray(parsed.rules)).toBe(true);
-      expect((parsed.rules ?? []).length).toBeGreaterThan(0);
+    it(`profile "${name}" has at least one enforcement rule`, () => {
+      const parsed = yaml.load(yamlStr) as {
+        agents?: Record<string, unknown>;
+        rules?: unknown[];
+      };
+      const hasRules = Array.isArray(parsed.rules) && parsed.rules.length > 0;
+      const hasAgentRules = parsed.agents !== undefined && Object.keys(parsed.agents).length > 0;
+      expect(hasRules || hasAgentRules).toBe(true);
     });
 
     it(`profile "${name}" has defaults`, () => {
@@ -58,21 +74,27 @@ describe('getProfile', () => {
   });
 
   it('minimal profile allows docs-only changes', () => {
-    const parsed = yaml.load(getProfile('minimal')!) as { rules?: Array<{ name: string; effect: string }> };
+    const parsed = yaml.load(getProfile('minimal')!) as {
+      rules?: Array<{ name: string; effect: string }>;
+    };
     const docsRule = parsed.rules?.find((r) => r.name === 'Allow docs-only changes');
     expect(docsRule).toBeDefined();
     expect(docsRule?.effect).toBe('allow');
   });
 
   it('strict-oss profile blocks sensitive paths', () => {
-    const parsed = yaml.load(getProfile('strict-oss')!) as { rules?: Array<{ name: string; effect: string }> };
+    const parsed = yaml.load(getProfile('strict-oss')!) as {
+      rules?: Array<{ name: string; effect: string }>;
+    };
     const sensitiveRule = parsed.rules?.find((r) => r.name === 'Block sensitive paths');
     expect(sensitiveRule).toBeDefined();
     expect(sensitiveRule?.effect).toBe('block');
   });
 
   it('security-sensitive profile blocks unknown agents', () => {
-    const parsed = yaml.load(getProfile('security-sensitive')!) as { rules?: Array<{ name: string; effect: string }> };
+    const parsed = yaml.load(getProfile('security-sensitive')!) as {
+      rules?: Array<{ name: string; effect: string }>;
+    };
     const blockUnknown = parsed.rules?.find((r) => r.name === 'Block unknown agents');
     expect(blockUnknown).toBeDefined();
     expect(blockUnknown?.effect).toBe('block');
@@ -83,5 +105,23 @@ describe('getProfile', () => {
       defaults?: { unknown_agent?: string };
     };
     expect(parsed.defaults?.unknown_agent).toBe('block');
+  });
+
+  it('monorepo profile routes core changes to named reviewers', () => {
+    const parsed = yaml.load(getProfile('monorepo')!) as {
+      rules?: Array<{ name: string; reviewers?: string[] }>;
+    };
+    const coreRule = parsed.rules?.find(
+      (rule) => rule.name === 'Require approval for packages/core changes',
+    );
+    expect(coreRule?.reviewers).toEqual(['@core-maintainers']);
+  });
+
+  it('dependency-bots profile recognizes both supported bot actors', () => {
+    const parsed = yaml.load(getProfile('dependency-bots')!) as {
+      agents?: Record<string, { match?: { actors?: string[] } }>;
+    };
+    expect(parsed.agents?.dependabot.match?.actors).toEqual(['dependabot[bot]']);
+    expect(parsed.agents?.renovate.match?.actors).toEqual(['renovate[bot]']);
   });
 });

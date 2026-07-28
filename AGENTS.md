@@ -46,7 +46,7 @@ packages/core/src/
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
   sarif.ts       — deterministic SARIF 2.1.0 rendering
-  profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
+  profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive, monorepo, dependency-bots)
   index.ts       — barrel export (all public API)
 
 packages/core/tests/
