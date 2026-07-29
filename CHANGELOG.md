@@ -7,6 +7,8 @@ semantic versioning.
 
 ### Added
 
+- A deterministic `pnpm demo` command that builds the production workspace and
+  runs the strict-OSS policy fixtures through the public CLI.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a

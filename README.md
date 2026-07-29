@@ -81,6 +81,32 @@ node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
 artifact smoke tests.
 
+### One-command proof
+
+To see the production CLI and policy engine enforce a real policy contract,
+run:
+
+```bash
+pnpm demo
+```
+
+The deterministic, network-free demo builds the workspace and executes the
+strict-OSS fixture suite. It proves three distinct outcomes from the same
+public pipeline:
+
+```text
+PASS documentation requires approval
+PASS workflow changes are blocked
+PASS dependency changes require approval
+
+3 passed, 0 failed
+```
+
+This is a product proof, not a synthetic shortcut: the command invokes the
+production CLI entry point, which loads the example policy and runs the same
+core evaluator used by the GitHub Action. It makes no GitHub API calls and
+requires no hosted service after dependencies are installed.
+
 ## Configure a policy
 
 Add `.github/AGENTOWNERS.yml`:
