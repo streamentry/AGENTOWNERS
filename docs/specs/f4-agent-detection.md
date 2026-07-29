@@ -39,19 +39,20 @@ PR body contains known agent-specific footers or summaries:
 - `<!-- agentowners` (our own marker)
 - `Co-authored-by:.*\[bot\]`
 
-### 5. Labels (possible)
+### 5. Configured body and title patterns (from policy, likely)
+Pull request, issue, or comment body matches
+`agents[name].match.bodyPatterns`; pull request titles match
+`prTitlePatterns`. These values come from untrusted event content, so a match
+retains the candidate agent at `likely` confidence and cannot authorize an
+otherwise unknown action. Malformed configured regular expressions are ignored
+individually. Detection continues with remaining patterns and falls through
+conservatively if nothing valid matches.
+
+### 6. Labels (possible)
 PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`, or a
 configured `agents[name].match.labels` entry. A configured label records the
 candidate agent name but remains `possible`; labels are mutable repository
 metadata and cannot establish confirmed identity.
-
-### 6. Configured body patterns (from policy)
-Pull request, issue, or comment body matches
-`agents[name].match.bodyPatterns`; pull request titles match
-`prTitlePatterns`.
-Malformed configured regular expressions are ignored individually. Detection
-continues with remaining patterns and falls through conservatively if nothing
-valid matches.
 
 ## Types
 

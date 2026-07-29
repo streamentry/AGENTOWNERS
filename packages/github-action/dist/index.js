@@ -33407,6 +33407,24 @@ function matchesConfiguredPattern(value, pattern) {
     return false;
   }
 }
+function matchesAgentContentPolicy(bodyTexts, prTitle, policy) {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
+    const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
+    for (const pattern of bodyPatterns) {
+      if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
+        return { name, signals: [`policy body pattern match: agents.${name}`] };
+      }
+    }
+    for (const pattern of titlePatterns) {
+      if (matchesConfiguredPattern(prTitle, pattern)) {
+        return { name, signals: [`policy title pattern match: agents.${name}`] };
+      }
+    }
+  }
+  return null;
+}
 function detectAgent(input) {
   const {
     actor,
@@ -33433,24 +33451,6 @@ function detectAgent(input) {
       }
       return { agentName: matchedAgent, confidence: "confirmed", signals };
     }
-    if (policy.agents) {
-      for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-        const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
-        const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
-        for (const pattern of bodyPatterns) {
-          if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
-            signals.push(`policy body pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
-          }
-        }
-        for (const pattern of titlePatterns) {
-          if (matchesConfiguredPattern(prTitle, pattern)) {
-            signals.push(`policy title pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
-          }
-        }
-      }
-    }
   }
   if (isKnownBotActor(actor)) {
     signals.push(`known bot actor: ${actor}`);
@@ -33471,12 +33471,18 @@ function detectAgent(input) {
     signals.push("body co-author [bot] pattern");
   }
   if (policy) {
+    const contentMatch = matchesAgentContentPolicy(bodyTexts, prTitle, policy);
     const commitMatch = matchesAgentCommitPolicy(commitEmails, commitNames, policy);
-    if (commitMatch) {
+    const matchedAgent = contentMatch ?? commitMatch;
+    if (matchedAgent) {
       return {
-        agentName: commitMatch.name,
+        agentName: matchedAgent.name,
         confidence: "likely",
-        signals: [...signals, ...commitMatch.signals]
+        signals: [
+          ...signals,
+          ...contentMatch?.signals ?? [],
+          ...commitMatch?.signals ?? []
+        ]
       };
     }
   }

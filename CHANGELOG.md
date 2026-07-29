@@ -59,6 +59,9 @@ semantic versioning.
 - Schema-supported commit email/name matches now flow through the CLI Git range
   adapter and GitHub Action PR metadata as forgeable `likely` evidence; they
   cannot authorize an otherwise unknown action.
+- Configured body/title detection now remains `likely` and no longer outranks
+  confirmed built-in bot actors, preventing contributor-controlled text from
+  becoming an implicit authorization signal.
 
 ### Changed
 

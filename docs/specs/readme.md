@@ -422,6 +422,9 @@ Detection signals:
    - tool-specific footer
    - configured body patterns
 
+   Configured body and title patterns remain `likely` evidence because the
+   matching event content is controlled by the contributor.
+
 4. Labels:
 
    - `ai-generated`

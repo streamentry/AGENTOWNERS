@@ -30,6 +30,9 @@ Configured agent labels are candidate identity signals, not confirmed
 identity. Keep `agents[name].match.labels` wired through `detectAgent()` while
 preserving `possible` confidence so a mutable label cannot authorize an
 otherwise unknown action. Blocking and approval rules may still fail closed.
+The same conservative boundary applies to configured body/title patterns:
+they are `likely`, while explicit actors and built-in verified bot actors are
+the only confirmed identity paths.
 
 ## Diagrams
 
