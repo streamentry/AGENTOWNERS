@@ -34505,6 +34505,18 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
   return loadPolicyText(policyText, `${repositoryPath} at trusted ref ${ref}`);
 }
 
+// src/agent-evidence.ts
+function applyKnownAgentActorEvidence(detection, actor, configuredActors) {
+  if (detection.confidence !== "unknown" || !configuredActors.includes(actor)) {
+    return detection;
+  }
+  return {
+    ...detection,
+    confidence: "likely",
+    signals: [...detection.signals, `known-agent-actors input: ${actor}`]
+  };
+}
+
 // src/index.ts
 async function run() {
   try {
@@ -34650,7 +34662,7 @@ async function run() {
       filesClassification,
       reviewState
     });
-    const agentDetection = detectAgent({
+    const detectedAgent = detectAgent({
       actor,
       prTitle,
       prBody,
@@ -34661,10 +34673,7 @@ async function run() {
       labels,
       policy
     });
-    if (knownAgentActors.includes(actor) && agentDetection.confidence === "unknown") {
-      agentDetection.signals.push(`known-agent-actors input: ${actor}`);
-      agentDetection.confidence = "likely";
-    }
+    const agentDetection = applyKnownAgentActorEvidence(detectedAgent, actor, knownAgentActors);
     const decision = evaluatePolicy({
       policy,
       agentDetection,

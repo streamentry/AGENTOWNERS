@@ -47,7 +47,7 @@ inputs:
     description: "Apply suggested labels to PR/issue"
   known-agent-actors:
     required: false
-    description: "Comma-separated list of known agent actor names"
+    description: "Comma-separated actor logins retained as likely evidence; never authorization"
 
 outputs:
   decision:
@@ -87,8 +87,9 @@ runs:
      PR or issue fields
 5. Classify files
 6. Infer actions
-7. Detect agent, retaining commit email/name matches as forgeable `likely`
-   evidence rather than confirmed identity
+7. Detect agent, retaining commit email/name matches and workflow-provided
+   actor hints as forgeable `likely` evidence rather than confirmed identity;
+   workflow input never grants an agent-policy allow path
 8. Evaluate policy
 9. Render verdict
 10. Post/update sticky comment (if mode includes "comment")

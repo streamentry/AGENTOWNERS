@@ -12,6 +12,7 @@ artifact and must be regenerated, never hand-edited.
 - `src/github.ts`: event metadata adapter, including paginated PR commit authors
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
+- `src/agent-evidence.ts`: workflow actor hints retained as forgeable likely evidence
 - `src/config.ts`: fail-closed runtime input validation
 - `tests/config.test.ts`: Action mode and token validation contracts
 - `action.yml`: package-local metadata, kept in parity with root Marketplace
@@ -64,3 +65,5 @@ Marketplace metadata changes must keep the root and package files equivalent
 apart from their explicit distribution identity and bundle paths.
 PR commit email/name matches remain forgeable `likely` evidence; never promote
 them to confirmed identity or bypass the conservative unknown-agent default.
+The `known-agent-actors` workflow input follows the same boundary: it adds only
+`likely` evidence and cannot assign an agent policy name or authorize an allow.

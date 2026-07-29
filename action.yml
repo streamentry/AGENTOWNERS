@@ -34,8 +34,8 @@ inputs:
     default: "true"
   known-agent-actors:
     description: >
-      Comma-separated list of GitHub actor logins to treat as known agents
-      in addition to those configured in the policy file
+      Comma-separated actor logins to retain as likely agent evidence. This
+      workflow input cannot confirm identity or authorize an otherwise unknown action.
     required: false
     default: ""
 

@@ -18,6 +18,7 @@ import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
 import { parseActionMode, requireGitHubToken } from './config.js';
 import { buildPolicyEvidence, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import { applyKnownAgentActorEvidence } from './agent-evidence.js';
 
 export async function run(): Promise<void> {
   try {
@@ -194,9 +195,8 @@ export async function run(): Promise<void> {
       reviewState,
     });
 
-    // 7. Detect agent
-    // Extend policy actors with known-agent-actors input
-    const agentDetection = detectAgent({
+    // 7. Detect agent. Workflow-provided actor hints remain forgeable evidence.
+    const detectedAgent = detectAgent({
       actor,
       prTitle,
       prBody,
@@ -208,11 +208,7 @@ export async function run(): Promise<void> {
       policy,
     });
 
-    // If the actor is in knownAgentActors and not already confirmed, mark as likely
-    if (knownAgentActors.includes(actor) && agentDetection.confidence === 'unknown') {
-      agentDetection.signals.push(`known-agent-actors input: ${actor}`);
-      (agentDetection as { confidence: string }).confidence = 'likely';
-    }
+    const agentDetection = applyKnownAgentActorEvidence(detectedAgent, actor, knownAgentActors);
 
     // 8. Evaluate policy
     const decision = evaluatePolicy({
