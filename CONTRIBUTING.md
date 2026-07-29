@@ -71,6 +71,11 @@ Use the narrowest label that matches the work:
   scoped work with an explicit contract and acceptance criteria.
 - `core-review`: changes that can alter policy decisions. A human maintainer
   must review the decision boundary and mutation evidence.
+- `security-review`: Action implementation or release-control changes. This
+  includes `packages/github-action/src/**`, the committed Action bundle, and
+  publication or release-verification scripts. Include the cheapest
+  security-relevant mutation, run `pnpm verify`, and run `pnpm verify:packages`
+  for release-facing work. Request `@streamentry` review before merge.
 - `dependency-review`: dependency or release-supply-chain changes. Packed
   consumer verification is mandatory.
 - `needs-rebase`: useful work based on stale `main`. Rebase before review
