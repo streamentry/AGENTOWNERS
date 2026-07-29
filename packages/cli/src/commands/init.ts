@@ -23,6 +23,7 @@ export function registerInit(program: Command): void {
           `Error: unknown profile "${profile}". Valid profiles: minimal, strict-oss, security-sensitive\n`,
         )
         process.exit(1)
+        return
       }
 
       const outputPath = path.resolve(process.cwd(), output)

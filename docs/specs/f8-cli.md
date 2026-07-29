@@ -30,6 +30,7 @@ Behavior:
 - Create output directory if needed
 - Write profile content from `packages/core/src/profiles.ts`
 - Print success message with path
+- An unknown profile exits before checking or writing the output path
 
 ### `agentowners validate [path]`
 

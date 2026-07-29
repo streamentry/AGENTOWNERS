@@ -36,6 +36,8 @@ semantic versioning.
 
 ### Fixed
 
+- `agentowners init` now stops after an unknown profile instead of continuing
+  into filesystem operations with invalid profile content.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
