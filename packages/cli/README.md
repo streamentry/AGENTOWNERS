@@ -40,6 +40,12 @@ agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
+
+# Verify an Action audit artifact before explaining it
+agentowners explain --decision agentowners-decision.json --sha256 <64-char-hex>
+
+# Emit the same explanation as a versioned machine-readable contract
+agentowners explain --decision agentowners-decision.json --output json
 ```
 
 Git refs are passed directly to Git as arguments, never interpolated into a
@@ -59,6 +65,14 @@ versioned machine result. See the
 
 SARIF output is deterministic and contains only non-allow policy results.
 Approval decisions are warnings and blocked decisions are errors.
+
+`explain --sha256` verifies the exact input bytes before parsing an Action audit
+artifact. A malformed digest or mismatch exits nonzero without rendering a
+decision; successful output records the normalized digest that was verified.
+Use `--output json` when an agent or CI consumer needs structured provenance:
+the result includes `schemaVersion: 1`, `inputType`, the normalized `decision`,
+the original `audit` record when present, and `verifiedSha256` after successful
+byte verification.
 
 See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
 and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

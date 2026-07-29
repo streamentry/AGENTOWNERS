@@ -7,6 +7,21 @@ semantic versioning.
 
 ### Added
 
+- A stable `audit-artifact` GitHub Action output and upload recipe so
+  policy evidence survives blocked runs.
+- A companion `audit-artifact-sha256` output for downstream verification of
+  retained audit bytes.
+- `agentowners explain --sha256` verification for Action audit artifacts before
+  rendering their decisions.
+- Versioned JSON explanations from `agentowners explain --output json`, with
+  normalized decisions, audit provenance, and verified digests for agents and
+  CI consumers.
+- Successful digest verification is now explicit in CLI output for durable
+  audit transcripts.
+- `agentowners explain` support for versioned Action audit artifacts, with
+  provenance context and strict shape validation.
+- Action audit artifacts now preserve decision labels for faithful downstream
+  explanation and reconciliation; legacy v1 artifacts remain readable.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a
@@ -36,6 +51,8 @@ semantic versioning.
 
 ### Fixed
 
+- The Action audit artifact now uses a fixed workspace-relative filename so
+  environment-controlled paths cannot reach the file-write sink.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

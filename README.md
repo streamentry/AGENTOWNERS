@@ -151,15 +151,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: streamentry/AGENTOWNERS@v0
+      - id: agentowners
+        uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: '.github/AGENTOWNERS.yml'
           mode: 'both'
           fail-on-block: 'true'
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentowners-decision
+          path: ${{ steps.agentowners.outputs.audit-artifact }}
+          if-no-files-found: error
 ```
 
 Open an agent-generated PR and inspect the verdict before switching from
-observation to enforcement.
+observation to enforcement. The upload step retains the versioned audit record
+even when policy enforcement fails the Action. The companion
+`audit-artifact-sha256` output lets a later consumer verify the uploaded bytes.
 
 ---
 
@@ -224,6 +233,16 @@ agentowners test \
   --policy .github/AGENTOWNERS.yml \
   --fixtures .agentowners/fixtures.yml
 
+# Explain CLI decisions or Action audit artifacts
+agentowners explain --decision agentowners-decision.json
+
+# Verify an Action artifact before explaining it
+agentowners explain --decision agentowners-decision.json \
+  --sha256 "$AGENTOWNERS_AUDIT_SHA256"
+
+# Emit a versioned machine-readable explanation for an agent or CI consumer
+agentowners explain --decision agentowners-decision.json --output json
+
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
 ```
@@ -237,6 +256,18 @@ modifies the repository.
 classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
+
+`explain` accepts either `check --output json` output or the Action's
+`agentowners-decision.json` audit artifact. Audit explanations retain the
+actor, repository, event, timestamp, detection confidence, and changed-file
+count before rendering the policy decision.
+Current artifacts also preserve decision labels for downstream reconciliation;
+legacy v1 artifacts without labels remain readable. Pass the Action's
+`audit-artifact-sha256` output with `--sha256` to verify the exact file bytes
+before rendering; successful output records the normalized digest that was
+verified. Use `--output json` for a versioned machine-readable explanation
+(`schemaVersion: 1`) carrying the normalized decision, audit provenance, and
+verified digest without requiring agents to parse terminal formatting.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial

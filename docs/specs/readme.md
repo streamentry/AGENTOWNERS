@@ -732,6 +732,10 @@ outputs:
     description: 'low | medium | high | critical'
   matched-rules:
     description: 'JSON array of matched rules'
+  audit-artifact:
+    description: 'Absolute path to the versioned agentowners-decision.json audit artifact'
+  audit-artifact-sha256:
+    description: 'SHA-256 digest of the exact audit artifact bytes written by the Action'
 ```
 
 Behavior:
@@ -833,6 +837,10 @@ Explains why a decision happened.
 ```text
 agentowners explain --decision decision.json
 ```
+
+The input may be raw `check --output json` Decision data or the Action's
+versioned `agentowners-decision.json` audit record. Unknown or malformed JSON
+fails with a bounded diagnostic rather than rendering undefined fields.
 
 ### 17.5 `agentowners fingerprint`
 
@@ -1133,7 +1141,8 @@ Schema:
       "reason": "Auth and permission changes require human review."
     }
   ],
-  "requiredReviewers": ["@maintainers/security"]
+  "requiredReviewers": ["@maintainers/security"],
+  "labelsToApply": ["ai-agent", "needs-human-review", "risk-high"]
 }
 ```
 

@@ -13,6 +13,8 @@ artifact and must be regenerated, never hand-edited.
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
+- Audit writes use a fixed workspace-relative filename; environment-controlled
+  paths must never reach the file sink.
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 
@@ -31,6 +33,7 @@ flowchart LR
   Decision --> Comment
   Decision --> Labels
   Decision --> Outputs
+  Decision --> AuditArtifact[Versioned audit artifact + SHA-256]
   Decision --> Status
 ```
 
@@ -48,7 +51,7 @@ sequenceDiagram
   Action->>Core: comment body as detection evidence
   Core-->>Action: decision
   Action->>GitHub: verdict and labels
-  Action-->>Runner: outputs and status
+  Action-->>Runner: outputs, hashed audit artifact, and status
 ```
 
 ## Verification

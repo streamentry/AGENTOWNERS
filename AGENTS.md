@@ -73,7 +73,7 @@ packages/cli/src/
   commands/init.ts   — agentowners init
   commands/validate.ts — agentowners validate
   commands/check.ts  — agentowners check
-  commands/explain.ts — agentowners explain
+  commands/explain.ts — agentowners explain for Decision and Action audit JSON
   commands/fingerprint.ts — agentowners fingerprint
   commands/self-check.ts — versioned pre-PR machine contract
   commands/test.ts  — portable policy fixture runner

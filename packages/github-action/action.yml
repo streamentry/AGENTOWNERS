@@ -51,6 +51,10 @@ outputs:
     description: "Risk level: low | medium | high | critical"
   matched-rules:
     description: JSON array of matched rule names
+  audit-artifact:
+    description: Absolute path to the versioned agentowners-decision.json audit artifact
+  audit-artifact-sha256:
+    description: SHA-256 digest of the exact audit artifact bytes written by the Action
 
 runs:
   using: node24

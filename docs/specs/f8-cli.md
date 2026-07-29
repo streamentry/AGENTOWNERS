@@ -87,13 +87,26 @@ Exit codes:
 
 ### `agentowners explain`
 
-Explains a decision from a JSON file.
+Explains a decision from a JSON file. The input may be raw `check --output
+json` Decision data or the versioned `agentowners-decision.json` Action audit
+record. The command validates the recognized shape before rendering and fails
+with a bounded diagnostic for malformed or unknown JSON.
 
 Options:
 
 - `--decision <path>` — path to decision JSON file
+- `--output <format>` — `text` (default) or versioned `json`
+- `--sha256 <digest>` — verify the input file's lowercase or uppercase
+  64-character SHA-256 digest before parsing
 
-Output: Human-readable explanation of how the decision was reached.
+Text output is a human-readable explanation of how the decision was reached.
+Audit records additionally show timestamp, actor, repository, event, detection
+confidence, and changed-file count. JSON output is a versioned object with
+`schemaVersion: 1`, `inputType` (`decision` or `audit`), the normalized
+`decision`, and the original `audit` record when present. When `--sha256`
+verifies the input bytes, JSON includes `verifiedSha256` and text output prints
+the normalized lowercase digest. A digest mismatch or malformed digest
+produces a bounded diagnostic and exit code `1` without rendering a decision.
 
 ### `agentowners fingerprint`
 
