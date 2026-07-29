@@ -43,6 +43,8 @@ semantic versioning.
   echoing source snippets that may contain secrets.
 - CLI validation diagnostics redact received values from schema errors while
   preserving field paths and actionable type guidance.
+- Human-readable fixture-test output now escapes control characters in case
+  names, preventing ANSI terminal injection from repository-authored fixtures.
 - SARIF rule identities now preserve distinct matched rules that share a display
   name, preventing audit descriptors from collapsing together.
 - `inferActions()` now reuses the canonical file classifier, preventing

@@ -119,6 +119,18 @@ describe('test command', () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it('escapes control characters in human-readable fixture names', async () => {
+    vi.mocked(runPolicyFixtureSuite).mockReturnValue({
+      ...passingResult,
+      cases: [{ name: 'docs\u001b[31m are allowed', passed: true, failures: [] }],
+    });
+
+    await makeProgram().parseAsync(argumentsFor());
+
+    expect(stdout).toContain('PASS docs\\u001b[31m are allowed');
+    expect(stdout).not.toContain('\u001b');
+  });
+
   it('emits a stable JSON result for machine consumers', async () => {
     await makeProgram().parseAsync(argumentsFor('json'));
 

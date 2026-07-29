@@ -53,6 +53,8 @@ go to stdout, invalid results go to stderr, and unsupported formats fail before
 the policy loader runs. Text diagnostics preserve YAML line and column context
 without echoing malformed policy source snippets. Schema diagnostics must also
 redact received values while retaining field paths.
+Human-readable fixture-test case names must escape control characters; JSON
+output remains structured and relies on JSON escaping.
 
 ```mermaid
 stateDiagram-v2
