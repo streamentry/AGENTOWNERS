@@ -13,6 +13,7 @@ artifact and must be regenerated, never hand-edited.
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
+- `tests/config.test.ts`: Action mode and token validation contracts
 - `action.yml`: package-local metadata, kept in parity with root Marketplace
   metadata except for distribution-specific `author` and `runs.main`
 - `dist/index.js`: committed Node 24 bundle

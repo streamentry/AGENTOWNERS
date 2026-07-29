@@ -76,7 +76,7 @@ runs:
 ## Main Logic (`src/index.ts`)
 
 ```
-1. Get inputs
+1. Get and validate inputs; unsupported `mode` values fail before token or API access
 2. Get GitHub context (event, payload)
 3. Load policy file
 4. Branch on event type:
@@ -131,4 +131,5 @@ decision to the exact policy revision rather than only to the artifact bytes.
 - Never print secret patterns from diff content
 - Treat all PR content as untrusted input
 - Do not execute content from policy as code
+- Reject unsupported `mode` values before creating a GitHub client
 - Use least-privilege permissions

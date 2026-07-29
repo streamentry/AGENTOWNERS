@@ -210,6 +210,10 @@ jobs:
 Open an agent-generated PR and inspect the verdict before switching from
 observation to enforcement.
 
+The Action accepts only `comment`, `check`, `both`, and `dry-run` modes. A
+misspelled mode fails before token or GitHub API access instead of silently
+running with incomplete side effects.
+
 ---
 
 ## Example verdict

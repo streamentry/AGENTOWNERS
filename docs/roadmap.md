@@ -19,6 +19,7 @@ The roadmap is ordered by user risk removed, not feature count.
 - Reusable capability API and CLI surface for adapter integration
 - Deterministic, value-free policy diff evidence for agent and maintainer review
 - Policy-bound Action audit evidence with canonical digest and trusted-ref outputs
+- Fail-closed validation for all documented Action modes
 
 ## Next: explainability and interoperability
 

@@ -88,12 +88,14 @@ packages/cli/tests/
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
   capabilities.test.ts — capability output and denial exit contracts
   policy-diff.test.ts — stable, value-free policy change contracts
+  config.test.ts      — Action mode and token validation contracts
 
 packages/github-action/src/
   index.ts    — main action entry
   github.ts   — GitHub API helpers (PR files, PR metadata)
   comment.ts  — sticky comment upsert (VERDICT_MARKER)
   policy.ts   — trusted policy loading and policy evidence binding
+  config.ts   — fail-closed Action input validation
 
 .github/agents/
   policy-engineer.agent.md — tests-first implementation specialist
@@ -111,6 +113,7 @@ docs/specs/
   f13-policy-fixtures.md — portable executable policy-suite contract
   f14-policy-diff.md — value-free deterministic policy diff contract
   f15-policy-bound-audit.md — policy digest and trusted-ref evidence contract
+  f16-action-mode.md — fail-closed Action mode input contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
 docs/assets/          — maintained documentation and social-preview media

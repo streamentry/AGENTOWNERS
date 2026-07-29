@@ -12,6 +12,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 - `specs/f7-verdict-renderer.md` and `specs/f9-github-action.md`: policy-bound
   audit evidence and Action outputs
 - `specs/f15-policy-bound-audit.md`: versioned policy provenance contract
+- `specs/f16-action-mode.md`: fail-closed Action mode input contract
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
 - `philosophy.md`: durable design principles

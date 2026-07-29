@@ -16,14 +16,14 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
-import { requireGitHubToken } from './config.js';
+import { parseActionMode, requireGitHubToken } from './config.js';
 import { buildPolicyEvidence, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
 export async function run(): Promise<void> {
   try {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
-    const mode = core.getInput('mode') || 'comment';
+    const mode = parseActionMode(core.getInput('mode'));
     const failOnBlock = core.getInput('fail-on-block') !== 'false';
     const failOnRequireApproval = core.getInput('fail-on-require-approval') === 'true';
     const addLabels = core.getInput('add-labels') !== 'false';

@@ -34378,6 +34378,12 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
 }
 
 // src/config.ts
+var ACTION_MODES = ["comment", "check", "both", "dry-run"];
+function parseActionMode(input) {
+  if (input === "") return "comment";
+  if (ACTION_MODES.includes(input)) return input;
+  throw new Error("Invalid mode. Expected one of: comment, check, both, dry-run.");
+}
 function requireGitHubToken(environmentToken, inputToken) {
   const token = environmentToken ?? inputToken;
   if (!token) {
@@ -34418,7 +34424,7 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
-    const mode = getInput("mode") || "comment";
+    const mode = parseActionMode(getInput("mode"));
     const failOnBlock = getInput("fail-on-block") !== "false";
     const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
     const addLabels = getInput("add-labels") !== "false";

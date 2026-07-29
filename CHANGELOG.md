@@ -56,6 +56,8 @@ semantic versioning.
 
 ### Fixed
 
+- GitHub Action mode inputs now fail closed before token or API access when the
+  value is not one of `comment`, `check`, `both`, or `dry-run`.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
