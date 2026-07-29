@@ -19,11 +19,21 @@ import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
+export const ACTION_MODES = ['comment', 'check', 'both', 'dry-run'] as const;
+export type ActionMode = (typeof ACTION_MODES)[number];
+
+export function normalizeActionMode(value: string): ActionMode {
+  if ((ACTION_MODES as readonly string[]).includes(value)) {
+    return value as ActionMode;
+  }
+  throw new Error('Mode must be one of: comment, check, both, dry-run.');
+}
+
 export async function run(): Promise<void> {
   try {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
-    const mode = core.getInput('mode') || 'comment';
+    const mode = normalizeActionMode(core.getInput('mode') || 'comment');
     const failOnBlock = core.getInput('fail-on-block') !== 'false';
     const failOnRequireApproval = core.getInput('fail-on-require-approval') === 'true';
     const addLabels = core.getInput('add-labels') !== 'false';
@@ -253,6 +263,7 @@ export async function run(): Promise<void> {
 
     // 13. Write audit artifact
     const auditRecord = renderAuditJson({
+      timestamp: new Date().toISOString(),
       actor,
       repository: `${owner}/${repo}`,
       event: eventName,

@@ -87,11 +87,10 @@ agents:
 # ── Default policy for agents not matched above ───────────────────────────────
 defaults:
   unknown_agent: require_approval   # allow | require_approval | block
-  allow_docs_only: true             # auto-allow docs-only PRs from any agent
-  require_approval_deps: true       # require approval for dependency changes
-  block_workflow_edits: true        # always block workflow edits from agents
-  block_auth_changes: true          # always block auth/permission changes
-  max_diff_lines: 500               # require approval when diff exceeds this
+  known_agent: require_approval     # allow | require_approval | block
+  docs_only: allow                  # allow | require_approval | block
+  workflows: block                  # allow | require_approval | block
+  secrets: block                    # allow | require_approval | block
 
 # ── Rules ─────────────────────────────────────────────────────────────────────
 # Rules are evaluated top-to-bottom.  The first matching rule wins.
@@ -162,6 +161,4 @@ rules:
 # ── Audit configuration ───────────────────────────────────────────────────────
 audit:
   enabled: true
-  comment: true       # Post a verdict comment on every evaluated PR
-  sticky: true        # Update the existing comment rather than adding a new one
-  label_agent_prs: true  # Add an "agent-pr" label to agent-created PRs
+  output: ".agentowners/audit/decision.json"

@@ -1,0 +1,47 @@
+version: 1
+
+cases:
+  - name: unknown agents are blocked
+    input:
+      event: pull_request.opened
+      actor: unknown-contributor
+      changed_files:
+        - src/app.ts
+    expect:
+      decision: block
+
+  - name: workflow edits are blocked
+    input:
+      event: pull_request.opened
+      actor: github-copilot[bot]
+      changed_files:
+        - .github/workflows/release.yml
+    expect:
+      decision: block
+
+  - name: authentication changes are blocked
+    input:
+      event: pull_request.opened
+      actor: github-copilot[bot]
+      changed_files:
+        - src/auth/session.ts
+    expect:
+      decision: block
+
+  - name: unconfigured agents cannot change tests
+    input:
+      event: pull_request.opened
+      actor: github-copilot[bot]
+      changed_files:
+        - tests/session.test.ts
+    expect:
+      decision: block
+
+  - name: unconfigured agents cannot change documentation
+    input:
+      event: pull_request.opened
+      actor: github-copilot[bot]
+      changed_files:
+        - docs/security-model.md
+    expect:
+      decision: block

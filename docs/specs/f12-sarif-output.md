@@ -36,7 +36,8 @@ or an agent action list, emit an additional `AGENTOWNERS/DEFAULT` result.
 
 - `version` is exactly `2.1.0`.
 - `$schema` is `https://json.schemastore.org/sarif-2.1.0.json`.
-- Rule IDs are opaque deterministic hashes of policy rule names.
+- Rule IDs are opaque deterministic hashes of each matched rule's name, effect,
+  and reason, so distinct rules may safely share a display name.
 - Partial fingerprints bind the rule ID to its repository-relative file.
 - Rules, results, actions, reviewers, and files have deterministic ordering.
 - Output contains no timestamps, random values, commit-specific identifiers, or

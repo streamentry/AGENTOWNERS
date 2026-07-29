@@ -98,12 +98,18 @@ describe('renderSarif', () => {
       }),
     );
 
-    expect(
-      output.runs[0].results.map((result) => [result.message.text, result.level]),
-    ).toEqual([
-      ['Workflow changes are blocked.', 'error'],
-      ['Authentication changes require review.', 'warning'],
-    ]);
+    expect(output.runs[0].results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: { text: 'Workflow changes are blocked.' },
+          level: 'error',
+        }),
+        expect.objectContaining({
+          message: { text: 'Authentication changes require review.' },
+          level: 'warning',
+        }),
+      ]),
+    );
   });
 
   it('represents an agent-action block even when another rule only requires approval', () => {
@@ -149,6 +155,31 @@ describe('renderSarif', () => {
     expect(output.runs[0].results[0].partialFingerprints?.['agentowners/v1']).toMatch(
       /^[0-9a-f]{16}$/,
     );
+  });
+
+  it('preserves distinct rules that happen to share a display name', () => {
+    const output = renderSarif(
+      decision({
+        effect: 'block',
+        matchedRules: [
+          {
+            name: 'Sensitive change',
+            effect: 'require_approval',
+            reason: 'Auth changes require review.',
+          },
+          {
+            name: 'Sensitive change',
+            effect: 'block',
+            reason: 'Workflow changes are blocked.',
+          },
+        ],
+      }),
+    );
+
+    const ids = output.runs[0].tool.driver.rules.map((rule) => rule.id);
+    expect(new Set(ids).size).toBe(2);
+    expect(output.runs[0].results).toHaveLength(2);
+    expect(new Set(output.runs[0].results.map((result) => result.ruleId)).size).toBe(2);
   });
 
   it('emits a synthetic result when a non-allow decision has no matched rule', () => {

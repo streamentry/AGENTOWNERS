@@ -9,7 +9,7 @@ Deterministic classification of changed files into categories used for action in
 ## File Categories (from spec section 19)
 
 ### Docs patterns
-`*.md`, `docs/**`, `*.rst`, `*.adoc`
+`**/*.md`, `docs/**`, `**/*.rst`, `**/*.adoc` (including repository-root files)
 
 ### Tests patterns
 `**/*.test.*`, `**/*.spec.*`, `tests/**`, `__tests__/**`
@@ -67,7 +67,7 @@ export type FilesClassification = {
 ## Functions
 
 ### `classifyFile(filePath: string): FileClassification`
-Classify a single file path against all category patterns using `minimatch`.
+Classify a single file path against all category patterns using `picomatch`.
 
 ### `classifyFiles(filePaths: string[]): FilesClassification`
 Classify a list of changed files. Compute aggregate properties:
@@ -79,13 +79,15 @@ Classify a list of changed files. Compute aggregate properties:
 Scan diff content for secret-like patterns. Return list of matched pattern names (NOT the values). Never include the actual secret value in output — redact with `[REDACTED]`.
 
 ### `matchGlob(pattern: string, filePath: string): boolean`
-Wrapper around `minimatch` with consistent options (`{ dot: true, matchBase: false }`).
+Wrapper around `picomatch` with the consistent `{ dot: true }` option. Patterns
+remain repository-relative; basename matching is not enabled implicitly.
 
 ### `matchGlobs(patterns: string[], filePath: string): boolean`
 Returns true if any pattern matches.
 
 ## Tests (`packages/core/tests/classifier.test.ts`)
 - `.md` file classified as docs
+- nested Markdown, reStructuredText, and AsciiDoc files classified as docs
 - `src/auth/session.ts` classified as auth
 - `.github/workflows/test.yml` classified as workflow
 - `package.json` classified as dependency

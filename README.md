@@ -206,6 +206,9 @@ agentowners init --profile minimal
 # Validate a policy file
 agentowners validate .github/AGENTOWNERS.yml
 
+# Emit a versioned result for CI and agent integrations
+agentowners validate .github/AGENTOWNERS.yml --output json
+
 # Check local diff against policy
 agentowners check --base main --head HEAD
 
@@ -232,6 +235,10 @@ agentowners fingerprint --commit HEAD
 stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
 and a bounded next action. It makes no model or GitHub API calls and never
 modifies the repository.
+
+`validate --output json` returns a versioned success or error document without
+including policy contents or absolute filesystem paths. Human-readable output
+remains the default.
 
 `test` executes a strict, versioned fixture suite through the same detection,
 classification, action-inference, and evaluation pipeline used in production.

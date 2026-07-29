@@ -35,6 +35,10 @@ Behavior:
 
 Validates a policy file.
 
+Options:
+
+- `--output <format>` — `text` (default) or `json`
+
 Default path: `.github/AGENTOWNERS.yml` (resolution order)
 
 Output on success:
@@ -52,6 +56,40 @@ Invalid AGENTOWNERS policy:
 ```
 
 Exit code: 0 on success, 1 on validation error.
+
+With `--output json`, the command emits a deterministic versioned result. A
+valid policy writes this JSON document to stdout and exits `0`:
+
+```json
+{
+  "schemaVersion": 1,
+  "status": "complete",
+  "valid": true
+}
+```
+
+An invalid policy writes a JSON document to stderr and exits `1`:
+
+```json
+{
+  "schemaVersion": 1,
+  "status": "error",
+  "valid": false,
+  "error": {
+    "code": "INVALID_POLICY",
+    "message": "Unable to load or validate the policy.",
+    "issues": [
+      {
+        "path": "rules.0.effect",
+        "message": "must be one of allow, require_approval, block"
+      }
+    ]
+  }
+}
+```
+
+The JSON form never includes policy contents or absolute filesystem paths. An
+unsupported output format fails before policy loading and exits `64`.
 
 ### `agentowners check`
 
@@ -146,6 +184,8 @@ Agent detection result:
 - `init` with `--force` overwrites existing file
 - `validate` exits 0 on valid policy
 - `validate` exits 1 with error messages on invalid policy
+- `validate --output json` emits the versioned success/error contract and
+  rejects unsupported formats before loading policy
 - `check` returns correct exit code by mode
 - `fingerprint` detects Co-Authored-By signals
 - `self-check` covers every public exit code and hostile Git refs
