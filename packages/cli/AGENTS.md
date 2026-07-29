@@ -10,7 +10,8 @@ from interpreting a ref that begins with `-` as an option.
 ## Key components
 
 - `src/git.ts`: bounded Git subprocess adapter
-- `src/commands/init.ts`: profile installation
+- `src/commands/init.ts`: profile installation with fail-closed unknown-profile
+  handling
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
 - `src/commands/explain.ts`: decision explanation

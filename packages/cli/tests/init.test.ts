@@ -122,6 +122,9 @@ describe('init command', () => {
     expect(stderrSpy).toHaveBeenCalledWith(
       expect.stringContaining('unknown profile'),
     )
+    expect(vi.mocked(fs.existsSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(fs.writeFileSync)).not.toHaveBeenCalled()
   })
 
   it('creates file with strict-oss profile content', async () => {
