@@ -95,10 +95,13 @@ with a bounded diagnostic for malformed or unknown JSON.
 Options:
 
 - `--decision <path>` — path to decision JSON file
+- `--sha256 <digest>` — verify the input file's lowercase or uppercase
+  64-character SHA-256 digest before parsing
 
 Output: Human-readable explanation of how the decision was reached. Audit
 records additionally show timestamp, actor, repository, event, detection
-confidence, and changed-file count.
+confidence, and changed-file count. A digest mismatch or malformed digest
+produces a bounded diagnostic and exit code `1` without rendering a decision.
 
 ### `agentowners fingerprint`
 

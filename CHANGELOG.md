@@ -11,6 +11,8 @@ semantic versioning.
   policy evidence survives blocked runs.
 - A companion `audit-artifact-sha256` output for downstream verification of
   retained audit bytes.
+- `agentowners explain --sha256` verification for Action audit artifacts before
+  rendering their decisions.
 - `agentowners explain` support for versioned Action audit artifacts, with
   provenance context and strict shape validation.
 - Action audit artifacts now preserve decision labels for faithful downstream

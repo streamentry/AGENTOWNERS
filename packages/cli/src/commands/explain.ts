@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { createHash } from 'node:crypto';
 import { Command } from 'commander';
 import type {
   AgentAction,
@@ -177,7 +178,7 @@ function writeDecision(input: ExplainableInput): void {
   process.stdout.write(lines.join('\n'));
 }
 
-function readInput(filePath: string): ExplainableInput | null {
+function readInput(filePath: string, expectedSha256?: string): ExplainableInput | null {
   let raw: string;
   try {
     raw = fs.readFileSync(filePath, 'utf8');
@@ -185,6 +186,21 @@ function readInput(filePath: string): ExplainableInput | null {
     process.stderr.write(`Error: cannot read decision file at ${filePath}\n`);
     process.exit(1);
     return null;
+  }
+
+  if (expectedSha256 !== undefined) {
+    if (!/^[a-f0-9]{64}$/i.test(expectedSha256)) {
+      process.stderr.write(`Error: --sha256 must be a 64-character hexadecimal digest\n`);
+      process.exit(1);
+      return null;
+    }
+
+    const actualSha256 = createHash('sha256').update(raw, 'utf8').digest('hex');
+    if (actualSha256 !== expectedSha256.toLowerCase()) {
+      process.stderr.write(`Error: ${filePath} does not match the supplied SHA-256 digest\n`);
+      process.exit(1);
+      return null;
+    }
   }
 
   try {
@@ -204,9 +220,10 @@ export function registerExplain(program: Command): void {
     .command('explain')
     .description('Explain a Decision or AGENTOWNERS audit JSON file')
     .option('--decision <path>', 'Path to decision or audit JSON file', 'decision.json')
-    .action((options: { decision: string }) => {
+    .option('--sha256 <digest>', 'Verify the SHA-256 digest of the input bytes before explaining')
+    .action((options: { decision: string; sha256?: string }) => {
       const filePath = path.resolve(process.cwd(), options.decision);
-      const input = readInput(filePath);
+      const input = readInput(filePath, options.sha256);
       if (input) writeDecision(input);
     });
 }

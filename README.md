@@ -236,6 +236,10 @@ agentowners test \
 # Explain CLI decisions or Action audit artifacts
 agentowners explain --decision agentowners-decision.json
 
+# Verify an Action artifact before explaining it
+agentowners explain --decision agentowners-decision.json \
+  --sha256 "$AGENTOWNERS_AUDIT_SHA256"
+
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
 ```
@@ -255,7 +259,9 @@ and returns nonzero when expectations drift.
 actor, repository, event, timestamp, detection confidence, and changed-file
 count before rendering the policy decision.
 Current artifacts also preserve decision labels for downstream reconciliation;
-legacy v1 artifacts without labels remain readable.
+legacy v1 artifacts without labels remain readable. Pass the Action's
+`audit-artifact-sha256` output with `--sha256` to verify the exact file bytes
+before rendering.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial

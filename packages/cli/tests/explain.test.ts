@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
+import { createHash } from 'node:crypto';
 import { registerExplain } from '../src/commands/explain.js';
 
 const { mockReadFileSync } = vi.hoisted(() => ({ mockReadFileSync: vi.fn() }));
@@ -56,25 +57,24 @@ describe('explain command', () => {
   });
 
   it('explains an Action audit artifact with provenance context', async () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        version: 1,
-        timestamp: '2026-07-29T00:00:00.000Z',
-        repository: 'streamentry/AGENTOWNERS',
-        event: 'pull_request',
-        actor: 'github-copilot[bot]',
-        matchedAgent: 'github-copilot',
-        confidence: 'confirmed',
-        decision: 'block',
-        riskScore: 95,
-        riskLevel: 'critical',
-        detectedActions: ['edit_workflows'],
-        changedFiles: ['.github/workflows/release.yml'],
-        matchedRules: [{ name: 'workflows', effect: 'block', reason: 'No workflow edits.' }],
-        requiredReviewers: [],
-        labelsToApply: ['risk-critical'],
-      }),
-    );
+    const auditJson = JSON.stringify({
+      version: 1,
+      timestamp: '2026-07-29T00:00:00.000Z',
+      repository: 'streamentry/AGENTOWNERS',
+      event: 'pull_request',
+      actor: 'github-copilot[bot]',
+      matchedAgent: 'github-copilot',
+      confidence: 'confirmed',
+      decision: 'block',
+      riskScore: 95,
+      riskLevel: 'critical',
+      detectedActions: ['edit_workflows'],
+      changedFiles: ['.github/workflows/release.yml'],
+      matchedRules: [{ name: 'workflows', effect: 'block', reason: 'No workflow edits.' }],
+      requiredReviewers: [],
+      labelsToApply: ['risk-critical'],
+    });
+    mockReadFileSync.mockReturnValue(auditJson);
 
     await program().parseAsync(['node', 'agentowners', 'explain']);
 
@@ -84,6 +84,54 @@ describe('explain command', () => {
     expect(stdout).toContain('Decision: \x1b[1mBLOCK\x1b[0m');
     expect(stdout).toContain('No workflow edits.');
     expect(stdout).toContain('Labels to apply: risk-critical');
+  });
+
+  it('verifies an audit artifact SHA-256 digest before explaining it', async () => {
+    const auditJson = JSON.stringify({
+      version: 1,
+      timestamp: '2026-07-29T00:00:00.000Z',
+      actor: 'github-copilot[bot]',
+      confidence: 'confirmed',
+      decision: 'allow',
+      riskScore: 5,
+      riskLevel: 'low',
+      detectedActions: [],
+      changedFiles: [],
+      matchedRules: [],
+      requiredReviewers: [],
+      labelsToApply: [],
+    });
+    mockReadFileSync.mockReturnValue(auditJson);
+    const digest = createHash('sha256').update(auditJson, 'utf8').digest('hex');
+
+    await program().parseAsync(['node', 'agentowners', 'explain', '--sha256', digest]);
+
+    expect(stdout).toContain('Decision: \x1b[1mALLOW\x1b[0m');
+    expect(stderr).toBe('');
+  });
+
+  it('rejects an audit artifact when its SHA-256 digest does not match', async () => {
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({
+        version: 1,
+        timestamp: '2026-07-29T00:00:00.000Z',
+        actor: 'github-copilot[bot]',
+        confidence: 'confirmed',
+        decision: 'allow',
+        riskScore: 5,
+        riskLevel: 'low',
+        detectedActions: [],
+        changedFiles: [],
+        matchedRules: [],
+        requiredReviewers: [],
+      }),
+    );
+
+    await program().parseAsync(['node', 'agentowners', 'explain', '--sha256', '0'.repeat(64)]);
+
+    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(stderr).toContain('does not match the supplied SHA-256 digest');
+    expect(stdout).toBe('');
   });
 
   it('accepts legacy v1 audit artifacts without labels', async () => {
