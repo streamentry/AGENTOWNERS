@@ -41,6 +41,8 @@ policy data, leaks secret matches, introduces hidden state, or lets untrusted
 input reach a shell. For GitHub pull requests, load policy from the immutable
 base commit. For CLI Git operations, treat refs as hostile options and use
 `--end-of-options`.
+Treat invalid or empty policy file globs as non-matches; malformed
+configuration must fail closed rather than aborting evaluation.
 Tests must not mutate contributor Git configuration; scope fixture identity to
 the exact subprocess that needs it.
 

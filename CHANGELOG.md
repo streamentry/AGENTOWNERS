@@ -41,6 +41,8 @@ semantic versioning.
   written artifact.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
+- Invalid or empty policy file-glob patterns now fail closed instead of
+  aborting policy evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
 - Pull requests now use policy from the immutable base commit rather than the
   untrusted pull request workspace.
