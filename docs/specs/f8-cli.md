@@ -102,6 +102,8 @@ Output: Human-readable explanation of how the decision was reached. Audit
 records additionally show timestamp, actor, repository, event, detection
 confidence, and changed-file count. A digest mismatch or malformed digest
 produces a bounded diagnostic and exit code `1` without rendering a decision.
+Successful verification prints the normalized lowercase digest in the
+human-readable output.
 
 ### `agentowners fingerprint`
 

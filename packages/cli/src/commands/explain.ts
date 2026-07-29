@@ -14,6 +14,7 @@ import type {
 type ExplainableInput = {
   decision: Decision;
   audit?: AuditRecord;
+  verifiedSha256?: string;
 };
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -131,9 +132,9 @@ function decisionFromAudit(audit: AuditRecord): Decision {
   };
 }
 
-function parseInput(raw: unknown): ExplainableInput | null {
-  if (isDecision(raw)) return { decision: raw };
-  if (isAuditRecord(raw)) return { decision: decisionFromAudit(raw), audit: raw };
+function parseInput(raw: unknown, verifiedSha256?: string): ExplainableInput | null {
+  if (isDecision(raw)) return { decision: raw, verifiedSha256 };
+  if (isAuditRecord(raw)) return { decision: decisionFromAudit(raw), audit: raw, verifiedSha256 };
   return null;
 }
 
@@ -152,6 +153,9 @@ function writeDecision(input: ExplainableInput): void {
   const { decision, audit } = input;
   const lines: string[] = [];
   if (audit) writeAuditContext(lines, audit);
+  if (input.verifiedSha256) {
+    lines.push(`SHA-256 verified: ${input.verifiedSha256}`, '');
+  }
 
   lines.push(`Decision: \x1b[1m${decision.effect.toUpperCase()}\x1b[0m`, '');
   if (decision.explanation) lines.push(decision.explanation, '');
@@ -200,7 +204,7 @@ function readInput(filePath: string, expectedSha256?: string): ExplainableInput 
   }
 
   try {
-    const input = parseInput(JSON.parse(raw) as unknown);
+    const input = parseInput(JSON.parse(raw) as unknown, expectedSha256?.toLowerCase());
     if (input) return input;
   } catch {
     // Fall through to the same bounded diagnostic as an unrecognized shape.

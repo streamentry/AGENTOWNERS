@@ -110,6 +110,7 @@ describe('explain command', () => {
     await program().parseAsync(['node', 'agentowners', 'explain', '--sha256', digest]);
 
     expect(stdout).toContain('Decision: \x1b[1mALLOW\x1b[0m');
+    expect(stdout).toContain(`SHA-256 verified: ${digest}`);
     expect(stderr).toBe('');
   });
 

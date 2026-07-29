@@ -65,7 +65,7 @@ Approval decisions are warnings and blocked decisions are errors.
 
 `explain --sha256` verifies the exact input bytes before parsing an Action audit
 artifact. A malformed digest or mismatch exits nonzero without rendering a
-decision.
+decision; successful output records the normalized digest that was verified.
 
 See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
 and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

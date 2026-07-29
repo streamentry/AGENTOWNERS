@@ -261,7 +261,8 @@ count before rendering the policy decision.
 Current artifacts also preserve decision labels for downstream reconciliation;
 legacy v1 artifacts without labels remain readable. Pass the Action's
 `audit-artifact-sha256` output with `--sha256` to verify the exact file bytes
-before rendering.
+before rendering; successful output records the normalized digest that was
+verified.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial
