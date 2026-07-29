@@ -17,27 +17,30 @@ description: Implement or review deterministic AI-agent governance changes in AG
    event-specific conditions cannot match the wrong event type.
 7. Add the cheapest disconfirming test first.
 8. Implement the smallest complete change.
-9. For a safety invariant, prove the new test fails under a temporary relevant
+9. Treat only explicit actors or built-in verified bots as `confirmed`; spoofable
+   labels, commit metadata, and event text cannot authorize an otherwise unknown
+   action.
+10. For a safety invariant, prove the new test fails under a temporary relevant
    mutation, then restore production code exactly.
-10. Regenerate distributions with `pnpm build`; never hand-edit them.
-11. If policy validation changed, run `pnpm generate:schema`.
-12. If decision behavior changed, update a portable fixture that proves the
+11. Regenerate distributions with `pnpm build`; never hand-edit them.
+12. If policy validation changed, run `pnpm generate:schema`.
+13. If decision behavior changed, update a portable fixture that proves the
    repository-facing contract.
-13. If capability-boundary behavior changed, run `pnpm build`,
+14. If capability-boundary behavior changed, run `pnpm build`,
    `pnpm test:capabilities`, and `node scripts/capability-demo.mjs`; verify the
    demo remains simulation-only and does not print secret values.
-14. If onboarding or product-proof behavior changed, run `pnpm demo` and verify
+15. If onboarding or product-proof behavior changed, run `pnpm demo` and verify
    both the production CLI fixture results and capability denials are present.
-15. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
-16. Run `pnpm verify`.
-17. Run the explicit `agentowners self-check` contract before opening a pull
-    request and record its `policyDigest` with the decision evidence.
-18. For release-facing changes, run `pnpm verify:packages`.
-19. For Marketplace changes, prove root and packaged Action metadata remain in
+16. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
+17. Run `pnpm verify`.
+18. Run the explicit `agentowners self-check` contract before opening a pull
+   request and record its `policyDigest` with the decision evidence.
+19. For release-facing changes, run `pnpm verify:packages`.
+20. For Marketplace changes, prove root and packaged Action metadata remain in
    parity outside explicit distribution identity and bundle paths, then
    disclose every owner-only publication gate that remains.
-20. In the pull request, disclose agent use, overlap, exact evidence, risks,
-    attribution, and rollback.
+21. In the pull request, disclose agent use, overlap, exact evidence, risks,
+   attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted

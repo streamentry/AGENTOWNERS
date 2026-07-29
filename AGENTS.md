@@ -198,6 +198,7 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+| Identity confidence | Only explicit actors and built-in verified bots are `confirmed`; labels, commit metadata, and event text remain spoofable evidence |
 
 The experimental capability boundary is specified in `AGENT_CAPABILITIES.md`.
 Its demo is deliberately non-runtime: it makes no network calls, reads no real
