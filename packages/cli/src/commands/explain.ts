@@ -190,16 +190,12 @@ function readInput(filePath: string, expectedSha256?: string): ExplainableInput 
 
   if (expectedSha256 !== undefined) {
     if (!/^[a-f0-9]{64}$/i.test(expectedSha256)) {
-      process.stderr.write(`Error: --sha256 must be a 64-character hexadecimal digest\n`);
-      process.exit(1);
-      return null;
+      throw new Error('--sha256 must be a 64-character hexadecimal digest');
     }
 
     const actualSha256 = createHash('sha256').update(raw, 'utf8').digest('hex');
     if (actualSha256 !== expectedSha256.toLowerCase()) {
-      process.stderr.write(`Error: ${filePath} does not match the supplied SHA-256 digest\n`);
-      process.exit(1);
-      return null;
+      throw new Error(`${filePath} does not match the supplied SHA-256 digest`);
     }
   }
 
@@ -223,7 +219,12 @@ export function registerExplain(program: Command): void {
     .option('--sha256 <digest>', 'Verify the SHA-256 digest of the input bytes before explaining')
     .action((options: { decision: string; sha256?: string }) => {
       const filePath = path.resolve(process.cwd(), options.decision);
-      const input = readInput(filePath, options.sha256);
-      if (input) writeDecision(input);
+      try {
+        const input = readInput(filePath, options.sha256);
+        if (input) writeDecision(input);
+      } catch (error: unknown) {
+        process.stderr.write(`Error: ${error instanceof Error ? error.message : String(error)}\n`);
+        process.exitCode = 1;
+      }
     });
 }

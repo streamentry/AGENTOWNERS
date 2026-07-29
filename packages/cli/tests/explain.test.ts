@@ -32,7 +32,10 @@ describe('explain command', () => {
     vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    process.exitCode = undefined;
+    vi.restoreAllMocks();
+  });
 
   it('explains a raw CLI Decision JSON file', async () => {
     mockReadFileSync.mockReturnValue(
@@ -129,7 +132,8 @@ describe('explain command', () => {
 
     await program().parseAsync(['node', 'agentowners', 'explain', '--sha256', '0'.repeat(64)]);
 
-    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(process.exit).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
     expect(stderr).toContain('does not match the supplied SHA-256 digest');
     expect(stdout).toBe('');
   });
