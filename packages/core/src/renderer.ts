@@ -26,6 +26,7 @@ export type AuditRecord = {
 };
 
 export type AuditContext = {
+  timestamp: string;
   actor: string;
   repository?: string;
   event?: string;
@@ -197,11 +198,11 @@ export function renderVerdict(decision: Decision, options?: RenderOptions): stri
 }
 
 export function renderAuditJson(context: AuditContext): AuditRecord {
-  const { actor, repository, event, agentDetection, decision, changedFiles } = context;
+  const { timestamp, actor, repository, event, agentDetection, decision, changedFiles } = context;
 
   return {
     version: 1,
-    timestamp: new Date().toISOString(),
+    timestamp,
     repository,
     event,
     actor,

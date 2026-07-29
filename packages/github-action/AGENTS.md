@@ -17,6 +17,9 @@ artifact and must be regenerated, never hand-edited.
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 
+The Action is the runtime boundary for audit timestamps. It obtains the current
+time and passes the value explicitly to the pure core renderer.
+
 ## Diagrams
 
 ```mermaid
@@ -32,6 +35,7 @@ flowchart LR
   Decision --> Comment
   Decision --> Labels
   Decision --> Outputs
+  Decision --> Audit[Audit JSON with adapter-supplied timestamp]
   Decision --> Status
 ```
 
@@ -47,6 +51,7 @@ sequenceDiagram
   Action->>GitHub: read available file patches
   Action->>Core: distinct PR and issue fields
   Action->>Core: comment body as detection evidence
+  Action->>Core: runtime timestamp for audit record
   Core-->>Action: decision
   Action->>GitHub: verdict and labels
   Action-->>Runner: outputs and status

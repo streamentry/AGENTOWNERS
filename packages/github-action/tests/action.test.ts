@@ -219,6 +219,11 @@ describe('GitHub Action — integration via mocks', () => {
           prBody: undefined,
         }),
       );
+      expect(core.renderAuditJson).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+        }),
+      );
     });
   });
 

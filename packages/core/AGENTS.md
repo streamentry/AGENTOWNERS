@@ -64,6 +64,7 @@ sequenceDiagram
   participant Adapter
   participant Core
   Adapter->>Core: normalized PR, issue, or comment input
+  Adapter->>Core: explicit audit timestamp
   Core->>Core: match event-specific metadata
   Core->>Core: pure evaluation
   Core-->>Adapter: immutable decision
@@ -96,5 +97,7 @@ under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers. Rule IDs must distinguish matched rules even when their display
 names are identical.
+Audit timestamps are supplied by adapters; the core renderer must never read
+the system clock.
 Policy-load errors must preserve useful line and column diagnostics without
 echoing malformed policy source text.

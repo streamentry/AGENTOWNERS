@@ -263,6 +263,7 @@ export async function run(): Promise<void> {
 
     // 13. Write audit artifact
     const auditRecord = renderAuditJson({
+      timestamp: new Date().toISOString(),
       actor,
       repository: `${owner}/${repo}`,
       event: eventName,

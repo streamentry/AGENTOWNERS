@@ -98,6 +98,11 @@ export type RenderOptions = {
 ## Audit JSON
 
 ### `renderAuditJson(context: AuditContext): AuditRecord`
+
+`timestamp` is required in the context. The core renderer never reads the
+system clock; adapters acquire the timestamp at their side-effect boundary and
+pass it explicitly. Given the same context, the audit record is byte-stable.
+
 ```ts
 export type AuditRecord = {
   version: 1;

@@ -145,6 +145,7 @@ describe('renderVerdict', () => {
 describe('renderAuditJson', () => {
   it('produces correct structure', () => {
     const record = renderAuditJson({
+      timestamp: '2026-07-29T00:00:00.000Z',
       actor: 'github-copilot[bot]',
       repository: 'owner/repo',
       event: 'pull_request',
@@ -166,22 +167,26 @@ describe('renderAuditJson', () => {
     expect(record.matchedRules).toHaveLength(1);
     expect(record.matchedRules[0].name).toBe('Require approval for auth changes');
     expect(record.requiredReviewers).toContain('@maintainers/security');
-    expect(typeof record.timestamp).toBe('string');
+    expect(record.timestamp).toBe('2026-07-29T00:00:00.000Z');
   });
 
-  it('timestamp is an ISO string', () => {
-    const record = renderAuditJson({
+  it('preserves the supplied timestamp and remains deterministic', () => {
+    const context = {
+      timestamp: '2026-07-29T00:00:00.000Z',
       actor: 'test',
       agentDetection: { confidence: 'unknown' },
       decision: allowDecision,
       changedFiles: [],
-    });
-    expect(() => new Date(record.timestamp)).not.toThrow();
-    expect(record.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    } as const;
+    const first = renderAuditJson(context);
+    const second = renderAuditJson(context);
+    expect(first).toEqual(second);
+    expect(first.timestamp).toBe(context.timestamp);
   });
 
   it('optional fields absent when not provided', () => {
     const record = renderAuditJson({
+      timestamp: '2026-07-29T00:00:00.000Z',
       actor: 'test',
       agentDetection: { confidence: 'unknown' },
       decision: allowDecision,

@@ -33742,10 +33742,10 @@ Unrecognized decision effect.`;
   return wrapWithMarker(content);
 }
 function renderAuditJson(context3) {
-  const { actor, repository, event, agentDetection, decision, changedFiles } = context3;
+  const { timestamp: timestamp2, actor, repository, event, agentDetection, decision, changedFiles } = context3;
   return {
     version: 1,
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    timestamp: timestamp2,
     repository,
     event,
     actor,
@@ -34476,6 +34476,7 @@ async function run() {
       )
     );
     const auditRecord = renderAuditJson({
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
       actor,
       repository: `${owner}/${repo}`,
       event: eventName,

@@ -39,6 +39,8 @@ semantic versioning.
 
 ### Fixed
 
+- The core audit renderer no longer reads the system clock. Adapters supply an
+  explicit timestamp, making identical audit contexts deterministic.
 - Malformed YAML diagnostics now retain line and column information without
   echoing source snippets that may contain secrets.
 - CLI validation diagnostics redact received values from schema errors while
