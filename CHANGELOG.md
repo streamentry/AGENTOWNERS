@@ -7,6 +7,8 @@ semantic versioning.
 
 ### Added
 
+- `agentowners fingerprint` now rejects unsupported output formats before
+  reading Git evidence, preserving a fail-closed CLI contract.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a

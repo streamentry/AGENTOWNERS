@@ -104,9 +104,9 @@ Options:
 - `--commit <ref>` — analyze a specific commit (default: HEAD)
 - `--output <format>` — `text` | `json`
 
-Output:
-
-```
+Output is human-readable text by default or the deterministic JSON detection
+object when `--output json` is selected. Any other output format is rejected
+with exit code `64` before reading Git evidence.
 
 ### `agentowners self-check`
 

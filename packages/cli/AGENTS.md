@@ -14,7 +14,8 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
 - `src/commands/explain.ts`: decision explanation
-- `src/commands/fingerprint.ts`: agent-signal inspection
+- `src/commands/fingerprint.ts`: agent-signal inspection with text/JSON output
+  validation before Git access
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
 - `src/commands/test.ts`: portable policy fixture execution
 

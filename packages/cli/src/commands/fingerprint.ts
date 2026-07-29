@@ -2,6 +2,15 @@ import { Command } from 'commander'
 import { detectAgent } from '@agent-owners/core'
 import { getCommitMessages, getCurrentActor } from '../git.js'
 
+type FingerprintOutput = 'text' | 'json'
+
+function validateOutput(output: string): output is FingerprintOutput {
+  if (output === 'text' || output === 'json') return true
+  process.stderr.write('Output format must be one of: text, json.\n')
+  process.exit(64)
+  return false
+}
+
 export function registerFingerprint(program: Command): void {
   program
     .command('fingerprint')
@@ -9,6 +18,8 @@ export function registerFingerprint(program: Command): void {
     .option('--commit <ref>', 'Analyze a specific commit (default: HEAD)', 'HEAD')
     .option('--output <format>', 'Output format: text | json', 'text')
     .action((options: { commit: string; output: string }) => {
+      if (!validateOutput(options.output)) return
+
       const cwd = process.cwd()
       const head = options.commit
       // get messages for the single commit

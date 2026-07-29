@@ -40,11 +40,15 @@ agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
+
+# Emit the detection object for an agent or CI consumer
+agentowners fingerprint --commit HEAD --output json
 ```
 
 Git refs are passed directly to Git as arguments, never interpolated into a
 shell command. Invalid refs fail closed instead of producing an empty,
-potentially misleading decision.
+potentially misleading decision. Fingerprint output is limited to `text` and
+`json`; unsupported formats fail with exit code `64` before Git is queried.
 
 `self-check` emits a versioned JSON contract and distinct exit codes for allow
 (`0`), approval (`10`), block (`20`), invalid input (`64`), invalid policy
