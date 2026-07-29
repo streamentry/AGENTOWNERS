@@ -349,6 +349,23 @@ describe('GitHub Action — integration via mocks', () => {
     expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['issues', 'transferred', { issue: { number: 1 } }],
+    ['issue_comment', 'deleted', { issue: { number: 1 } }],
+    ['pull_request_review', 'edited', { pull_request: { number: 1 } }],
+  ])('fails closed for unsupported %s action', async (eventName, action, payload) => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.eventName = eventName;
+    mockContext.payload = { action, ...payload };
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockCore.setFailed).toHaveBeenCalledWith(
+      `Unsupported ${eventName} action "${action}".`,
+    );
+  });
+
   it('block with fail-on-block=true → setFailed called', async () => {
     // Test the fail logic directly
     const effect = mockDecisionBlock.effect;
