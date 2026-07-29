@@ -496,6 +496,8 @@ Design principles:
 The repository is designed for both human and agent contributors:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) defines the evidence and PR contract.
+- [GOVERNANCE.md](GOVERNANCE.md) defines independent review, conflict handling,
+  and release authority.
 - [Good first issues](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22good+first+issue%22)
   provide bounded entry work that does not change enforcement semantics.
 - [Help wanted](https://github.com/streamentry/AGENTOWNERS/issues?q=is%3Aopen+label%3A%22help+wanted%22)
