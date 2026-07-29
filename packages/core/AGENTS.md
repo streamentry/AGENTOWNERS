@@ -95,7 +95,9 @@ Capability contract changes must keep `capabilities.test.ts` and the checked-in
 identity-bound fixture behavior deterministic.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 Policy-diff changes must keep `tests/policy-diff.test.ts` deterministic and
-must not add policy values to the diff contract.
+must not add policy values to the diff contract. Structural changes must stay
+aligned with the digest's canonicalization, including omitted undefined
+optional fields.
 Repository policy template changes must keep `tests/repository-policy.test.ts`
 green so copyable configuration cannot drift from the strict schema.
 After changing policy validation, run `pnpm generate:schema` and commit the

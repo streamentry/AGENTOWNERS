@@ -25,8 +25,9 @@ schema and returns:
 }
 ```
 
-Canonicalization sorts object keys, preserves array order, and ignores YAML
-formatting and comments. Policy values are never included in the diff result.
+Canonicalization sorts object keys, preserves array order, ignores explicitly
+undefined optional object fields, and ignores YAML formatting and comments.
+Policy values are never included in the diff result.
 Paths use JSON Pointer escaping (`~` becomes `~0`, `/` becomes `~1`). Changes
 are sorted by path and kind, so equivalent inputs produce byte-stable output.
 

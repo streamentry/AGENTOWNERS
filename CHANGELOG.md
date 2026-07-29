@@ -51,6 +51,8 @@ semantic versioning.
   layout, verification gates, and policy-template review contract.
 - Clarified in the primary README that `monorepo` is a copyable example, not a
   currently exposed `agentowners init --profile` option.
+- Kept policy-diff structural changes consistent with canonical digests when
+  public callers provide explicitly undefined optional fields.
 
 ### Changed
 

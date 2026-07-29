@@ -83,7 +83,12 @@ function compareValues(
   }
 
   if (isRecord(base) && isRecord(proposed)) {
-    const keys = new Set([...Object.keys(base), ...Object.keys(proposed)]);
+    // Keep structural changes aligned with stablePolicyStringify(): optional
+    // fields explicitly set to undefined are absent from the canonical form.
+    const keys = new Set([
+      ...Object.keys(base).filter((key) => base[key] !== undefined),
+      ...Object.keys(proposed).filter((key) => proposed[key] !== undefined),
+    ]);
     for (const key of [...keys].sort()) {
       const child = childPath(path, key);
       if (!(key in base)) recordChange(changes, child, 'added');

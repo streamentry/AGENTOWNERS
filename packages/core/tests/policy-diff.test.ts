@@ -32,6 +32,18 @@ describe('diffPolicies', () => {
     });
   });
 
+  it('treats explicitly undefined optional fields as absent', () => {
+    const withUndefined = { version: 1 as const, defaults: undefined };
+
+    expect(diffPolicies({ version: 1 as const }, withUndefined)).toEqual({
+      schemaVersion: 1,
+      baseDigest: hashPolicy({ version: 1 as const }),
+      proposedDigest: hashPolicy({ version: 1 as const }),
+      identical: true,
+      changes: [],
+    });
+  });
+
   it('reports paths and change kinds without exposing policy values', () => {
     const proposed = {
       ...basePolicy,
