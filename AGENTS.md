@@ -113,6 +113,8 @@ CONTRIBUTING.md       — contribution lanes, review contract, and required evid
 SKILL.md              — compact execution workflow for compatible coding agents
 
 scripts/
+  capability-demo.mjs   — fail-closed capability manifest simulator and audit
+  capability-demo.test.mjs — deterministic denial, budget, and redaction tests
   generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
@@ -178,6 +180,10 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+
+The experimental capability boundary is specified in `AGENT_CAPABILITIES.md`.
+Its demo is deliberately non-runtime: it makes no network calls, reads no real
+secrets, and cannot substitute for OS/container isolation or GitHub permissions.
 
 ## How to add a new feature
 

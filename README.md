@@ -81,6 +81,24 @@ node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
 artifact smoke tests.
 
+## Capability boundary demonstration
+
+Repository policy is not the same thing as runtime authority. The experimental
+[`AGENT_CAPABILITIES.md`](AGENT_CAPABILITIES.md) specification defines a
+fail-closed pre-dispatch manifest for tools, repositories, network destinations,
+data and secret scopes, privileges, budgets, approvals, and hash-chained audit.
+Run the deterministic demonstration with:
+
+```bash
+pnpm test:capabilities
+node scripts/capability-demo.mjs
+```
+
+The fixture allows one read-only Git operation and records denials for unlisted
+egress, a token scope, and merge privilege. It is a simulator, not an OS
+sandbox or firewall; production adapters still need isolation and real
+credential, egress, identity, and log controls.
+
 ## Configure a policy
 
 Add `.github/AGENTOWNERS.yml`:

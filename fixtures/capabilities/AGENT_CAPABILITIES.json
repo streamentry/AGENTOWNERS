@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "agent": {
+    "id": "demo-coding-agent",
+    "issuer": "demo.example.invalid",
+    "identity_sha256": "e537d36bef65ee4bcad8e6cb280591d9c71e4af88a1dcdd7eab99812af8591c4"
+  },
+  "repositories": ["streamentry/AGENTOWNERS"],
+  "tools": {"allow": ["git.read"]},
+  "network": {"allowed_destinations": []},
+  "data": {
+    "allowed_secret_scopes": [],
+    "allowed_data_scopes": ["repository"]
+  },
+  "privileges": {"allow": []},
+  "escalation": {
+    "human_approval_required": ["write", "merge", "deploy"],
+    "kill_on_violation": true
+  },
+  "budgets": {
+    "max_actions": 4,
+    "max_network_requests": 0,
+    "max_secret_reads": 0,
+    "max_privileged_actions": 0
+  },
+  "audit": {"required": true, "hash_chain": true}
+}

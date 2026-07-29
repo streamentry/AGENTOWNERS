@@ -23,6 +23,8 @@ semantic versioning.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.
+- Experimental `AGENT_CAPABILITIES.md` specification with a deterministic,
+  fail-closed capability and hash-chained audit demonstration.
 
 ### Changed
 

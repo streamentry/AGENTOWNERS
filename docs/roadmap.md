@@ -13,14 +13,17 @@ The roadmap is ordered by user risk removed, not feature count.
 - Deterministic SARIF 2.1.0 output for code-scanning interoperability
 - Dogfooded policy, contribution templates, and private vulnerability reporting
 - Stable policy examples and migration notes
+- Experimental capability manifest and deterministic denial/audit demonstration
 
 ## Next: explainability and interoperability
 
 - Explicit reviewer requests and label lifecycle controls
+- Adapter integrations that enforce signed capability manifests before dispatch
 
 ## Later: governed expansion
 
-- Signed agent manifests and verifiable provenance
+- Signed agent manifests and verifiable provenance (the current demo does not
+  yet verify signatures)
 - Organization-level policy inheritance
 - GitLab adapter
 - Webhook mode for installations that need centralized enforcement

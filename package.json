@@ -14,6 +14,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
+    "test:capabilities": "node --test scripts/capability-demo.test.mjs",
     "test:coverage": "pnpm -r run test:coverage",
     "lint": "eslint packages/*/src/**/*.ts",
     "typecheck": "tsc --noEmit",
@@ -22,7 +23,7 @@
     "verify:schema": "node scripts/generate-json-schema.mjs --check",
     "verify:release": "node scripts/verify-release.mjs",
     "verify:packages": "node scripts/verify-packed-packages.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm verify:schema && pnpm test && pnpm verify:release"
+    "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm verify:schema && pnpm test && pnpm test:capabilities && pnpm verify:release"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
