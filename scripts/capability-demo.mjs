@@ -170,5 +170,16 @@ export async function runDemo(root = path.resolve(path.dirname(fileURLToPath(imp
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  runDemo().then((result) => console.log(JSON.stringify(result, null, 2))).catch((error) => { console.error(`capability demo failed: ${error.message}`); process.exitCode = 1; });
+  runDemo().then((result) => {
+    if (process.argv.includes('--summary')) {
+      console.log(
+        `Capability demo: ${result.summary.allowed} allowed, ${result.summary.denied} denied, kill=${result.summary.kill_triggered}`,
+      );
+      return;
+    }
+    console.log(JSON.stringify(result, null, 2));
+  }).catch((error) => {
+    console.error(`capability demo failed: ${error.message}`);
+    process.exitCode = 1;
+  });
 }

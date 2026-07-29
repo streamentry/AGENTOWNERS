@@ -289,6 +289,8 @@ hand. After changing `schema.ts` or `json-schema.ts`, run
 
 Marketplace verification parses both Action metadata files and requires parity
 except for their distribution-specific `author` and `runs.main` values.
+Run `pnpm demo` for the network-free first-run proof; it invokes the built CLI
+and capability simulator and must not be mistaken for runtime containment.
 
 ## What NOT to build (v1 non-goals)
 

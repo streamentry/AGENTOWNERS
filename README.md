@@ -81,6 +81,20 @@ node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
 artifact smoke tests.
 
+### One-command proof
+
+To exercise the production CLI policy pipeline and the capability boundary
+without GitHub, credentials, or network access, run:
+
+```bash
+pnpm demo
+```
+
+The command builds the workspace, runs the strict-OSS fixture suite, and then
+summarizes the capability demo's one allowed read-only action and three denied
+authority attempts. Use `node scripts/capability-demo.mjs` when you need the
+full hash-chained audit. It is a local product proof, not a runtime sandbox.
+
 ## Capability boundary demonstration
 
 Repository policy is not the same thing as runtime authority. The experimental

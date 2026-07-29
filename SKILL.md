@@ -26,15 +26,17 @@ description: Implement or review deterministic AI-agent governance changes in AG
 13. If capability-boundary behavior changed, run `pnpm test:capabilities` and
    `node scripts/capability-demo.mjs`; verify the demo remains simulation-only
    and does not print secret values.
-14. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
-15. Run `pnpm verify`.
-16. Run the explicit `agentowners self-check` contract before opening a pull
+14. If onboarding or product-proof behavior changed, run `pnpm demo` and verify
+   both the production CLI fixture results and capability denials are present.
+15. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
+16. Run `pnpm verify`.
+17. Run the explicit `agentowners self-check` contract before opening a pull
    request.
-17. For release-facing changes, run `pnpm verify:packages`.
-18. For Marketplace changes, prove root and packaged Action metadata remain in
+18. For release-facing changes, run `pnpm verify:packages`.
+19. For Marketplace changes, prove root and packaged Action metadata remain in
    parity outside explicit distribution identity and bundle paths, then
    disclose every owner-only publication gate that remains.
-19. In the pull request, disclose agent use, overlap, exact evidence, risks,
+20. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes

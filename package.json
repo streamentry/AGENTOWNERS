@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build": "pnpm -r run build",
+    "demo": "pnpm build && node packages/cli/dist/index.js test --policy examples/strict-oss/AGENTOWNERS.yml --fixtures examples/strict-oss/AGENTOWNERS.fixtures.yml && node scripts/capability-demo.mjs --summary",
     "test": "pnpm -r run test",
     "test:capabilities": "node --test scripts/capability-demo.test.mjs",
     "test:coverage": "pnpm -r run test:coverage",

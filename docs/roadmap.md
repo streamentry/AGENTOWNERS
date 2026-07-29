@@ -15,6 +15,7 @@ The roadmap is ordered by user risk removed, not feature count.
 - Stable policy examples and migration notes
 - Experimental capability manifest and deterministic denial/audit demonstration
 - Marketplace metadata parity and idempotent release preflight helpers
+- One-command, network-free product proof for new contributors
 
 ## Next: explainability and interoperability
 

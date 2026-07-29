@@ -29,6 +29,8 @@ semantic versioning.
   bundle paths, and root/package metadata parity.
 - Idempotent release helper primitives with exact-version registry preflight,
   isolated npm cache verification, and stable-tag safety tests.
+- A network-free `pnpm demo` that exercises the production CLI fixture pipeline
+  and capability-boundary proof in one first-run command.
 
 ### Changed
 
