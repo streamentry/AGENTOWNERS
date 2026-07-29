@@ -218,6 +218,56 @@ describe('evaluateRule', () => {
     expect(noMatch).toBeNull();
   });
 
+  it.each(['likely', 'possible'] as const)(
+    'does not let spoofable %s agent evidence match an allow rule',
+    (confidence) => {
+      const rule: Rule = {
+        name: 'Allow release agent',
+        when: { agents: ['release-agent'] },
+        effect: 'allow',
+        reason: 'Release agent may perform routine work.',
+      };
+
+      expect(
+        evaluateRule(
+          rule,
+          baseInput({
+            agentDetection: {
+              agentName: 'release-agent',
+              confidence,
+              signals: ['spoofable evidence'],
+            },
+          }),
+        ),
+      ).toBeNull();
+    },
+  );
+
+  it.each(['require_approval', 'block'] as const)(
+    'keeps %s routing active for spoofable agent evidence',
+    (effect) => {
+      const rule: Rule = {
+        name: 'Review release agent',
+        when: { agents: ['release-agent'] },
+        effect,
+        reason: 'Release agent actions need a safe boundary.',
+      };
+
+      expect(
+        evaluateRule(
+          rule,
+          baseInput({
+            agentDetection: {
+              agentName: 'release-agent',
+              confidence: 'likely',
+              signals: ['spoofable evidence'],
+            },
+          }),
+        )?.effect,
+      ).toBe(effect);
+    },
+  );
+
   it('matches actions condition', () => {
     const rule: Rule = {
       name: 'Restrict edit_workflows action',
@@ -268,6 +318,75 @@ describe('evaluatePolicy', () => {
       );
 
       expect(decision.effect).toBe('block');
+    },
+  );
+
+  it.each(['likely', 'possible'] as const)(
+    'does not let a spoofable candidate signal authorize allowed actions (%s)',
+    (confidence) => {
+      const policy: AgentOwnersPolicy = {
+        version: 1,
+        agents: {
+          'release-agent': {
+            match: { labels: ['automation:release-agent'] },
+            allowed: ['open_pr'],
+          },
+        },
+        defaults: { unknown_agent: 'require_approval' },
+      };
+
+      const decision = evaluatePolicy(
+        baseInput({
+          policy,
+          agentDetection: {
+            agentName: 'release-agent',
+            confidence,
+            signals: ['policy label match'],
+          },
+          detectedActions: ['open_pr'],
+        }),
+      );
+
+      expect(decision.effect).toBe('require_approval');
+      expect(decision.matchedRules).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Agent policy: release-agent' }),
+        ]),
+      );
+    },
+  );
+
+  it.each(['likely', 'possible'] as const)(
+    'does not let spoofable %s agent evidence authorize a generic agent rule',
+    (confidence) => {
+      const policy: AgentOwnersPolicy = {
+        version: 1,
+        rules: [
+          {
+            name: 'Allow release agent',
+            when: { agents: ['release-agent'] },
+            effect: 'allow',
+            reason: 'Release agent may perform routine work.',
+          },
+        ],
+        defaults: { unknown_agent: 'require_approval' },
+      };
+
+      const decision = evaluatePolicy(
+        baseInput({
+          policy,
+          agentDetection: {
+            agentName: 'release-agent',
+            confidence,
+            signals: ['spoofable evidence'],
+          },
+        }),
+      );
+
+      expect(decision.effect).toBe('require_approval');
+      expect(decision.matchedRules).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'Allow release agent' })]),
+      );
     },
   );
 

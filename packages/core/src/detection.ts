@@ -3,6 +3,8 @@ import type { AgentDetectionConfidence, AgentDetectionResult, AgentOwnersPolicy 
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   issueBody?: string;
@@ -55,6 +57,35 @@ export function matchesAgentPolicy(
   return null;
 }
 
+function matchesAgentCommitPolicy(
+  commitEmails: string[],
+  commitNames: string[],
+  policy: AgentOwnersPolicy,
+): { name: string; signals: string[] } | null {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const signals: string[] = [];
+    if (agentPolicy.match?.commitEmails?.some((email) => commitEmails.includes(email))) {
+      signals.push(`policy commit email match: agents.${name}.match.commitEmails`);
+    }
+    if (agentPolicy.match?.commitNames?.some((commitName) => commitNames.includes(commitName))) {
+      signals.push(`policy commit name match: agents.${name}.match.commitNames`);
+    }
+    if (signals.length > 0) return { name, signals };
+  }
+  return null;
+}
+
+function matchesAgentLabelPolicy(labels: string[], policy: AgentOwnersPolicy): string | null {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    if (agentPolicy.match?.labels?.some((label) => labels.includes(label))) {
+      return name;
+    }
+  }
+  return null;
+}
+
 function matchesConfiguredPattern(value: string | undefined, pattern: string): boolean {
   if (!value) return false;
   try {
@@ -64,10 +95,35 @@ function matchesConfiguredPattern(value: string | undefined, pattern: string): b
   }
 }
 
+function matchesAgentContentPolicy(
+  bodyTexts: string[],
+  prTitle: string | undefined,
+  policy: AgentOwnersPolicy,
+): { name: string; signals: string[] } | null {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
+    const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
+    for (const pattern of bodyPatterns) {
+      if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
+        return { name, signals: [`policy body pattern match: agents.${name}`] };
+      }
+    }
+    for (const pattern of titlePatterns) {
+      if (matchesConfiguredPattern(prTitle, pattern)) {
+        return { name, signals: [`policy title pattern match: agents.${name}`] };
+      }
+    }
+  }
+  return null;
+}
+
 export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -84,28 +140,11 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
-      return { agentName: matchedAgent, confidence: 'confirmed', signals };
-    }
-
-    // 6. Configured body patterns (from policy) — checked alongside policy
-    if (policy.agents) {
-      for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-        const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
-        const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
-        for (const pattern of bodyPatterns) {
-          if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
-            signals.push(`policy body pattern match: agents.${name}`);
-            return { agentName: name, confidence: 'confirmed', signals };
-          }
-        }
-        for (const pattern of titlePatterns) {
-          if (matchesConfiguredPattern(prTitle, pattern)) {
-            signals.push(`policy title pattern match: agents.${name}`);
-            return { agentName: name, confidence: 'confirmed', signals };
-          }
-        }
+      const agentPolicy = policy.agents?.[matchedAgent];
+      if (agentPolicy?.match?.actors?.includes(actor)) {
+        signals.push(`policy match: agents.${matchedAgent}.match.actors`);
       }
+      return { agentName: matchedAgent, confidence: 'confirmed', signals };
     }
   }
 
@@ -133,8 +172,38 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
     signals.push('body co-author [bot] pattern');
   }
 
+  if (policy) {
+    const contentMatch = matchesAgentContentPolicy(bodyTexts, prTitle, policy);
+    const commitMatch = matchesAgentCommitPolicy(commitEmails, commitNames, policy);
+    const matchedAgent = contentMatch ?? commitMatch;
+    if (matchedAgent) {
+      return {
+        agentName: matchedAgent.name,
+        confidence: 'likely',
+        signals: [
+          ...signals,
+          ...(contentMatch?.signals ?? []),
+          ...(commitMatch?.signals ?? []),
+        ],
+      };
+    }
+  }
+
   if (signals.length > 0) {
     return { confidence: 'likely', signals };
+  }
+
+  // Configured labels are useful routing evidence, but labels can be added by
+  // collaborators and therefore must not be promoted to confirmed identity.
+  if (policy) {
+    const matchedLabelAgent = matchesAgentLabelPolicy(labels, policy);
+    if (matchedLabelAgent) {
+      return {
+        agentName: matchedLabelAgent,
+        confidence: 'possible',
+        signals: [`policy label match: agents.${matchedLabelAgent}.match.labels`],
+      };
+    }
   }
 
   // 5. Labels (possible)

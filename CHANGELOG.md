@@ -36,6 +36,37 @@ semantic versioning.
 - Reusable capability validation/evaluation is now exported from `@agent-owners/core`
   and exposed through `agentowners capabilities` with stable output and
   `--fail-on-deny`.
+- Deterministic `diffPolicies()` / `hashPolicy()` evidence and the
+  `agentowners policy-diff` CLI command report policy fingerprints and changed
+  paths without printing policy values.
+- `agentowners self-check` now includes the canonical policy digest in success
+  output so pre-PR evidence can be bound to the policy it evaluated.
+- GitHub Action audit records now include the canonical policy digest and
+  trusted policy ref, with matching `policy-digest` and `policy-ref` outputs.
+- A canonical policy authoring reference and AGENTOWNERS-specific evidence-first
+  agent-team workflow replace broken and unrelated contributor guidance.
+- Strict-schema regression coverage for the repository policy and copyable
+  `.github/AGENTOWNERS.yml.example` template.
+- Reconciled the Claude contributor guide with the current dependency, spec
+  layout, verification gates, and policy-template review contract.
+- Clarified in the primary README that `monorepo` is a copyable example, not a
+  currently exposed `agentowners init --profile` option.
+- Kept policy-diff structural changes consistent with canonical digests when
+  public callers provide explicitly undefined optional fields.
+- Configured `agents[name].match.labels` entries now retain the candidate agent
+  name at `possible` confidence instead of falling through to generic label
+  heuristics; mutable labels cannot authorize an otherwise unknown action.
+- Schema-supported commit email/name matches now flow through the CLI Git range
+  adapter and GitHub Action PR metadata as forgeable `likely` evidence; they
+  cannot authorize an otherwise unknown action.
+- Configured body/title detection now remains `likely` and no longer outranks
+  confirmed built-in bot actors, preventing contributor-controlled text from
+  becoming an implicit authorization signal.
+- The Action's workflow-provided `known-agent-actors` input is now documented
+  and implemented as `likely` evidence only; it cannot confirm identity or
+  authorize an otherwise unknown action.
+- The CLI now reads its displayed version from `packages/cli/package.json`,
+  removing a second hard-coded release-version authority.
 
 ### Changed
 
@@ -49,6 +80,10 @@ semantic versioning.
 
 ### Fixed
 
+- Generic `when.agents` allow rules now require confirmed identity; likely and
+  possible candidates may still route blocking or human approval.
+- GitHub Action mode inputs now fail closed before token or API access when the
+  value is not one of `comment`, `check`, `both`, or `dry-run`.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
@@ -63,6 +98,8 @@ semantic versioning.
   metadata instead of being silently ignored.
 - Issue comments now preserve whether their target is a pull request or issue,
   and their bodies participate in agent detection.
+- The copyable repository policy template no longer uses removed legacy fields
+  or claims that rule order overrides immutable effect precedence.
 
 ## [0.1.0] - 2026-07-28
 

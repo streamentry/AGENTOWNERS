@@ -37,7 +37,9 @@ defaults:
 ### Rule Condition Matching
 A rule matches when ALL specified conditions in `when` are satisfied:
 
-- `agents`: agent name matches list
+- `agents`: agent name matches list; a `confirmed` identity is required for an
+  `allow` rule, while `likely` or `possible` evidence may only match
+  `require_approval` or `block` rules
 - `actors`: GitHub actor matches list
 - `actions`: any inferred action is in list
 - `files`: any changed file matches any glob pattern

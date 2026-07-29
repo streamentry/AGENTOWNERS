@@ -65,6 +65,11 @@ export function evaluateRule(rule: Rule, input: EvaluationInput): MatchedRule | 
   if (when.agents !== undefined) {
     const agentName = agentDetection.agentName ?? 'unknown';
     if (!when.agents.includes(agentName)) return null;
+    // Agent names derived from spoofable labels, commit metadata, or event
+    // text may route restrictive outcomes, but cannot authorize an allow rule.
+    if (rule.effect === 'allow' && agentDetection.confidence !== 'confirmed') {
+      return null;
+    }
     matchedConditions.push('agents');
   }
 
@@ -207,7 +212,8 @@ function evaluateAgentActions(input: EvaluationInput): MatchedRule | null {
       ? 'block'
       : approval.length > 0
         ? 'require_approval'
-        : allowed.length === input.detectedActions.length
+        : input.agentDetection.confidence === 'confirmed' &&
+            allowed.length === input.detectedActions.length
           ? 'allow'
           : null;
   if (effect === null) return null;

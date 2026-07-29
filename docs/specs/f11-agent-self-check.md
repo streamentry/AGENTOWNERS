@@ -34,6 +34,7 @@ The command writes one JSON document to stdout:
     "head": "HEAD",
     "actor": "coding-agent[bot]"
   },
+  "policyDigest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "decision": "require_approval",
   "risk": {
     "score": 45,
@@ -59,6 +60,11 @@ change-set decision, not an independent per-action policy evaluation.
 
 The recommendation is advisory data. The command never edits files, commits,
 opens pull requests, contacts GitHub, or merges.
+
+`policyDigest` is the lowercase SHA-256 fingerprint produced by the core
+canonicalization contract. It binds the decision evidence to the exact policy
+content after YAML formatting and comments are normalized. It does not prove
+policy authorship, approval, or repository authenticity.
 
 ## Error output
 
@@ -109,6 +115,7 @@ code and `schemaVersion`.
 - Git refs are passed as subprocess arguments and never through a shell.
 - The command makes no model, network, or GitHub API calls.
 - The same repository, policy, refs, and actor produce the same JSON.
+- Success output includes the canonical digest of the policy used for evaluation.
 - JSON contains no timestamp, random identifier, or machine-specific absolute
   path.
 - Unknown output versions fail closed.

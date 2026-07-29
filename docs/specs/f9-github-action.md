@@ -47,7 +47,7 @@ inputs:
     description: "Apply suggested labels to PR/issue"
   known-agent-actors:
     required: false
-    description: "Comma-separated list of known agent actor names"
+    description: "Comma-separated actor logins retained as likely evidence; never authorization"
 
 outputs:
   decision:
@@ -58,6 +58,10 @@ outputs:
     description: "low | medium | high | critical"
   matched-rules:
     description: "JSON array of matched rules"
+  policy-digest:
+    description: "Canonical SHA-256 digest of the policy used for this decision"
+  policy-ref:
+    description: "Immutable Git ref used to load the policy used for this decision"
 
 runs:
   using: node24
@@ -72,18 +76,20 @@ runs:
 ## Main Logic (`src/index.ts`)
 
 ```
-1. Get inputs
+1. Get and validate inputs; unsupported `mode` values fail before token or API access
 2. Get GitHub context (event, payload)
 3. Load policy file
 4. Branch on event type:
-   - pull_request → fetchPRFiles, fetchPRMetadata
+   - pull_request → fetchPRFiles, fetchPRMetadata, and commit author metadata
    - issues → inspect actor/title/body/labels
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
      PR or issue fields
 5. Classify files
 6. Infer actions
-7. Detect agent
+7. Detect agent, retaining commit email/name matches and workflow-provided
+   actor hints as forgeable `likely` evidence rather than confirmed identity;
+   workflow input never grants an agent-policy allow path
 8. Evaluate policy
 9. Render verdict
 10. Post/update sticky comment (if mode includes "comment")
@@ -108,6 +114,11 @@ Create labels if they don't exist (with sensible colors).
 
 ## Audit Artifact
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
+The record includes the canonical SHA-256 digest of the evaluated policy and
+the trusted Git ref used to load it. For pull requests this is the immutable
+base SHA; for issue events it is the repository's default branch ref. The same values are exposed as
+`policy-digest` and `policy-ref` outputs so downstream evidence can bind a
+decision to the exact policy revision rather than only to the artifact bytes.
 
 ## Tests (`packages/github-action/tests/`)
 - PR opened event → fetches files, evaluates, posts comment
@@ -122,4 +133,5 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Never print secret patterns from diff content
 - Treat all PR content as untrusted input
 - Do not execute content from policy as code
+- Reject unsupported `mode` values before creating a GitHub client
 - Use least-privilege permissions

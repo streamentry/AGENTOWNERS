@@ -25,6 +25,7 @@ const mockOctokit = {
     },
     pulls: {
       listFiles: vi.fn(),
+      listCommits: vi.fn(),
       get: vi.fn(),
     },
     issues: {
@@ -88,6 +89,7 @@ const mockDecisionBlock = {
 
 vi.mock('@agent-owners/core', () => ({
   loadPolicyText: vi.fn().mockReturnValue({ version: 1, rules: [], defaults: {} }),
+  hashPolicy: vi.fn().mockReturnValue('a'.repeat(64)),
   classifyFiles: vi.fn().mockReturnValue({
     docsOnly: false,
     testsOnly: false,
@@ -159,6 +161,7 @@ function setupOctokitPR(files: string[] = ['src/index.ts']): void {
       head: { ref: 'feature-branch' },
     },
   });
+  mockOctokit.rest.pulls.listCommits.mockResolvedValue({ data: [] });
   mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
   mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 1 } });
   mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 1 } });
@@ -218,6 +221,12 @@ describe('GitHub Action — integration via mocks', () => {
           prTitle: undefined,
           prBody: undefined,
         }),
+      );
+      expect(core.hashPolicy).toHaveBeenCalled();
+      expect(mockCore.setOutput).toHaveBeenCalledWith('policy-digest', 'a'.repeat(64));
+      expect(mockCore.setOutput).toHaveBeenCalledWith('policy-ref', 'main');
+      expect(core.renderAuditJson).toHaveBeenCalledWith(
+        expect.objectContaining({ policyDigest: 'a'.repeat(64), policyRef: 'main' }),
       );
     });
   });
@@ -504,6 +513,12 @@ describe('getPRMetadata', () => {
         head: { ref: 'feature' },
       },
     });
+    mockOctokit.rest.pulls.listCommits.mockResolvedValue({
+      data: [
+        { commit: { author: { email: 'agent@example.invalid', name: 'Automation Bot' } } },
+        { commit: { author: { email: null, name: null } } },
+      ],
+    });
 
     const meta = await getPRMetadata(mockOctokit as never, 'owner', 'repo', 1);
     expect(meta.title).toBe('Test PR');
@@ -511,6 +526,30 @@ describe('getPRMetadata', () => {
     expect(meta.labels).toEqual(['ai-agent']);
     expect(meta.commits).toBe(2);
     expect(meta.baseSha).toBe('base-sha');
+    expect(meta.commitEmails).toEqual(['agent@example.invalid']);
+    expect(meta.commitNames).toEqual(['Automation Bot']);
+  });
+});
+
+describe('getPRCommitIdentities', () => {
+  it('paginates commit authors without exposing raw API objects', async () => {
+    const { getPRCommitIdentities } = await import('../src/github.js');
+    vi.clearAllMocks();
+    const page1 = Array.from({ length: 100 }, (_, index) => ({
+      commit: { author: { email: `agent${index}@example.invalid`, name: `Agent ${index}` } },
+    }));
+    const page2 = [{ commit: { author: { email: 'last@example.invalid', name: 'Last Agent' } } }];
+    mockOctokit.rest.pulls.listCommits
+      .mockResolvedValueOnce({ data: page1 })
+      .mockResolvedValueOnce({ data: page2 });
+
+    await expect(
+      getPRCommitIdentities(mockOctokit as never, 'owner', 'repo', 1),
+    ).resolves.toEqual({
+      commitEmails: [...page1.map((entry) => entry.commit.author.email), 'last@example.invalid'],
+      commitNames: [...page1.map((entry) => entry.commit.author.name), 'Last Agent'],
+    });
+    expect(mockOctokit.rest.pulls.listCommits).toHaveBeenCalledTimes(2);
   });
 });
 

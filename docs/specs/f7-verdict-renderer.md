@@ -102,6 +102,10 @@ export type RenderOptions = {
 export type AuditRecord = {
   version: 1;
   timestamp: string;
+  /** Canonical digest of the policy evaluated for this record, when available. */
+  policyDigest?: string;
+  /** Trusted Git ref from which the policy was loaded, when available. */
+  policyRef?: string;
   repository?: string;
   event?: string;
   actor: string;
@@ -126,3 +130,4 @@ export type AuditRecord = {
 - Sticky comment marker included by default
 - `compact: true` produces shorter output
 - `renderAuditJson` produces correct structure
+- Action audit records bind the evaluated policy digest and trusted ref when supplied

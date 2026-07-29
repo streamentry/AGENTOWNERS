@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { loadPolicyText, type AgentOwnersPolicy } from '@agent-owners/core';
+import { hashPolicy, loadPolicyText, type AgentOwnersPolicy } from '@agent-owners/core';
 import { getRepositoryFileContent, type Octokit } from './github.js';
 
 export function selectTrustedPolicyRef(
@@ -24,6 +24,15 @@ export function normalizeRepositoryPolicyPath(policyPath: string): string {
     throw new Error('Policy path must be a repository-relative policy path.');
   }
   return normalized;
+}
+
+export type PolicyEvidence = {
+  policyDigest: string;
+  policyRef: string;
+};
+
+export function buildPolicyEvidence(policy: AgentOwnersPolicy, policyRef: string): PolicyEvidence {
+  return { policyDigest: hashPolicy(policy), policyRef };
 }
 
 export async function loadTrustedPolicy(

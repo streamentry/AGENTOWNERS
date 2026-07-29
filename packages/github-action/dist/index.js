@@ -33092,6 +33092,7 @@ var {
 
 // ../core/dist/index.mjs
 var import_picomatch = __toESM(require_picomatch2(), 1);
+var import_crypto = require("crypto");
 var agentActionSchema = external_exports.enum([
   "open_pr",
   "update_pr",
@@ -33375,6 +33376,29 @@ function matchesAgentPolicy(actor, policy) {
   }
   return null;
 }
+function matchesAgentCommitPolicy(commitEmails, commitNames, policy) {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const signals = [];
+    if (agentPolicy.match?.commitEmails?.some((email) => commitEmails.includes(email))) {
+      signals.push(`policy commit email match: agents.${name}.match.commitEmails`);
+    }
+    if (agentPolicy.match?.commitNames?.some((commitName) => commitNames.includes(commitName))) {
+      signals.push(`policy commit name match: agents.${name}.match.commitNames`);
+    }
+    if (signals.length > 0) return { name, signals };
+  }
+  return null;
+}
+function matchesAgentLabelPolicy(labels, policy) {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    if (agentPolicy.match?.labels?.some((label) => labels.includes(label))) {
+      return name;
+    }
+  }
+  return null;
+}
 function matchesConfiguredPattern(value, pattern) {
   if (!value) return false;
   try {
@@ -33383,10 +33407,30 @@ function matchesConfiguredPattern(value, pattern) {
     return false;
   }
 }
+function matchesAgentContentPolicy(bodyTexts, prTitle, policy) {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
+    const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
+    for (const pattern of bodyPatterns) {
+      if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
+        return { name, signals: [`policy body pattern match: agents.${name}`] };
+      }
+    }
+    for (const pattern of titlePatterns) {
+      if (matchesConfiguredPattern(prTitle, pattern)) {
+        return { name, signals: [`policy title pattern match: agents.${name}`] };
+      }
+    }
+  }
+  return null;
+}
 function detectAgent(input) {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -33401,26 +33445,11 @@ function detectAgent(input) {
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
-      return { agentName: matchedAgent, confidence: "confirmed", signals };
-    }
-    if (policy.agents) {
-      for (const [name, agentPolicy] of Object.entries(policy.agents)) {
-        const bodyPatterns = agentPolicy.match?.bodyPatterns ?? [];
-        const titlePatterns = agentPolicy.match?.prTitlePatterns ?? [];
-        for (const pattern of bodyPatterns) {
-          if (bodyTexts.some((body) => matchesConfiguredPattern(body, pattern))) {
-            signals.push(`policy body pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
-          }
-        }
-        for (const pattern of titlePatterns) {
-          if (matchesConfiguredPattern(prTitle, pattern)) {
-            signals.push(`policy title pattern match: agents.${name}`);
-            return { agentName: name, confidence: "confirmed", signals };
-          }
-        }
+      const agentPolicy = policy.agents?.[matchedAgent];
+      if (agentPolicy?.match?.actors?.includes(actor)) {
+        signals.push(`policy match: agents.${matchedAgent}.match.actors`);
       }
+      return { agentName: matchedAgent, confidence: "confirmed", signals };
     }
   }
   if (isKnownBotActor(actor)) {
@@ -33441,8 +33470,34 @@ function detectAgent(input) {
   if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
     signals.push("body co-author [bot] pattern");
   }
+  if (policy) {
+    const contentMatch = matchesAgentContentPolicy(bodyTexts, prTitle, policy);
+    const commitMatch = matchesAgentCommitPolicy(commitEmails, commitNames, policy);
+    const matchedAgent = contentMatch ?? commitMatch;
+    if (matchedAgent) {
+      return {
+        agentName: matchedAgent.name,
+        confidence: "likely",
+        signals: [
+          ...signals,
+          ...contentMatch?.signals ?? [],
+          ...commitMatch?.signals ?? []
+        ]
+      };
+    }
+  }
   if (signals.length > 0) {
     return { confidence: "likely", signals };
+  }
+  if (policy) {
+    const matchedLabelAgent = matchesAgentLabelPolicy(labels, policy);
+    if (matchedLabelAgent) {
+      return {
+        agentName: matchedLabelAgent,
+        confidence: "possible",
+        signals: [`policy label match: agents.${matchedLabelAgent}.match.labels`]
+      };
+    }
   }
   const matchedLabels = labels.filter((l) => AGENT_LABELS.includes(l));
   if (matchedLabels.length > 0) {
@@ -33769,10 +33824,21 @@ Unrecognized decision effect.`;
   return wrapWithMarker(content);
 }
 function renderAuditJson(context3) {
-  const { actor, repository, event, agentDetection, decision, changedFiles } = context3;
+  const {
+    actor,
+    policyDigest,
+    policyRef,
+    repository,
+    event,
+    agentDetection,
+    decision,
+    changedFiles
+  } = context3;
   return {
     version: 1,
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    ...policyDigest !== void 0 ? { policyDigest } : {},
+    ...policyRef !== void 0 ? { policyRef } : {},
     repository,
     event,
     actor,
@@ -33822,6 +33888,9 @@ function evaluateRule(rule, input) {
   if (when.agents !== void 0) {
     const agentName = agentDetection.agentName ?? "unknown";
     if (!when.agents.includes(agentName)) return null;
+    if (rule.effect === "allow" && agentDetection.confidence !== "confirmed") {
+      return null;
+    }
     matchedConditions.push("agents");
   }
   if (when.actors !== void 0) {
@@ -33930,7 +33999,7 @@ function evaluateAgentActions(input) {
     (action) => agentPolicy.requires_approval?.includes(action)
   );
   const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
-  const effect = blocked.length > 0 ? "block" : approval.length > 0 ? "require_approval" : allowed.length === input.detectedActions.length ? "allow" : null;
+  const effect = blocked.length > 0 ? "block" : approval.length > 0 ? "require_approval" : input.agentDetection.confidence === "confirmed" && allowed.length === input.detectedActions.length ? "allow" : null;
   if (effect === null) return null;
   const matchedActions = effect === "block" ? blocked : effect === "require_approval" ? approval : allowed;
   return {
@@ -34228,6 +34297,34 @@ var capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine((attempt, 
     });
   }
 });
+var digestPattern = /^[a-f0-9]{64}$/;
+var policyDiffSchema = external_exports.object({
+  schemaVersion: external_exports.literal(1),
+  baseDigest: external_exports.string().regex(digestPattern),
+  proposedDigest: external_exports.string().regex(digestPattern),
+  identical: external_exports.boolean(),
+  changes: external_exports.array(
+    external_exports.object({
+      path: external_exports.string().min(1),
+      kind: external_exports.enum(["added", "removed", "changed"])
+    }).strict()
+  ).readonly()
+}).strict();
+function stablePolicyStringify(value) {
+  if (value === null || typeof value !== "object") {
+    const serialized = JSON.stringify(value);
+    if (serialized === void 0) throw new TypeError("policy contains an unsupported value");
+    return serialized;
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stablePolicyStringify).join(",")}]`;
+  }
+  const record = value;
+  return `{${Object.keys(record).filter((key) => record[key] !== void 0).sort().map((key) => `${JSON.stringify(key)}:${stablePolicyStringify(record[key])}`).join(",")}}`;
+}
+function hashPolicy(policy) {
+  return (0, import_crypto.createHash)("sha256").update(stablePolicyStringify(policy)).digest("hex");
+}
 
 // src/github.ts
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {
@@ -34280,6 +34377,7 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     repo,
     pull_number: pullNumber
   });
+  const commitIdentities = await getPRCommitIdentities(octokit, owner, repo, pullNumber);
   return {
     title: data.title,
     body: data.body ?? "",
@@ -34292,8 +34390,35 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     changedFiles: data.changed_files,
     base: data.base.ref,
     baseSha: data.base.sha,
-    head: data.head.ref
+    head: data.head.ref,
+    ...commitIdentities
   };
+}
+async function getPRCommitIdentities(octokit, owner, repo, pullNumber) {
+  const commitEmails = [];
+  const commitNames = [];
+  let page = 1;
+  while (true) {
+    const response = await octokit.rest.pulls.listCommits({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100,
+      page
+    });
+    for (const commit of response.data) {
+      const author = commit.commit?.author;
+      if (typeof author?.email === "string" && author.email.length > 0) {
+        commitEmails.push(author.email);
+      }
+      if (typeof author?.name === "string" && author.name.length > 0) {
+        commitNames.push(author.name);
+      }
+    }
+    if (response.data.length < 100) break;
+    page += 1;
+  }
+  return { commitEmails, commitNames };
 }
 async function getIssueMetadata(octokit, owner, repo, issueNumber) {
   const { data } = await octokit.rest.issues.get({
@@ -34338,6 +34463,12 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
 }
 
 // src/config.ts
+var ACTION_MODES = ["comment", "check", "both", "dry-run"];
+function parseActionMode(input) {
+  if (input === "") return "comment";
+  if (ACTION_MODES.includes(input)) return input;
+  throw new Error("Invalid mode. Expected one of: comment, check, both, dry-run.");
+}
 function requireGitHubToken(environmentToken, inputToken) {
   const token = environmentToken ?? inputToken;
   if (!token) {
@@ -34364,6 +34495,9 @@ function normalizeRepositoryPolicyPath(policyPath) {
   }
   return normalized;
 }
+function buildPolicyEvidence(policy, policyRef) {
+  return { policyDigest: hashPolicy(policy), policyRef };
+}
 async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
   if (!ref) throw new Error("Missing trusted repository ref for policy load.");
   const repositoryPath = normalizeRepositoryPolicyPath(policyPath);
@@ -34371,11 +34505,23 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
   return loadPolicyText(policyText, `${repositoryPath} at trusted ref ${ref}`);
 }
 
+// src/agent-evidence.ts
+function applyKnownAgentActorEvidence(detection, actor, configuredActors) {
+  if (detection.confidence !== "unknown" || !configuredActors.includes(actor)) {
+    return detection;
+  }
+  return {
+    ...detection,
+    confidence: "likely",
+    signals: [...detection.signals, `known-agent-actors input: ${actor}`]
+  };
+}
+
 // src/index.ts
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
-    const mode = getInput("mode") || "comment";
+    const mode = parseActionMode(getInput("mode"));
     const failOnBlock = getInput("fail-on-block") !== "false";
     const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
     const addLabels = getInput("add-labels") !== "false";
@@ -34400,6 +34546,8 @@ async function run() {
     let issueBody;
     let commentBody;
     let labels = [];
+    let commitEmails = [];
+    let commitNames = [];
     let issueNumber;
     let eventType;
     let reviewState;
@@ -34428,6 +34576,8 @@ async function run() {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else if (eventName === "issues") {
       const issue2 = payload.issue;
       if (!issue2) throw new Error("Missing issue payload");
@@ -34475,6 +34625,8 @@ async function run() {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else {
       warning(`Unsupported event: ${eventName}. Skipping AGENTOWNERS check.`);
       return;
@@ -34491,6 +34643,7 @@ async function run() {
       policyPath,
       trustedPolicyRef
     );
+    const { policyDigest, policyRef } = buildPolicyEvidence(policy, trustedPolicyRef);
     if (!eventType) {
       warning("Could not determine event type. Skipping.");
       return;
@@ -34509,19 +34662,18 @@ async function run() {
       filesClassification,
       reviewState
     });
-    const agentDetection = detectAgent({
+    const detectedAgent = detectAgent({
       actor,
       prTitle,
       prBody,
       issueBody,
       commentBody,
+      commitEmails,
+      commitNames,
       labels,
       policy
     });
-    if (knownAgentActors.includes(actor) && agentDetection.confidence === "unknown") {
-      agentDetection.signals.push(`known-agent-actors input: ${actor}`);
-      agentDetection.confidence = "likely";
-    }
+    const agentDetection = applyKnownAgentActorEvidence(detectedAgent, actor, knownAgentActors);
     const decision = evaluatePolicy({
       policy,
       agentDetection,
@@ -34557,8 +34709,12 @@ async function run() {
         decision.matchedRules.map((r) => r.name)
       )
     );
+    setOutput("policy-digest", policyDigest);
+    setOutput("policy-ref", policyRef);
     const auditRecord = renderAuditJson({
       actor,
+      policyDigest,
+      policyRef,
       repository: `${owner}/${repo}`,
       event: eventName,
       agentDetection: {

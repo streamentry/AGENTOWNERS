@@ -18,6 +18,17 @@ revising the change. Input and environment failures use exits `64` through
 `70`; the complete contract is in
 [F11](docs/specs/f11-agent-self-check.md).
 
+### Detection confidence contract
+
+The detector has an explicit trust ladder. Explicitly configured actors and
+built-in verified bot actors are `confirmed`; commit identities and configured
+body or title matches are `likely`; configured labels are `possible`. Only a
+`confirmed` identity may satisfy an agent-identity `allow` rule or use a
+known-agent allow default. `likely` and `possible` signals may still route a
+change to blocking or human approval, but they must never authorize an otherwise
+unknown action. Treat labels, commit metadata, and event text as spoofable
+evidence, not proof of identity.
+
 ## For humans
 
 ### Setup
@@ -47,7 +58,7 @@ above. Add the smallest focused proof for each surface the change touches:
 | Change surface | Focused proof before the full gate | Additional pull-request evidence |
 | --- | --- | --- |
 | Policy types or schema | Focused schema test, then `pnpm generate:schema` | Commit the generated schema and show `pnpm verify:schema` passing |
-| Detection, classification, actions, evaluation, or scoring | Focused unit test plus a portable fixture when repository-visible behavior changes | Name the invariant and the temporary production mutation that makes the new test fail |
+| Detection, classification, actions, evaluation, or scoring | Focused unit test plus a portable fixture when repository-visible behavior changes | Name the confidence level of each identity signal, the invariant, and the temporary production mutation that makes the new test fail |
 | Renderer, audit JSON, or SARIF | Focused renderer or SARIF test | Prove exact ordering, stable identifiers, repository-relative paths, and redaction where applicable |
 | CLI behavior | Focused CLI test using real argument parsing and exit codes | Include stdout, stderr, and exit-code boundaries; treat Git refs as hostile input |
 | GitHub Action adapter | Focused Action test, then `pnpm build` | Commit the regenerated bundle and show that base-policy loading and least privilege remain intact |

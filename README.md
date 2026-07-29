@@ -46,7 +46,7 @@ claim.
 | Package                       | Responsibility                                                          | Trust boundary                                            |
 | ----------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
 | `@agent-owners/core`          | Schema, detection, classification, evaluation, scoring, rendering       | Pure and stateless; no shell, network, clock, or database |
-| `@agent-owners/cli`           | Local policy creation, validation, fingerprinting, and Git-range checks | Git refs are passed as argv, never through a shell        |
+| `@agent-owners/cli`           | Local policy creation, validation, fingerprinting, policy diffs, and Git-range checks | Git refs are passed as argv, never through a shell        |
 | `@agent-owners/github-action` | Event ingestion, sticky verdicts, labels, audit output, CI status       | Least-privilege GitHub token permissions                  |
 
 The engine detects agent signals, classifies changed paths, infers actions,
@@ -171,7 +171,7 @@ The first-line schema directive gives compatible YAML editors completion and
 validation against the same Zod contract used at runtime. The generated
 [JSON Schema](packages/core/agentowners.schema.json) rejects unknown fields,
 empty `match` and `when` objects, and actions assigned to conflicting policy
-lists.
+lists. The complete authoring guide is [the policy reference](docs/policy-reference.md).
 
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the
@@ -209,6 +209,10 @@ jobs:
 
 Open an agent-generated PR and inspect the verdict before switching from
 observation to enforcement.
+
+The Action accepts only `comment`, `check`, `both`, and `dry-run` modes. A
+misspelled mode fails before token or GitHub API access instead of silently
+running with incomplete side effects.
 
 ---
 
@@ -275,23 +279,39 @@ agentowners test \
 
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
+
+# Review a policy change without printing policy values
+agentowners policy-diff \
+  --base .github/AGENTOWNERS.yml \
+  --proposed /tmp/AGENTOWNERS.yml \
+  --format json --fail-on-change
 ```
 
 `self-check` always uses explicit policy, refs, and actor inputs. It returns
-stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
-and a bounded next action. It makes no model or GitHub API calls and never
-modifies the repository.
+stable JSON with the policy digest, decision, risk, matched rules, blocked
+actions, reviewers, and a bounded next action. It makes no model or GitHub API
+calls and never modifies the repository.
 
 `test` executes a strict, versioned fixture suite through the same detection,
 classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
 
+`policy-diff` compares two valid policies using canonical SHA-256 fingerprints
+and sorted JSON Pointer paths. It never prints policy values; use
+`--fail-on-change` when a CI or agent preflight must reject governance drift.
+
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial
 fingerprints, and repository-relative locations are stable across equivalent
 runs. Upload the file with `github/codeql-action/upload-sarif@v4` where GitHub
 code scanning is available.
+
+The GitHub Action also emits `policy-digest` and `policy-ref` outputs and binds
+the same values into its audit artifact. Together with the artifact SHA-256,
+they let a downstream verifier distinguish “this file was not modified” from
+the stronger claim “this decision was produced from this exact trusted policy
+revision.”
 
 ---
 
@@ -302,7 +322,7 @@ code scanning is available.
 | `minimal`            | `require_approval`  | New projects, getting started      |
 | `strict-oss`         | `require_approval`  | Open-source with many contributors |
 | `security-sensitive` | `block` for unknown | Security-critical repositories     |
-| `monorepo`           | Per-package rules   | Large monorepos                    |
+| `monorepo` example   | Per-package rules   | Large monorepos; copy the example rather than using `init --profile` |
 
 ```bash
 agentowners init --profile strict-oss
@@ -405,8 +425,11 @@ AGENTOWNERS detects AI agents from:
 1. **Policy config:** explicit actor → agent mapping (`confirmed`)
 2. **Known bots:** `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]` (`confirmed`)
 3. **Commit signatures:** `Co-Authored-By: Claude`, `Generated with`, `🤖`, `Claude Code` (`likely`)
-4. **PR body markers:** tool-specific footers (`likely`)
-5. **Labels:** `ai-generated`, `agent`, `claude`, `copilot` (`possible`)
+4. **Configured commit authors:** policy-listed commit emails or names (`likely`;
+   forgeable metadata cannot authorize an otherwise unknown action)
+5. **PR body markers:** tool-specific footers (`likely`)
+6. **Labels:** `ai-generated`, `agent`, `claude`, `copilot`, or policy-listed
+   labels (`possible`)
 
 ---
 

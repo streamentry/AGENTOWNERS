@@ -9,7 +9,8 @@ from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
-- `src/git.ts`: bounded Git subprocess adapter
+- `src/git.ts`: bounded Git subprocess adapter for paths, messages, and commit
+  author metadata
 - `src/commands/init.ts`: profile installation
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
@@ -18,6 +19,8 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
 - `src/commands/test.ts`: portable policy fixture execution
 - `src/commands/capabilities.ts`: capability manifest evaluation and audit output
+- `src/commands/policy-diff.ts`: value-free policy comparison and CI exit contract
+- `src/version.ts`: published CLI version loaded from package metadata
 
 ## Diagrams
 
@@ -99,6 +102,12 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
 The `capabilities` command performs no dispatch; use `--fail-on-deny` when a
 caller needs a nonzero result for denied attempts.
+The `policy-diff` command reads only the two explicit policy paths, never emits
+policy values, and uses `--fail-on-change` for CI drift enforcement.
+Successful `self-check` output includes `policyDigest`, binding the decision
+contract to the canonical policy used for evaluation.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.
+Commit author emails and names are untrusted evidence: pass them to core for
+`likely` detection only, and keep every ref after `--end-of-options`.

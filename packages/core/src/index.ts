@@ -15,3 +15,4 @@ export * from './profiles.js';
 export * from './evaluator.js';
 export * from './fixtures.js';
 export * from './capabilities.js';
+export * from './policy-diff.js';

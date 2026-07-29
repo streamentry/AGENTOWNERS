@@ -16,6 +16,9 @@ pnpm test             # run all tests (vitest)
 pnpm typecheck        # tsc --noEmit across all packages
 pnpm lint             # eslint
 pnpm format           # prettier --write
+pnpm verify           # complete local correctness and release-artifact gate
+pnpm verify:packages  # isolated packed-consumer install, audit, and smoke test
+pnpm demo             # network-free product and capability proof
 ```
 
 Per-package:
@@ -45,7 +48,7 @@ packages/
 | vitest | Tests |
 | zod | Schema validation |
 | js-yaml | YAML parsing |
-| minimatch | Glob matching |
+| picomatch | Glob matching |
 | commander | CLI argument parsing |
 | @actions/core, @actions/github | GitHub Action runtime |
 
@@ -114,12 +117,13 @@ Scope: core cli github-action examples docs
 - `packages/core/src/types.ts` — coordinate first, type changes are breaking
 - `packages/github-action/action.yml` — inputs/outputs are public API
 - `LICENSE` — Apache-2.0, do not change
-- `.github/AGENTOWNERS.yml.example` — kept as the canonical example from the spec
+- `.github/AGENTOWNERS.yml.example` — protected copyable policy template; edit
+  only with a schema regression test and core-review evidence
 
 ## Documentation map
 
 - `docs/specs/readme.md` — canonical product spec (sections 1–31)
-- `docs/specs/f1-f10.md` — per-feature implementation specs
+- `docs/specs/f1-*.md` through `docs/specs/f16-*.md` — per-feature implementation specs
 - `docs/policy-reference.md` — end-user policy format reference
 - `docs/philosophy.md` — why the project exists
 - `docs/threat-model.md` — what it protects against

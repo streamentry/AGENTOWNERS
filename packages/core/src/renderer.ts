@@ -11,6 +11,10 @@ export type RenderOptions = {
 export type AuditRecord = {
   version: 1;
   timestamp: string;
+  /** Canonical digest of the policy used for this decision, when available. */
+  policyDigest?: string;
+  /** Trusted Git ref used to load the policy, when available. */
+  policyRef?: string;
   repository?: string;
   event?: string;
   actor: string;
@@ -27,6 +31,8 @@ export type AuditRecord = {
 
 export type AuditContext = {
   actor: string;
+  policyDigest?: string;
+  policyRef?: string;
   repository?: string;
   event?: string;
   agentDetection: {
@@ -197,11 +203,22 @@ export function renderVerdict(decision: Decision, options?: RenderOptions): stri
 }
 
 export function renderAuditJson(context: AuditContext): AuditRecord {
-  const { actor, repository, event, agentDetection, decision, changedFiles } = context;
+  const {
+    actor,
+    policyDigest,
+    policyRef,
+    repository,
+    event,
+    agentDetection,
+    decision,
+    changedFiles,
+  } = context;
 
   return {
     version: 1,
     timestamp: new Date().toISOString(),
+    ...(policyDigest !== undefined ? { policyDigest } : {}),
+    ...(policyRef !== undefined ? { policyRef } : {}),
     repository,
     event,
     actor,

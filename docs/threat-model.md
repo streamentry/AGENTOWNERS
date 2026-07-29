@@ -23,9 +23,10 @@ a substitute for dedicated secret scanning.
 
 ### 5. Impersonation of non-agent actors
 **Threat**: An agent claims to be a human contributor to bypass policy.  
-**Protection**: Configured actor matches produce confirmed identity. Spoofable
-body and commit markers remain unconfirmed and receive the unknown-agent
-default.
+**Protection**: Explicit policy actor matches and built-in verified bot actors
+produce confirmed identity. Spoofable body, commit, label, and
+workflow-provided actor hints remain candidate evidence and cannot satisfy an
+agent-identity allow path or receive the known-agent default.
 
 ### 6. Policy injection via PR content
 **Threat**: A malicious PR body contains instructions that change how AGENTOWNERS evaluates the policy.  

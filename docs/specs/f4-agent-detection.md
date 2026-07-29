@@ -11,7 +11,7 @@ Detect whether a PR, issue, comment, or commit likely came from an AI agent.
 
 ## Detection Signals (in priority order)
 
-### 1. Explicit policy match (confirmed)
+### 1. Explicit actor policy match (confirmed)
 Actor matches a configured `agents[name].match.actors` entry.
 
 ### 2. Known bot actor (confirmed)
@@ -28,22 +28,31 @@ Commit messages or PR body contains:
 - `OpenAI Codex`
 - `Cursor`
 
+Configured commit author metadata (`agents[name].match.commitEmails` or
+`agents[name].match.commitNames`) is also `likely`: Git author fields are
+untrusted and can be forged. The matched candidate name is retained, but it
+cannot authorize an otherwise unknown action.
+
 ### 4. PR body agent markers (likely)
 PR body contains known agent-specific footers or summaries:
 - `🤖 Generated with`
 - `<!-- agentowners` (our own marker)
 - `Co-authored-by:.*\[bot\]`
 
-### 5. Labels (possible)
-PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`
-
-### 6. Configured body patterns (from policy)
+### 5. Configured body and title patterns (from policy, likely)
 Pull request, issue, or comment body matches
 `agents[name].match.bodyPatterns`; pull request titles match
-`prTitlePatterns`.
-Malformed configured regular expressions are ignored individually. Detection
-continues with remaining patterns and falls through conservatively if nothing
-valid matches.
+`prTitlePatterns`. These values come from untrusted event content, so a match
+retains the candidate agent at `likely` confidence and cannot authorize an
+otherwise unknown action. Malformed configured regular expressions are ignored
+individually. Detection continues with remaining patterns and falls through
+conservatively if nothing valid matches.
+
+### 6. Labels (possible)
+PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`, or a
+configured `agents[name].match.labels` entry. A configured label records the
+candidate agent name but remains `possible`; labels are mutable repository
+metadata and cannot establish confirmed identity.
 
 ## Types
 
@@ -51,6 +60,8 @@ valid matches.
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   labels?: string[];

@@ -11,7 +11,12 @@ import {
   type AgentOwnersPolicy,
   type Decision,
 } from '@agent-owners/core';
-import { getChangedFiles, getCommitMessages, getCurrentActor } from '../git.js';
+import {
+  getChangedFiles,
+  getCommitIdentities,
+  getCommitMessages,
+  getCurrentActor,
+} from '../git.js';
 
 type CheckOptions = {
   policy: string;
@@ -25,6 +30,8 @@ type CheckOptions = {
 type GitInputs = {
   changedFiles: string[];
   commitMessages: string[];
+  commitEmails: string[];
+  commitNames: string[];
 };
 
 function validateOutput(output: string): boolean {
@@ -51,6 +58,7 @@ function readGit(options: CheckOptions): GitInputs | undefined {
     return {
       changedFiles: getChangedFiles(options.base, options.head, process.cwd()),
       commitMessages: getCommitMessages(options.base, options.head, process.cwd()),
+      ...getCommitIdentities(options.base, options.head, process.cwd()),
     };
   } catch (error: unknown) {
     const detail = error instanceof Error ? error.message : String(error);
@@ -69,6 +77,8 @@ function evaluate(policy: AgentOwnersPolicy, inputs: GitInputs, actor: string): 
   const agentDetection = detectAgent({
     actor,
     commitMessages: inputs.commitMessages,
+    commitEmails: inputs.commitEmails,
+    commitNames: inputs.commitNames,
     policy,
   });
   return evaluatePolicy({

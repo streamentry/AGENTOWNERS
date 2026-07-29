@@ -41,6 +41,12 @@ agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
 
+# Compare policy structure without printing policy values
+agentowners policy-diff \
+  --base .github/AGENTOWNERS.yml \
+  --proposed /tmp/AGENTOWNERS.yml \
+  --format json --fail-on-change
+
 # Evaluate a pre-dispatch capability manifest
 agentowners capabilities \
   --manifest fixtures/capabilities/AGENT_CAPABILITIES.json \
@@ -53,7 +59,8 @@ Git refs are passed directly to Git as arguments, never interpolated into a
 shell command. Invalid refs fail closed instead of producing an empty,
 potentially misleading decision.
 
-`self-check` emits a versioned JSON contract and distinct exit codes for allow
+`self-check` emits a versioned JSON contract, including the canonical digest of
+the policy used, and distinct exit codes for allow
 (`0`), approval (`10`), block (`20`), invalid input (`64`), invalid policy
 (`65`), invalid Git range (`66`), and internal failure (`70`). See the
 [self-check specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f11-agent-self-check.md).
@@ -63,6 +70,11 @@ invalid command input, `65` for invalid policy data, `66` for invalid fixture
 data, and `70` for an unexpected internal failure. Use `--output json` for the
 versioned machine result. See the
 [fixture specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f13-policy-fixtures.md).
+
+`policy-diff` emits canonical base/proposed SHA-256 fingerprints and sorted
+JSON Pointer paths with `added`, `removed`, or `changed` kinds. It never emits
+policy values. Add `--fail-on-change` to return exit `1` when any path differs.
+See [F14](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f14-policy-diff.md).
 
 SARIF output is deterministic and contains only non-allow policy results.
 Approval decisions are warnings and blocked decisions are errors.

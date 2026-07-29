@@ -65,7 +65,7 @@ try {
     process.execPath,
     [
       '-e',
-      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function') process.exit(1)",
+      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function'||typeof core.diffPolicies!=='function'||typeof core.hashPolicy!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -74,7 +74,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "import { evaluatePolicy,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function') process.exit(1)",
+      "import { diffPolicies,evaluatePolicy,hashPolicy,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function'||typeof diffPolicies!=='function'||typeof hashPolicy!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -94,6 +94,38 @@ try {
   run('git', ['config', 'user.email', 'verifier@example.invalid'], fixtureDirectory);
   run(cliPath, ['init', '--profile', 'minimal'], fixtureDirectory);
   run(cliPath, ['validate', '.github/AGENTOWNERS.yml'], fixtureDirectory);
+  const policyPath = resolve(fixtureDirectory, '.github/AGENTOWNERS.yml');
+  const proposedPolicyPath = resolve(fixtureDirectory, 'AGENTOWNERS.proposed.yml');
+  const policyText = await readFile(policyPath, 'utf8');
+  if (!policyText.includes('docs_only: allow')) {
+    throw new Error('Packed policy fixture did not contain the expected baseline default');
+  }
+  await writeFile(proposedPolicyPath, policyText.replace('docs_only: allow', 'docs_only: block'));
+  const policyDiff = JSON.parse(
+    run(
+      cliPath,
+      [
+        'policy-diff',
+        '--base',
+        policyPath,
+        '--proposed',
+        proposedPolicyPath,
+        '--format',
+        'json',
+      ],
+      fixtureDirectory,
+    ),
+  );
+  if (
+    policyDiff.schemaVersion !== 1 ||
+    policyDiff.status !== 'complete' ||
+    policyDiff.diff?.identical !== false ||
+    !policyDiff.diff?.changes?.some(
+      (change) => change.path === '/defaults/docs_only' && change.kind === 'changed',
+    )
+  ) {
+    throw new Error('Packed CLI policy diff returned an unexpected contract');
+  }
   run('git', ['add', '.github/AGENTOWNERS.yml'], fixtureDirectory);
   run('git', ['commit', '-m', 'chore: initialize policy'], fixtureDirectory);
   await writeFile(resolve(fixtureDirectory, 'README.md'), '# Fixture\n');

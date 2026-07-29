@@ -190,6 +190,22 @@ describe('renderAuditJson', () => {
     expect(record.repository).toBeUndefined();
     expect(record.event).toBeUndefined();
   });
+
+  it('binds audit evidence to the trusted policy revision when provided', () => {
+    const record = renderAuditJson({
+      actor: 'github-copilot[bot]',
+      repository: 'owner/repo',
+      event: 'pull_request',
+      policyDigest: 'a'.repeat(64),
+      policyRef: '0123456789abcdef0123456789abcdef01234567',
+      agentDetection: { confidence: 'confirmed' },
+      decision: allowDecision,
+      changedFiles: ['README.md'],
+    });
+
+    expect(record.policyDigest).toBe('a'.repeat(64));
+    expect(record.policyRef).toBe('0123456789abcdef0123456789abcdef01234567');
+  });
 });
 
 describe('renderAllowed', () => {

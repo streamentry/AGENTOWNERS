@@ -22,6 +22,11 @@ Portable policy suites use `parsePolicyFixtureSuite()` and
 `runPolicyFixtureSuite()`. They exercise detection, classification, inference,
 and evaluation without Git, GitHub, network access, or hidden state.
 
+`diffPolicies()` and `hashPolicy()` provide a value-free, deterministic policy
+change contract. They canonicalize valid policies, return stable SHA-256
+fingerprints, and report only sorted JSON Pointer paths and change kinds. The
+fingerprint proves canonical content equivalence, not authorship or approval.
+
 The experimental capability API provides the same deterministic boundary for a
 pre-dispatch adapter. `parseCapabilityManifest()` validates strict identity,
 scope, privilege, budget, escalation, and audit fields; `evaluateCapabilities()`

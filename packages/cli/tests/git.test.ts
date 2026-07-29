@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'child_process';
-import { getChangedFiles, getCommitMessages, getCurrentActor } from '../src/git.js';
+import {
+  getChangedFiles,
+  getCommitIdentities,
+  getCommitMessages,
+  getCurrentActor,
+} from '../src/git.js';
 
 vi.mock('child_process', () => ({
   execFileSync: vi.fn(),
@@ -31,6 +36,22 @@ describe('git helpers', () => {
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
       ['log', '--format=%s%n%b', '--end-of-options', 'main..HEAD'],
+      expect.any(Object),
+    );
+  });
+
+  it('reads commit author identities from the requested range', () => {
+    vi.mocked(execFileSync).mockReturnValue(
+      'agent@example.invalid\0Automation Bot\nmaintainer@example.invalid\0Maintainer\n',
+    );
+
+    expect(getCommitIdentities('main', 'HEAD')).toEqual({
+      commitEmails: ['agent@example.invalid', 'maintainer@example.invalid'],
+      commitNames: ['Automation Bot', 'Maintainer'],
+    });
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['log', '--format=%ae%x00%an', '--end-of-options', 'main..HEAD'],
       expect.any(Object),
     );
   });

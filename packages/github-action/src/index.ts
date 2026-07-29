@@ -16,14 +16,15 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
-import { requireGitHubToken } from './config.js';
-import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import { parseActionMode, requireGitHubToken } from './config.js';
+import { buildPolicyEvidence, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import { applyKnownAgentActorEvidence } from './agent-evidence.js';
 
 export async function run(): Promise<void> {
   try {
     // 1. Inputs
     const policyPath = core.getInput('policy-path') || '.github/AGENTOWNERS.yml';
-    const mode = core.getInput('mode') || 'comment';
+    const mode = parseActionMode(core.getInput('mode'));
     const failOnBlock = core.getInput('fail-on-block') !== 'false';
     const failOnRequireApproval = core.getInput('fail-on-require-approval') === 'true';
     const addLabels = core.getInput('add-labels') !== 'false';
@@ -57,6 +58,8 @@ export async function run(): Promise<void> {
     let issueBody: string | undefined;
     let commentBody: string | undefined;
     let labels: string[] = [];
+    let commitEmails: string[] = [];
+    let commitNames: string[] = [];
     let issueNumber: number | undefined;
     let eventType: GitHubEventType | undefined;
     let reviewState: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;
@@ -89,6 +92,8 @@ export async function run(): Promise<void> {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else if (eventName === 'issues') {
       const issue = payload.issue;
       if (!issue) throw new Error('Missing issue payload');
@@ -143,6 +148,8 @@ export async function run(): Promise<void> {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else {
       core.warning(`Unsupported event: ${eventName}. Skipping AGENTOWNERS check.`);
       return;
@@ -161,6 +168,7 @@ export async function run(): Promise<void> {
       policyPath,
       trustedPolicyRef,
     );
+    const { policyDigest, policyRef } = buildPolicyEvidence(policy, trustedPolicyRef);
 
     if (!eventType) {
       core.warning('Could not determine event type. Skipping.');
@@ -187,23 +195,20 @@ export async function run(): Promise<void> {
       reviewState,
     });
 
-    // 7. Detect agent
-    // Extend policy actors with known-agent-actors input
-    const agentDetection = detectAgent({
+    // 7. Detect agent. Workflow-provided actor hints remain forgeable evidence.
+    const detectedAgent = detectAgent({
       actor,
       prTitle,
       prBody,
       issueBody,
       commentBody,
+      commitEmails,
+      commitNames,
       labels,
       policy,
     });
 
-    // If the actor is in knownAgentActors and not already confirmed, mark as likely
-    if (knownAgentActors.includes(actor) && agentDetection.confidence === 'unknown') {
-      agentDetection.signals.push(`known-agent-actors input: ${actor}`);
-      (agentDetection as { confidence: string }).confidence = 'likely';
-    }
+    const agentDetection = applyKnownAgentActorEvidence(detectedAgent, actor, knownAgentActors);
 
     // 8. Evaluate policy
     const decision = evaluatePolicy({
@@ -250,10 +255,14 @@ export async function run(): Promise<void> {
         decision.matchedRules.map((r: import('@agent-owners/core').MatchedRule) => r.name),
       ),
     );
+    core.setOutput('policy-digest', policyDigest);
+    core.setOutput('policy-ref', policyRef);
 
     // 13. Write audit artifact
     const auditRecord = renderAuditJson({
       actor,
+      policyDigest,
+      policyRef,
       repository: `${owner}/${repo}`,
       event: eventName,
       agentDetection: {

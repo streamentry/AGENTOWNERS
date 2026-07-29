@@ -92,6 +92,7 @@ The project should ship as three things:
    - `agentowners init`
    - `agentowners validate`
    - `agentowners fingerprint`
+   - `agentowners policy-diff`
 
 Optional later:
 
@@ -411,12 +412,18 @@ Detection signals:
    - `OpenAI Codex`
    - `Cursor`
 
+   Configured commit email or name matches are retained as `likely` evidence;
+   Git author metadata is forgeable and cannot establish confirmed identity.
+
 3. PR body contains known agent markers:
 
    - generated summary
    - agent run link
    - tool-specific footer
    - configured body patterns
+
+   Configured body and title patterns remain `likely` evidence because the
+   matching event content is controlled by the contributor.
 
 4. Labels:
 
@@ -732,6 +739,10 @@ outputs:
     description: 'low | medium | high | critical'
   matched-rules:
     description: 'JSON array of matched rules'
+  policy-digest:
+    description: 'Canonical SHA-256 digest of the policy used for this decision'
+  policy-ref:
+    description: 'Trusted Git ref used to load the policy used for this decision'
 ```
 
 Behavior:
@@ -745,6 +756,7 @@ Behavior:
   - evaluate policy
   - post or update a sticky comment
   - optionally apply labels
+  - emit the canonical policy digest and trusted policy ref
   - fail check if decision is block
 
 - On issue events:
@@ -848,7 +860,14 @@ agentowners fingerprint --commit HEAD
 Runs an explicit pre-PR contract against a Git range and returns versioned
 JSON. Policy, base, head, and actor are mandatory; identity is never inferred.
 
-### 17.7 `agentowners test`
+### 17.7 `agentowners policy-diff`
+
+Compares two valid policies without printing policy values. It returns stable
+SHA-256 fingerprints and sorted JSON Pointer paths with `added`, `removed`, or
+`changed` kinds. `--format json` emits the versioned machine contract and
+`--fail-on-change` exits `1` when any path differs.
+
+### 17.8 `agentowners test`
 
 Executes repository-owned policy fixtures without GitHub or network access.
 

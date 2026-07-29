@@ -9,6 +9,7 @@ agents under the repository policy.
 ## Key Components
 
 - `AGENTOWNERS.yml`: policy applied to this repository
+- `AGENTOWNERS.yml.example`: copyable strict-schema policy template
 - `CODEOWNERS`: human ownership routing
 - `ISSUE_TEMPLATE/`: structured defect and feature intake
 - `DISCUSSION_TEMPLATE/`: structured community proposals
@@ -51,5 +52,6 @@ sequenceDiagram
 
 ## Verification
 
-Discussion form filenames must match category slugs. Validate YAML structure,
-run `pnpm verify`, and never modify workflows when policy self-check blocks it.
+Discussion form filenames must match category slugs. Validate both repository
+policy files against the strict schema, run `pnpm verify`, and never modify
+workflows when policy self-check blocks it.
