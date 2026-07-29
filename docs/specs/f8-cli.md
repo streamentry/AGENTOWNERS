@@ -13,6 +13,10 @@ fingerprint, policy-diff, and self-check.
 
 `packages/cli/src/index.ts` — uses `commander`
 
+The `--version` value is loaded from `packages/cli/package.json`, which is the
+single release-version authority for the published CLI. The entry point must
+not duplicate a semantic version literal.
+
 ## Commands
 
 ### `agentowners init`
