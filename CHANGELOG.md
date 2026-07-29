@@ -13,6 +13,9 @@ semantic versioning.
   retained audit bytes.
 - `agentowners explain --sha256` verification for Action audit artifacts before
   rendering their decisions.
+- Versioned JSON explanations from `agentowners explain --output json`, with
+  normalized decisions, audit provenance, and verified digests for agents and
+  CI consumers.
 - Successful digest verification is now explicit in CLI output for durable
   audit transcripts.
 - `agentowners explain` support for versioned Action audit artifacts, with

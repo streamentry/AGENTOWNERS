@@ -17,6 +17,8 @@ type ExplainableInput = {
   verifiedSha256?: string;
 };
 
+type ExplainOutput = 'text' | 'json';
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -149,7 +151,23 @@ function writeAuditContext(lines: string[], audit: AuditRecord): void {
   lines.push('');
 }
 
-function writeDecision(input: ExplainableInput): void {
+function writeJson(input: ExplainableInput): void {
+  const output = {
+    schemaVersion: 1,
+    inputType: input.audit ? 'audit' : 'decision',
+    decision: input.decision,
+    ...(input.audit ? { audit: input.audit } : {}),
+    ...(input.verifiedSha256 ? { verifiedSha256: input.verifiedSha256 } : {}),
+  };
+  process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
+}
+
+function writeDecision(input: ExplainableInput, output: ExplainOutput): void {
+  if (output === 'json') {
+    writeJson(input);
+    return;
+  }
+
   const { decision, audit } = input;
   const lines: string[] = [];
   if (audit) writeAuditContext(lines, audit);
@@ -220,12 +238,16 @@ export function registerExplain(program: Command): void {
     .command('explain')
     .description('Explain a Decision or AGENTOWNERS audit JSON file')
     .option('--decision <path>', 'Path to decision or audit JSON file', 'decision.json')
+    .option('--output <format>', 'Output format: text | json', 'text')
     .option('--sha256 <digest>', 'Verify the SHA-256 digest of the input bytes before explaining')
-    .action((options: { decision: string; sha256?: string }) => {
+    .action((options: { decision: string; output: string; sha256?: string }) => {
       const filePath = path.resolve(process.cwd(), options.decision);
       try {
+        if (!['text', 'json'].includes(options.output)) {
+          throw new Error('Output format must be one of: text, json.');
+        }
         const input = readInput(filePath, options.sha256);
-        if (input) writeDecision(input);
+        if (input) writeDecision(input, options.output as ExplainOutput);
       } catch (error: unknown) {
         process.stderr.write(`Error: ${error instanceof Error ? error.message : String(error)}\n`);
         process.exitCode = 1;
