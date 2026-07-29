@@ -34310,6 +34310,19 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
 }
 
 // src/index.ts
+var SUPPORTED_EVENT_ACTIONS = {
+  pull_request: ["opened", "synchronize", "reopened", "ready_for_review"],
+  issues: ["opened", "labeled", "closed", "reopened"],
+  issue_comment: ["created", "edited"],
+  pull_request_review: ["submitted"]
+};
+function requireSupportedEventAction(eventName, action) {
+  const supportedActions = SUPPORTED_EVENT_ACTIONS[eventName];
+  if (!supportedActions.includes(action)) {
+    throw new Error(`Unsupported ${eventName} action "${action}".`);
+  }
+  return `${eventName}.${action}`;
+}
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
@@ -34348,14 +34361,7 @@ async function run() {
       if (!pr) throw new Error("Missing pull_request payload");
       issueNumber = pr.number;
       const prAction = payload.action;
-      const validPrActions = [
-        "pull_request.opened",
-        "pull_request.synchronize",
-        "pull_request.reopened",
-        "pull_request.ready_for_review"
-      ];
-      const inferredEvent = `pull_request.${prAction}`;
-      eventType = validPrActions.includes(inferredEvent) ? inferredEvent : "pull_request.opened";
+      eventType = requireSupportedEventAction("pull_request", prAction);
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
       changedFiles = prFiles.files;
@@ -34371,7 +34377,7 @@ async function run() {
       if (!issue2) throw new Error("Missing issue payload");
       issueNumber = issue2.number;
       const issueAction = payload.action;
-      eventType = `issues.${issueAction}`;
+      eventType = requireSupportedEventAction("issues", issueAction);
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
       labels = metadata.labels;
@@ -34382,7 +34388,7 @@ async function run() {
       if (!issue2) throw new Error("Missing issue payload for issue_comment");
       issueNumber = issue2.number;
       const commentAction = payload.action;
-      eventType = `issue_comment.${commentAction}`;
+      eventType = requireSupportedEventAction("issue_comment", commentAction);
       const comment = payload.comment;
       actor = comment?.user?.login || actor;
       commentBody = comment?.body ?? void 0;
@@ -34400,7 +34406,7 @@ async function run() {
       const pr = payload.pull_request;
       if (!pr) throw new Error("Missing pull_request payload for review");
       issueNumber = pr.number;
-      eventType = "pull_request_review.submitted";
+      eventType = requireSupportedEventAction("pull_request_review", payload.action);
       const review = payload.review;
       reviewState = review?.state;
       actor = review?.user?.login || actor;

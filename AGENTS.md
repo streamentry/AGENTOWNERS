@@ -177,6 +177,7 @@ These are immutable safety rules. Never change them:
 | Least privilege | GitHub Action never requests `repo:admin` or `secrets:read` permissions |
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
+| Event integrity | Unsupported GitHub event actions fail closed; they are never coerced into another action |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
 
 ## How to add a new feature
