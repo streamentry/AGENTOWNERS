@@ -47,6 +47,8 @@ semantic versioning.
   agent-team workflow replace broken and unrelated contributor guidance.
 - Strict-schema regression coverage for the repository policy and copyable
   `.github/AGENTOWNERS.yml.example` template.
+- Reconciled the Claude contributor guide with the current dependency, spec
+  layout, verification gates, and policy-template review contract.
 
 ### Changed
 
