@@ -119,6 +119,11 @@ approval if any detected action requires approval. An `allowed` result applies
 only when every detected action is explicitly allowed. Unlisted actions fall
 through to repository rules and defaults.
 
+The same confidence boundary applies to repository rules that use
+`when.agents`: a `likely` or `possible` identity can trigger restrictive rules,
+but cannot satisfy an `allow` rule. Use `when.actors` when the intended contract
+is an explicit actor match rather than a detected agent identity.
+
 ## Rules and conditions
 
 Each rule has a unique human-readable `name`, a non-empty `when` condition, an

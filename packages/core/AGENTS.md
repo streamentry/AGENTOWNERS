@@ -32,7 +32,9 @@ preserving `possible` confidence so a mutable label cannot authorize an
 otherwise unknown action. Blocking and approval rules may still fail closed.
 The same conservative boundary applies to configured body/title patterns:
 they are `likely`, while explicit actors and built-in verified bot actors are
-the only confirmed identity paths.
+the only confirmed identity paths. In `evaluateRule`, `when.agents` may route
+`block` or `require_approval` for candidate identities, but an `allow` rule
+requires `confirmed` confidence; use `when.actors` for explicit actor policy.
 
 ## Diagrams
 

@@ -18,8 +18,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 7. Add the cheapest disconfirming test first.
 8. Implement the smallest complete change.
 9. Treat only explicit actors or built-in verified bots as `confirmed`; spoofable
-   labels, commit metadata, and event text cannot authorize an otherwise unknown
-   action.
+   labels, commit metadata, and event text cannot satisfy an agent-identity
+   `allow` rule or authorize an otherwise unknown action.
 10. For a safety invariant, prove the new test fails under a temporary relevant
    mutation, then restore production code exactly.
 11. Regenerate distributions with `pnpm build`; never hand-edit them.

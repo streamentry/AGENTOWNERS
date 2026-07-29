@@ -33888,6 +33888,9 @@ function evaluateRule(rule, input) {
   if (when.agents !== void 0) {
     const agentName = agentDetection.agentName ?? "unknown";
     if (!when.agents.includes(agentName)) return null;
+    if (rule.effect === "allow" && agentDetection.confidence !== "confirmed") {
+      return null;
+    }
     matchedConditions.push("agents");
   }
   if (when.actors !== void 0) {

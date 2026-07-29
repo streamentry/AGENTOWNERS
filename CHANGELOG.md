@@ -75,6 +75,8 @@ semantic versioning.
 
 ### Fixed
 
+- Generic `when.agents` allow rules now require confirmed identity; likely and
+  possible candidates may still route blocking or human approval.
 - GitHub Action mode inputs now fail closed before token or API access when the
   value is not one of `comment`, `check`, `both`, or `dry-run`.
 - Malformed configured detection regex patterns no longer abort policy

@@ -23,10 +23,11 @@ revising the change. Input and environment failures use exits `64` through
 The detector has an explicit trust ladder. Explicitly configured actors and
 built-in verified bot actors are `confirmed`; commit identities and configured
 body or title matches are `likely`; configured labels are `possible`. Only a
-`confirmed` identity may use a known-agent allow rule. `likely` and `possible`
-signals may still route a change to blocking or human approval, but they must
-never authorize an otherwise unknown action. Treat labels, commit metadata,
-and event text as spoofable evidence, not proof of identity.
+`confirmed` identity may satisfy an agent-identity `allow` rule or use a
+known-agent allow default. `likely` and `possible` signals may still route a
+change to blocking or human approval, but they must never authorize an otherwise
+unknown action. Treat labels, commit metadata, and event text as spoofable
+evidence, not proof of identity.
 
 ## For humans
 
