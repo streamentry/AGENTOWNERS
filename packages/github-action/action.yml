@@ -1,8 +1,5 @@
 name: AGENTOWNERS Check
-description: >
-  Enforces AGENTOWNERS policy on pull requests and issues.
-  Detects AI-agent contributions, evaluates policy rules, posts
-  a verdict comment, and optionally fails the check on blocked actions.
+description: Deterministic policy checks for AI-agent pull requests and issues.
 
 author: agentowners
 
