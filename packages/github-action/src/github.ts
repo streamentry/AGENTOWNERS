@@ -17,6 +17,8 @@ export type PRMetadata = {
   base: string;
   baseSha: string;
   head: string;
+  commitEmails: string[];
+  commitNames: string[];
 };
 
 export type PRFiles = {
@@ -121,6 +123,7 @@ export async function getPRMetadata(
     repo,
     pull_number: pullNumber,
   });
+  const commitIdentities = await getPRCommitIdentities(octokit, owner, repo, pullNumber);
 
   return {
     title: data.title,
@@ -135,7 +138,44 @@ export async function getPRMetadata(
     base: data.base.ref,
     baseSha: data.base.sha,
     head: data.head.ref,
+    ...commitIdentities,
   };
+}
+
+export async function getPRCommitIdentities(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+): Promise<{ commitEmails: string[]; commitNames: string[] }> {
+  const commitEmails: string[] = [];
+  const commitNames: string[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await octokit.rest.pulls.listCommits({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100,
+      page,
+    });
+
+    for (const commit of response.data) {
+      const author = commit.commit?.author;
+      if (typeof author?.email === 'string' && author.email.length > 0) {
+        commitEmails.push(author.email);
+      }
+      if (typeof author?.name === 'string' && author.name.length > 0) {
+        commitNames.push(author.name);
+      }
+    }
+
+    if (response.data.length < 100) break;
+    page += 1;
+  }
+
+  return { commitEmails, commitNames };
 }
 
 export async function getIssueMetadata(

@@ -425,8 +425,11 @@ AGENTOWNERS detects AI agents from:
 1. **Policy config:** explicit actor → agent mapping (`confirmed`)
 2. **Known bots:** `github-copilot[bot]`, `copilot-swe-agent[bot]`, `dependabot[bot]`, `renovate[bot]` (`confirmed`)
 3. **Commit signatures:** `Co-Authored-By: Claude`, `Generated with`, `🤖`, `Claude Code` (`likely`)
-4. **PR body markers:** tool-specific footers (`likely`)
-5. **Labels:** `ai-generated`, `agent`, `claude`, `copilot` (`possible`)
+4. **Configured commit authors:** policy-listed commit emails or names (`likely`;
+   forgeable metadata cannot authorize an otherwise unknown action)
+5. **PR body markers:** tool-specific footers (`likely`)
+6. **Labels:** `ai-generated`, `agent`, `claude`, `copilot`, or policy-listed
+   labels (`possible`)
 
 ---
 

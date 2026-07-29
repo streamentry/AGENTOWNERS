@@ -10,7 +10,7 @@ import {
   type AgentOwnersPolicy,
   type Decision,
 } from '@agent-owners/core';
-import { getChangedFiles, getCommitMessages } from '../git.js';
+import { getChangedFiles, getCommitIdentities, getCommitMessages } from '../git.js';
 
 type SelfCheckOptions = {
   policy?: string;
@@ -141,11 +141,17 @@ async function loadPolicy(
 function loadGitRange(
   options: ResolvedOptions,
   cwd: string,
-): { changedFiles: string[]; commitMessages: string[] } | null {
+): {
+  changedFiles: string[];
+  commitMessages: string[];
+  commitEmails: string[];
+  commitNames: string[];
+} | null {
   try {
     return {
       changedFiles: getChangedFiles(options.base, options.head, cwd),
       commitMessages: getCommitMessages(options.base, options.head, cwd),
+      ...getCommitIdentities(options.base, options.head, cwd),
     };
   } catch {
     writeError('INVALID_GIT_RANGE');
@@ -158,6 +164,8 @@ function evaluateSelfCheck(
   policy: AgentOwnersPolicy,
   changedFiles: string[],
   commitMessages: string[],
+  commitEmails: string[],
+  commitNames: string[],
 ): Decision {
   const filesClassification = classifyFiles(changedFiles);
   const detectedActions = inferActions({
@@ -167,6 +175,8 @@ function evaluateSelfCheck(
   const agentDetection = detectAgent({
     actor: options.actor,
     commitMessages,
+    commitEmails,
+    commitNames,
     policy,
   });
 
@@ -216,6 +226,8 @@ async function runSelfCheck(rawOptions: SelfCheckOptions): Promise<void> {
       policy,
       gitRange.changedFiles,
       gitRange.commitMessages,
+      gitRange.commitEmails,
+      gitRange.commitNames,
     );
     writeSuccess(options, decision, hashPolicy(policy));
   } catch {

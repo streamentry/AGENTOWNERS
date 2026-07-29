@@ -33376,6 +33376,20 @@ function matchesAgentPolicy(actor, policy) {
   }
   return null;
 }
+function matchesAgentCommitPolicy(commitEmails, commitNames, policy) {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const signals = [];
+    if (agentPolicy.match?.commitEmails?.some((email) => commitEmails.includes(email))) {
+      signals.push(`policy commit email match: agents.${name}.match.commitEmails`);
+    }
+    if (agentPolicy.match?.commitNames?.some((commitName) => commitNames.includes(commitName))) {
+      signals.push(`policy commit name match: agents.${name}.match.commitNames`);
+    }
+    if (signals.length > 0) return { name, signals };
+  }
+  return null;
+}
 function matchesAgentLabelPolicy(labels, policy) {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
@@ -33397,6 +33411,8 @@ function detectAgent(input) {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -33453,6 +33469,16 @@ function detectAgent(input) {
   }
   if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
     signals.push("body co-author [bot] pattern");
+  }
+  if (policy) {
+    const commitMatch = matchesAgentCommitPolicy(commitEmails, commitNames, policy);
+    if (commitMatch) {
+      return {
+        agentName: commitMatch.name,
+        confidence: "likely",
+        signals: [...signals, ...commitMatch.signals]
+      };
+    }
   }
   if (signals.length > 0) {
     return { confidence: "likely", signals };
@@ -34342,6 +34368,7 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     repo,
     pull_number: pullNumber
   });
+  const commitIdentities = await getPRCommitIdentities(octokit, owner, repo, pullNumber);
   return {
     title: data.title,
     body: data.body ?? "",
@@ -34354,8 +34381,35 @@ async function getPRMetadata(octokit, owner, repo, pullNumber) {
     changedFiles: data.changed_files,
     base: data.base.ref,
     baseSha: data.base.sha,
-    head: data.head.ref
+    head: data.head.ref,
+    ...commitIdentities
   };
+}
+async function getPRCommitIdentities(octokit, owner, repo, pullNumber) {
+  const commitEmails = [];
+  const commitNames = [];
+  let page = 1;
+  while (true) {
+    const response = await octokit.rest.pulls.listCommits({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100,
+      page
+    });
+    for (const commit of response.data) {
+      const author = commit.commit?.author;
+      if (typeof author?.email === "string" && author.email.length > 0) {
+        commitEmails.push(author.email);
+      }
+      if (typeof author?.name === "string" && author.name.length > 0) {
+        commitNames.push(author.name);
+      }
+    }
+    if (response.data.length < 100) break;
+    page += 1;
+  }
+  return { commitEmails, commitNames };
 }
 async function getIssueMetadata(octokit, owner, repo, issueNumber) {
   const { data } = await octokit.rest.issues.get({
@@ -34471,6 +34525,8 @@ async function run() {
     let issueBody;
     let commentBody;
     let labels = [];
+    let commitEmails = [];
+    let commitNames = [];
     let issueNumber;
     let eventType;
     let reviewState;
@@ -34499,6 +34555,8 @@ async function run() {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else if (eventName === "issues") {
       const issue2 = payload.issue;
       if (!issue2) throw new Error("Missing issue payload");
@@ -34546,6 +34604,8 @@ async function run() {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else {
       warning(`Unsupported event: ${eventName}. Skipping AGENTOWNERS check.`);
       return;
@@ -34587,6 +34647,8 @@ async function run() {
       prBody,
       issueBody,
       commentBody,
+      commitEmails,
+      commitNames,
       labels,
       policy
     });

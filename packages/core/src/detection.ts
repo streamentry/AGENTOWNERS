@@ -3,6 +3,8 @@ import type { AgentDetectionConfidence, AgentDetectionResult, AgentOwnersPolicy 
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   issueBody?: string;
@@ -55,6 +57,25 @@ export function matchesAgentPolicy(
   return null;
 }
 
+function matchesAgentCommitPolicy(
+  commitEmails: string[],
+  commitNames: string[],
+  policy: AgentOwnersPolicy,
+): { name: string; signals: string[] } | null {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    const signals: string[] = [];
+    if (agentPolicy.match?.commitEmails?.some((email) => commitEmails.includes(email))) {
+      signals.push(`policy commit email match: agents.${name}.match.commitEmails`);
+    }
+    if (agentPolicy.match?.commitNames?.some((commitName) => commitNames.includes(commitName))) {
+      signals.push(`policy commit name match: agents.${name}.match.commitNames`);
+    }
+    if (signals.length > 0) return { name, signals };
+  }
+  return null;
+}
+
 function matchesAgentLabelPolicy(labels: string[], policy: AgentOwnersPolicy): string | null {
   if (!policy.agents) return null;
   for (const [name, agentPolicy] of Object.entries(policy.agents)) {
@@ -78,6 +99,8 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   const {
     actor,
     commitMessages = [],
+    commitEmails = [],
+    commitNames = [],
     prTitle,
     prBody,
     issueBody,
@@ -144,6 +167,17 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   }
   if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
     signals.push('body co-author [bot] pattern');
+  }
+
+  if (policy) {
+    const commitMatch = matchesAgentCommitPolicy(commitEmails, commitNames, policy);
+    if (commitMatch) {
+      return {
+        agentName: commitMatch.name,
+        confidence: 'likely',
+        signals: [...signals, ...commitMatch.signals],
+      };
+    }
   }
 
   if (signals.length > 0) {

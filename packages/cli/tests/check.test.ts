@@ -16,6 +16,7 @@ vi.mock('@agent-owners/core', async () => {
 
 vi.mock('../src/git.js', () => ({
   getChangedFiles: vi.fn(),
+  getCommitIdentities: vi.fn(() => ({ commitEmails: [], commitNames: [] })),
   getCommitMessages: vi.fn(),
   getCurrentActor: vi.fn(() => undefined),
 }));

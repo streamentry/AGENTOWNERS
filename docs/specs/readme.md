@@ -412,6 +412,9 @@ Detection signals:
    - `OpenAI Codex`
    - `Cursor`
 
+   Configured commit email or name matches are retained as `likely` evidence;
+   Git author metadata is forgeable and cannot establish confirmed identity.
+
 3. PR body contains known agent markers:
 
    - generated summary

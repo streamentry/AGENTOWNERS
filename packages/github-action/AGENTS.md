@@ -9,7 +9,7 @@ artifact and must be regenerated, never hand-edited.
 ## Key components
 
 - `src/index.ts`: orchestration, policy evidence binding, and outputs
-- `src/github.ts`: event metadata adapter
+- `src/github.ts`: event metadata adapter, including paginated PR commit authors
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
@@ -62,3 +62,5 @@ Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 `pnpm verify:release`.
 Marketplace metadata changes must keep the root and package files equivalent
 apart from their explicit distribution identity and bundle paths.
+PR commit email/name matches remain forgeable `likely` evidence; never promote
+them to confirmed identity or bypass the conservative unknown-agent default.

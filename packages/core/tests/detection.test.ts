@@ -213,6 +213,56 @@ describe('detectAgent', () => {
     });
   });
 
+  it('configured commit email identifies a likely candidate agent', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'commit-agent': {
+          match: {
+            commitEmails: ['agent@example.invalid'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      commitEmails: ['agent@example.invalid'],
+      policy,
+    });
+
+    expect(result).toEqual({
+      agentName: 'commit-agent',
+      confidence: 'likely',
+      signals: ['policy commit email match: agents.commit-agent.match.commitEmails'],
+    });
+  });
+
+  it('configured commit name identifies a likely candidate agent', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'named-agent': {
+          match: {
+            commitNames: ['Automation Bot'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      commitNames: ['Automation Bot'],
+      policy,
+    });
+
+    expect(result.confidence).toBe('likely');
+    expect(result.agentName).toBe('named-agent');
+    expect(result.signals).toContain(
+      'policy commit name match: agents.named-agent.match.commitNames',
+    );
+  });
+
   it('policy body pattern matches an issue comment body', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

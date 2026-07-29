@@ -80,14 +80,15 @@ runs:
 2. Get GitHub context (event, payload)
 3. Load policy file
 4. Branch on event type:
-   - pull_request → fetchPRFiles, fetchPRMetadata
+   - pull_request → fetchPRFiles, fetchPRMetadata, and commit author metadata
    - issues → inspect actor/title/body/labels
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
      PR or issue fields
 5. Classify files
 6. Infer actions
-7. Detect agent
+7. Detect agent, retaining commit email/name matches as forgeable `likely`
+   evidence rather than confirmed identity
 8. Evaluate policy
 9. Render verdict
 10. Post/update sticky comment (if mode includes "comment")

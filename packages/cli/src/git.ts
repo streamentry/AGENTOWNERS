@@ -28,6 +28,28 @@ export function getCommitMessages(base: string, head: string, cwd?: string): str
   return output.split('\n').filter(Boolean);
 }
 
+export function getCommitIdentities(
+  base: string,
+  head: string,
+  cwd?: string,
+): { commitEmails: string[]; commitNames: string[] } {
+  const output = exec(
+    'git',
+    ['log', '--format=%ae%x00%an', '--end-of-options', `${base}..${head}`],
+    cwd,
+  );
+  if (!output) return { commitEmails: [], commitNames: [] };
+
+  const fields = output.split('\n').flatMap((record) => record.split('\0'));
+  const commitEmails: string[] = [];
+  const commitNames: string[] = [];
+  for (let index = 0; index + 1 < fields.length; index += 2) {
+    if (fields[index]) commitEmails.push(fields[index]);
+    if (fields[index + 1]) commitNames.push(fields[index + 1]);
+  }
+  return { commitEmails, commitNames };
+}
+
 export function getCurrentActor(cwd?: string): string | null {
   try {
     const name = exec('git', ['config', 'user.name'], cwd);

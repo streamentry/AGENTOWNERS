@@ -57,6 +57,8 @@ export async function run(): Promise<void> {
     let issueBody: string | undefined;
     let commentBody: string | undefined;
     let labels: string[] = [];
+    let commitEmails: string[] = [];
+    let commitNames: string[] = [];
     let issueNumber: number | undefined;
     let eventType: GitHubEventType | undefined;
     let reviewState: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;
@@ -89,6 +91,8 @@ export async function run(): Promise<void> {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else if (eventName === 'issues') {
       const issue = payload.issue;
       if (!issue) throw new Error('Missing issue payload');
@@ -143,6 +147,8 @@ export async function run(): Promise<void> {
       prTitle = metadata.title;
       prBody = metadata.body;
       labels = metadata.labels;
+      commitEmails = metadata.commitEmails;
+      commitNames = metadata.commitNames;
     } else {
       core.warning(`Unsupported event: ${eventName}. Skipping AGENTOWNERS check.`);
       return;
@@ -196,6 +202,8 @@ export async function run(): Promise<void> {
       prBody,
       issueBody,
       commentBody,
+      commitEmails,
+      commitNames,
       labels,
       policy,
     });

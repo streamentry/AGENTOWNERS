@@ -69,10 +69,12 @@ Options:
 Behavior:
 
 1. Load policy
-2. Get changed files via `git diff --name-only <base> <head>`
+2. Get changed files and commit messages/authors via shell-free Git argv calls
+   (`git diff --name-only <base> <head>` and `git log`)
 3. Classify files
 4. Infer actions
-5. Detect agent (from actor flag + git log)
+5. Detect agent (from actor flag, commit messages, commit email/name metadata,
+   and policy signals)
 6. Evaluate policy
 7. Render verdict
 

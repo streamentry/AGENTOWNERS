@@ -56,6 +56,9 @@ semantic versioning.
 - Configured `agents[name].match.labels` entries now retain the candidate agent
   name at `possible` confidence instead of falling through to generic label
   heuristics; mutable labels cannot authorize an otherwise unknown action.
+- Schema-supported commit email/name matches now flow through the CLI Git range
+  adapter and GitHub Action PR metadata as forgeable `likely` evidence; they
+  cannot authorize an otherwise unknown action.
 
 ### Changed
 

@@ -28,6 +28,11 @@ Commit messages or PR body contains:
 - `OpenAI Codex`
 - `Cursor`
 
+Configured commit author metadata (`agents[name].match.commitEmails` or
+`agents[name].match.commitNames`) is also `likely`: Git author fields are
+untrusted and can be forged. The matched candidate name is retained, but it
+cannot authorize an otherwise unknown action.
+
 ### 4. PR body agent markers (likely)
 PR body contains known agent-specific footers or summaries:
 - `🤖 Generated with`
@@ -54,6 +59,8 @@ valid matches.
 export type AgentDetectionInput = {
   actor: string;
   commitMessages?: string[];
+  commitEmails?: string[];
+  commitNames?: string[];
   prTitle?: string;
   prBody?: string;
   labels?: string[];

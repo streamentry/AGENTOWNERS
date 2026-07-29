@@ -9,7 +9,8 @@ from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
-- `src/git.ts`: bounded Git subprocess adapter
+- `src/git.ts`: bounded Git subprocess adapter for paths, messages, and commit
+  author metadata
 - `src/commands/init.ts`: profile installation
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
@@ -107,3 +108,5 @@ contract to the canonical policy used for evaluation.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.
+Commit author emails and names are untrusted evidence: pass them to core for
+`likely` detection only, and keep every ref after `--end-of-options`.
