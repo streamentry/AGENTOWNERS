@@ -122,6 +122,10 @@ agentowners capabilities \
   --manifest fixtures/capabilities/AGENT_CAPABILITIES.json \
   --attempts fixtures/capabilities/attempts.json \
   --output json --fail-on-deny
+
+# Verify a saved audit before accepting it downstream
+agentowners capabilities verify-audit \
+  --audit capability-audit.json --format json
 ```
 
 Release readiness is independently checked with `pnpm verify:release`: it

@@ -5,6 +5,8 @@ import {
   evaluateCapabilities,
   parseCapabilityAttempts,
   parseCapabilityManifest,
+  verifyCapabilityAudit,
+  type CapabilityAuditVerification,
   type CapabilityEvaluationResult,
 } from '@agent-owners/core';
 
@@ -22,16 +24,19 @@ type ResolvedCapabilityOptions = {
   failOnDeny: boolean;
 };
 
+type AuditVerificationOptions = {
+  audit: string;
+  output: string;
+};
+
 type CapabilityErrorCode =
-  | 'INVALID_INPUT'
-  | 'INVALID_MANIFEST'
-  | 'INVALID_ATTEMPTS'
-  | 'INTERNAL_ERROR';
+  'INVALID_INPUT' | 'INVALID_MANIFEST' | 'INVALID_ATTEMPTS' | 'INVALID_AUDIT' | 'INTERNAL_ERROR';
 
 const errorDetails: Record<CapabilityErrorCode, { exitCode: number; message: string }> = {
   INVALID_INPUT: { exitCode: 64, message: 'Invalid capability command input.' },
   INVALID_MANIFEST: { exitCode: 65, message: 'Unable to load or validate capability manifest.' },
   INVALID_ATTEMPTS: { exitCode: 66, message: 'Unable to load or validate capability attempts.' },
+  INVALID_AUDIT: { exitCode: 65, message: 'Unable to load or validate capability audit.' },
   INTERNAL_ERROR: { exitCode: 70, message: 'Capability evaluation failed unexpectedly.' },
 };
 
@@ -73,7 +78,11 @@ function resolveOptions(options: CapabilityOptions): ResolvedCapabilityOptions |
   };
 }
 
-async function readJson(filePath: string, code: CapabilityErrorCode, output: string): Promise<unknown | null> {
+async function readJson(
+  filePath: string,
+  code: CapabilityErrorCode,
+  output: string,
+): Promise<unknown | null> {
   try {
     return JSON.parse(await readFile(filePath, 'utf8')) as unknown;
   } catch {
@@ -89,7 +98,11 @@ function writeText(result: CapabilityEvaluationResult): void {
   );
 }
 
-function writeResult(result: CapabilityEvaluationResult, output: 'text' | 'json', failOnDeny: boolean): void {
+function writeResult(
+  result: CapabilityEvaluationResult,
+  output: 'text' | 'json',
+  failOnDeny: boolean,
+): void {
   if (output === 'json') {
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } else {
@@ -98,9 +111,27 @@ function writeResult(result: CapabilityEvaluationResult, output: 'text' | 'json'
   process.exitCode = failOnDeny && result.summary.denied > 0 ? 1 : 0;
 }
 
-export async function runCapabilities(
-  rawOptions: CapabilityOptions,
-): Promise<void> {
+function writeAuditVerification(
+  verification: CapabilityAuditVerification,
+  output: 'text' | 'json',
+): void {
+  if (output === 'json') {
+    process.stdout.write(
+      `${JSON.stringify({ schemaVersion: 1, status: 'complete', verification }, null, 2)}\n`,
+    );
+  } else if (verification.valid) {
+    process.stdout.write(
+      `Capability audit verified.\n${verification.eventsChecked} events checked.\nDigest: ${verification.auditDigest}.\n`,
+    );
+  } else {
+    process.stdout.write(
+      `Capability audit verification failed.\nCode: ${verification.code}.\n${verification.eventsChecked} events checked.\n`,
+    );
+  }
+  process.exitCode = verification.valid ? 0 : 1;
+}
+
+export async function runCapabilities(rawOptions: CapabilityOptions): Promise<void> {
   const options = resolveOptions(rawOptions);
   if (!options) return;
   const manifest = await readJson(options.manifest, 'INVALID_MANIFEST', options.output);
@@ -122,19 +153,47 @@ export async function runCapabilities(
     return;
   }
   try {
-    writeResult(evaluateCapabilities(parsedManifest, parsedAttempts), options.output, options.failOnDeny);
+    writeResult(
+      evaluateCapabilities(parsedManifest, parsedAttempts),
+      options.output,
+      options.failOnDeny,
+    );
+  } catch {
+    writeError('INTERNAL_ERROR', options.output);
+  }
+}
+
+export async function runVerifyCapabilityAudit(options: AuditVerificationOptions): Promise<void> {
+  if (options.output !== 'text' && options.output !== 'json') {
+    writeError('INVALID_INPUT', options.output, `Unsupported output format: ${options.output}`);
+    return;
+  }
+  const auditPath = path.resolve(process.cwd(), options.audit);
+  const audit = await readJson(auditPath, 'INVALID_AUDIT', options.output);
+  if (audit === null) return;
+  try {
+    writeAuditVerification(verifyCapabilityAudit(audit), options.output);
   } catch {
     writeError('INTERNAL_ERROR', options.output);
   }
 }
 
 export function registerCapabilities(program: Command): void {
-  program
+  const capabilities = program
     .command('capabilities')
     .description('Evaluate a pre-dispatch capability manifest and audit attempts')
-    .requiredOption('--manifest <path>', 'Path to a JSON capability manifest')
-    .requiredOption('--attempts <path>', 'Path to a JSON array of capability attempts')
+    .option('--manifest <path>', 'Path to a JSON capability manifest')
+    .option('--attempts <path>', 'Path to a JSON array of capability attempts')
     .option('--output <format>', 'Output format: text | json', 'text')
     .option('--fail-on-deny', 'Exit one when any attempt is denied')
     .action(runCapabilities);
+
+  capabilities
+    .command('verify-audit')
+    .description('Verify a hash-chained capability audit JSON file')
+    .requiredOption('--audit <path>', 'Path to a capability evaluation result JSON file')
+    .option('--format <format>', 'Output format: text | json', 'text')
+    .action((options: { audit: string; format: string }) =>
+      runVerifyCapabilityAudit({ audit: options.audit, output: options.format }),
+    );
 }

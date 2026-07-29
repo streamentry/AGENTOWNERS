@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type {
   CapabilityAttempt,
   CapabilityAuditEvent,
+  CapabilityAuditVerification,
   CapabilityDecision,
   CapabilityEvaluationResult,
   CapabilityManifest,
@@ -71,34 +72,87 @@ const capabilityAttemptBaseSchema = z
   })
   .strict();
 
-export const capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine((attempt, context) => {
-  const field = {
-    tool: 'tool',
-    network: 'destination',
-    secret: 'scope',
-    data: 'scope',
-    privilege: 'capability',
-  }[attempt.type] as keyof typeof attempt;
-  if (typeof attempt[field] !== 'string' || attempt[field].length === 0) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [field],
-      message: `${field} is required for ${attempt.type} attempts`,
-    });
-  }
-});
+export const capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine(
+  (attempt, context) => {
+    const field = {
+      tool: 'tool',
+      network: 'destination',
+      secret: 'scope',
+      data: 'scope',
+      privilege: 'capability',
+    }[attempt.type] as keyof typeof attempt;
+    if (typeof attempt[field] !== 'string' || attempt[field].length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} is required for ${attempt.type} attempts`,
+      });
+    }
+  },
+);
+
+const capabilityAuditEventSchema = z
+  .object({
+    sequence: z.number().int().positive(),
+    attempt_id: z.string().min(1),
+    agent_id: z.string().min(1),
+    issuer: z.string().min(1),
+    identity_sha256: z.string().regex(identityHashPattern),
+    type: z.enum(capabilityActionTypes),
+    target: z.string().min(1),
+    repository: z.string().min(1).nullable(),
+    decision: z.enum(['allow', 'deny']),
+    dispatched: z.boolean(),
+    reason: z.string().min(1),
+    previous_hash: z.string().regex(identityHashPattern),
+    event_hash: z.string().regex(identityHashPattern),
+  })
+  .strict();
+
+const capabilityEvaluationResultSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    status: z.literal('complete'),
+    summary: z
+      .object({
+        attempts: z.number().int().nonnegative(),
+        allowed: z.number().int().nonnegative(),
+        denied: z.number().int().nonnegative(),
+        kill_triggered: z.boolean(),
+      })
+      .strict(),
+    audit: z.array(capabilityAuditEventSchema),
+    auditDigest: z.string().regex(identityHashPattern),
+  })
+  .strict();
 
 export function stableCapabilityStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableCapabilityStringify).join(',')}]`;
   return `{${Object.keys(value)
     .sort()
-    .map((key) => `${JSON.stringify(key)}:${stableCapabilityStringify((value as Record<string, unknown>)[key])}`)
+    .map(
+      (key) =>
+        `${JSON.stringify(key)}:${stableCapabilityStringify((value as Record<string, unknown>)[key])}`,
+    )
     .join(',')}}`;
 }
 
 export function hashCapabilityIdentity(agentId: string): string {
   return createHash('sha256').update(agentId).digest('hex');
+}
+
+function hashCapabilityAuditEvent(event: Omit<CapabilityAuditEvent, 'event_hash'>): string {
+  return createHash('sha256').update(stableCapabilityStringify(event)).digest('hex');
+}
+
+function hashCapabilityAuditDigest(
+  auditHead: string,
+  summary: CapabilityEvaluationResult['summary'],
+): string {
+  return createHash('sha256')
+    .update(stableCapabilityStringify({ audit_head: auditHead, summary }))
+    .digest('hex');
 }
 
 export function parseCapabilityManifest(input: unknown): CapabilityManifest {
@@ -122,7 +176,8 @@ function targetForAttempt(attempt: CapabilityAttempt): string {
         : attempt.type === 'secret' || attempt.type === 'data'
           ? attempt.scope
           : attempt.capability;
-  if (target === undefined) throw new Error(`attempt ${attempt.attempt_id} has no normalized target`);
+  if (target === undefined)
+    throw new Error(`attempt ${attempt.attempt_id} has no normalized target`);
   return target;
 }
 
@@ -178,7 +233,10 @@ function denyReason(
   if (attempt.type === 'secret' && counts.secrets >= manifest.budgets.max_secret_reads) {
     return 'secret read budget exhausted';
   }
-  if (attempt.type === 'privilege' && counts.privileged >= manifest.budgets.max_privileged_actions) {
+  if (
+    attempt.type === 'privilege' &&
+    counts.privileged >= manifest.budgets.max_privileged_actions
+  ) {
     return 'privileged action budget exhausted';
   }
   return null;
@@ -210,9 +268,7 @@ export function evaluateCapabilities(
       reason: reason ?? 'allowlisted',
       previous_hash: previousHash,
     };
-    const eventHash = createHash('sha256')
-      .update(stableCapabilityStringify(eventWithoutHash))
-      .digest('hex');
+    const eventHash = hashCapabilityAuditEvent(eventWithoutHash);
     previousHash = eventHash;
     if (decision === 'allow') {
       counts.actions += 1;
@@ -224,16 +280,83 @@ export function evaluateCapabilities(
     }
     return { ...eventWithoutHash, event_hash: eventHash };
   });
+  const summary = {
+    attempts: audit.length,
+    allowed: audit.filter((event) => event.decision === 'allow').length,
+    denied: audit.filter((event) => event.decision === 'deny').length,
+    kill_triggered: killTriggered,
+  };
   return {
     schemaVersion: 1,
     status: 'complete',
-    summary: {
-      attempts: audit.length,
-      allowed: audit.filter((event) => event.decision === 'allow').length,
-      denied: audit.filter((event) => event.decision === 'deny').length,
-      kill_triggered: killTriggered,
-    },
+    summary,
     audit,
-    auditDigest: previousHash,
+    auditDigest: hashCapabilityAuditDigest(previousHash, summary),
+  };
+}
+
+export function verifyCapabilityAudit(input: unknown): CapabilityAuditVerification {
+  const parsed = capabilityEvaluationResultSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      valid: false,
+      code: 'invalid_shape',
+      eventsChecked: 0,
+      auditDigest: null,
+    };
+  }
+
+  const result = parsed.data;
+  let previousHash = zeroHash;
+  for (const [index, event] of result.audit.entries()) {
+    if (event.sequence !== index + 1 || event.previous_hash !== previousHash) {
+      return {
+        valid: false,
+        code: 'invalid_sequence',
+        eventsChecked: index,
+        auditDigest: result.auditDigest,
+      };
+    }
+    const { event_hash: eventHash, ...eventWithoutHash } = event;
+    if (hashCapabilityAuditEvent(eventWithoutHash) !== eventHash) {
+      return {
+        valid: false,
+        code: 'invalid_hash',
+        eventsChecked: index,
+        auditDigest: result.auditDigest,
+      };
+    }
+    previousHash = eventHash;
+  }
+
+  const allowed = result.audit.filter((event) => event.decision === 'allow').length;
+  const denied = result.audit.length - allowed;
+  if (
+    result.summary.attempts !== result.audit.length ||
+    result.summary.allowed !== allowed ||
+    result.summary.denied !== denied
+  ) {
+    return {
+      valid: false,
+      code: 'invalid_summary',
+      eventsChecked: result.audit.length,
+      auditDigest: result.auditDigest,
+    };
+  }
+
+  if (result.auditDigest !== hashCapabilityAuditDigest(previousHash, result.summary)) {
+    return {
+      valid: false,
+      code: 'invalid_digest',
+      eventsChecked: result.audit.length,
+      auditDigest: result.auditDigest,
+    };
+  }
+
+  return {
+    valid: true,
+    code: 'valid',
+    eventsChecked: result.audit.length,
+    auditDigest: result.auditDigest,
   };
 }
