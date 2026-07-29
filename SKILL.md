@@ -25,7 +25,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
    repository-facing contract.
 13. If capability-boundary behavior changed, run `pnpm build`,
    `pnpm test:capabilities`, and `node scripts/capability-demo.mjs`; verify the
-   demo remains simulation-only and does not print secret values.
+   demo remains simulation-only, the saved audit passes
+   `agentowners capabilities verify-audit --manifest ...`, and no secret values
+   are printed.
 14. If onboarding or product-proof behavior changed, run `pnpm demo` and verify
    both the production CLI fixture results and capability denials are present.
 15. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.

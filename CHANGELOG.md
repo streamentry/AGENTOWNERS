@@ -36,6 +36,9 @@ semantic versioning.
 - Reusable capability validation/evaluation is now exported from `@agent-owners/core`
   and exposed through `agentowners capabilities` with stable output and
   `--fail-on-deny`.
+- Hash-chained capability audits now have a public verifier in the core API and
+  `agentowners capabilities verify-audit`, with generic tamper failure codes and
+  optional exact-manifest binding.
 
 ### Changed
 

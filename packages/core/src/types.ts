@@ -252,7 +252,23 @@ export type CapabilityEvaluationResult = {
     kill_triggered: boolean;
   };
   audit: CapabilityAuditEvent[];
+  manifestDigest: string;
   auditDigest: string;
+};
+
+export type CapabilityAuditVerification = {
+  valid: boolean;
+  code:
+    | 'valid'
+    | 'invalid_shape'
+    | 'invalid_sequence'
+    | 'invalid_hash'
+    | 'invalid_digest'
+    | 'invalid_summary'
+    | 'manifest_mismatch';
+  eventsChecked: number;
+  manifestDigest: string | null;
+  auditDigest: string | null;
 };
 
 export type SarifLevel = 'warning' | 'error';

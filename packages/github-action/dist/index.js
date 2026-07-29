@@ -34212,22 +34212,52 @@ var capabilityAttemptBaseSchema = external_exports.object({
   human_approved: external_exports.boolean().optional(),
   expected: external_exports.enum(["allow", "deny"]).optional()
 }).strict();
-var capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine((attempt, context3) => {
-  const field = {
-    tool: "tool",
-    network: "destination",
-    secret: "scope",
-    data: "scope",
-    privilege: "capability"
-  }[attempt.type];
-  if (typeof attempt[field] !== "string" || attempt[field].length === 0) {
-    context3.addIssue({
-      code: external_exports.ZodIssueCode.custom,
-      path: [field],
-      message: `${field} is required for ${attempt.type} attempts`
-    });
+var capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine(
+  (attempt, context3) => {
+    const field = {
+      tool: "tool",
+      network: "destination",
+      secret: "scope",
+      data: "scope",
+      privilege: "capability"
+    }[attempt.type];
+    if (typeof attempt[field] !== "string" || attempt[field].length === 0) {
+      context3.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        path: [field],
+        message: `${field} is required for ${attempt.type} attempts`
+      });
+    }
   }
-});
+);
+var capabilityAuditEventSchema = external_exports.object({
+  sequence: external_exports.number().int().positive(),
+  attempt_id: external_exports.string().min(1),
+  agent_id: external_exports.string().min(1),
+  issuer: external_exports.string().min(1),
+  identity_sha256: external_exports.string().regex(identityHashPattern),
+  type: external_exports.enum(capabilityActionTypes),
+  target: external_exports.string().min(1),
+  repository: external_exports.string().min(1).nullable(),
+  decision: external_exports.enum(["allow", "deny"]),
+  dispatched: external_exports.boolean(),
+  reason: external_exports.string().min(1),
+  previous_hash: external_exports.string().regex(identityHashPattern),
+  event_hash: external_exports.string().regex(identityHashPattern)
+}).strict();
+var capabilityEvaluationResultSchema = external_exports.object({
+  schemaVersion: external_exports.literal(1),
+  status: external_exports.literal("complete"),
+  summary: external_exports.object({
+    attempts: external_exports.number().int().nonnegative(),
+    allowed: external_exports.number().int().nonnegative(),
+    denied: external_exports.number().int().nonnegative(),
+    kill_triggered: external_exports.boolean()
+  }).strict(),
+  audit: external_exports.array(capabilityAuditEventSchema),
+  manifestDigest: external_exports.string().regex(identityHashPattern),
+  auditDigest: external_exports.string().regex(identityHashPattern)
+}).strict();
 
 // src/github.ts
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {

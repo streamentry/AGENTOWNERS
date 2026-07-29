@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   evaluateCapabilities,
+  hashCapabilityManifest,
   parseCapabilityAttempts,
   parseCapabilityManifest,
+  verifyCapabilityAudit,
 } from '../src/index.js';
 
 const identitySha256 = 'e537d36bef65ee4bcad8e6cb280591d9c71e4af88a1dcdd7eab99812af8591c4';
@@ -70,12 +72,7 @@ describe('capability contract', () => {
     expect(parseCapabilityManifest(manifest)).toEqual(manifest);
     const result = evaluateCapabilities(manifest, attempts);
 
-    expect(result.audit.map((event) => event.decision)).toEqual([
-      'allow',
-      'deny',
-      'deny',
-      'deny',
-    ]);
+    expect(result.audit.map((event) => event.decision)).toEqual(['allow', 'deny', 'deny', 'deny']);
     expect(result.summary).toEqual({ attempts: 4, allowed: 1, denied: 3, kill_triggered: true });
     expect(result.audit[1]?.previous_hash).toBe(result.audit[0]?.event_hash);
   });
@@ -105,5 +102,73 @@ describe('capability contract', () => {
     expect(() => parseCapabilityAttempts([{ ...attempts[0], tool: undefined }])).toThrow(
       'tool is required',
     );
+  });
+
+  it('verifies the complete audit chain and summary contract', () => {
+    const result = evaluateCapabilities(manifest, attempts);
+
+    expect(verifyCapabilityAudit(result)).toEqual({
+      valid: true,
+      code: 'valid',
+      eventsChecked: 4,
+      manifestDigest: hashCapabilityManifest(manifest),
+      auditDigest: result.auditDigest,
+    });
+    expect(verifyCapabilityAudit(result, hashCapabilityManifest(manifest)).valid).toBe(true);
+    expect(verifyCapabilityAudit(result, '0'.repeat(64))).toMatchObject({
+      valid: false,
+      code: 'manifest_mismatch',
+    });
+  });
+
+  it('identifies tampering without echoing untrusted event content', () => {
+    const result = evaluateCapabilities(manifest, attempts);
+
+    expect(
+      verifyCapabilityAudit({
+        ...result,
+        audit: result.audit.map((event, index) =>
+          index === 1 ? { ...event, reason: 'secret-value-should-not-be-printed' } : event,
+        ),
+      }),
+    ).toMatchObject({ valid: false, code: 'invalid_hash', eventsChecked: 1 });
+    expect(
+      JSON.stringify(
+        verifyCapabilityAudit({ ...result, summary: { ...result.summary, allowed: 4 } }),
+      ),
+    ).not.toContain('secret-value');
+  });
+
+  it('distinguishes sequence, digest, summary, and shape failures', () => {
+    const result = evaluateCapabilities(manifest, attempts);
+
+    expect(
+      verifyCapabilityAudit({
+        ...result,
+        audit: result.audit.map((event, index) =>
+          index === 2 ? { ...event, sequence: 99 } : event,
+        ),
+      }),
+    ).toMatchObject({ valid: false, code: 'invalid_sequence' });
+    expect(verifyCapabilityAudit({ ...result, auditDigest: '0'.repeat(64) })).toMatchObject({
+      valid: false,
+      code: 'invalid_digest',
+    });
+    expect(
+      verifyCapabilityAudit({ ...result, summary: { ...result.summary, denied: 0 } }),
+    ).toMatchObject({ valid: false, code: 'invalid_summary' });
+    expect(
+      verifyCapabilityAudit({
+        ...result,
+        summary: { ...result.summary, kill_triggered: false },
+      }),
+    ).toMatchObject({ valid: false, code: 'invalid_digest' });
+    expect(verifyCapabilityAudit({ schemaVersion: 1 })).toEqual({
+      valid: false,
+      code: 'invalid_shape',
+      eventsChecked: 0,
+      manifestDigest: null,
+      auditDigest: null,
+    });
   });
 });

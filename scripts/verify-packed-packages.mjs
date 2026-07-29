@@ -65,7 +65,7 @@ try {
     process.execPath,
     [
       '-e',
-      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function') process.exit(1)",
+      "const core=require('@agent-owners/core'); if(typeof core.evaluatePolicy!=='function'||typeof core.parsePolicyFixtureSuite!=='function'||typeof core.runPolicyFixtureSuite!=='function'||typeof core.renderSarif!=='function'||typeof core.verifyCapabilityAudit!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -74,7 +74,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "import { evaluatePolicy,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function') process.exit(1)",
+      "import { evaluatePolicy,parsePolicyFixtureSuite,renderSarif,runPolicyFixtureSuite,verifyCapabilityAudit } from '@agent-owners/core'; if(typeof evaluatePolicy!=='function'||typeof parsePolicyFixtureSuite!=='function'||typeof runPolicyFixtureSuite!=='function'||typeof renderSarif!=='function'||typeof verifyCapabilityAudit!=='function') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -188,6 +188,45 @@ try {
     fixtureResult.result?.passed !== true
   ) {
     throw new Error('Packed CLI fixture test returned an unexpected contract');
+  }
+
+  const capabilityAuditPath = resolve(fixtureDirectory, 'capability-audit.json');
+  const capabilityAudit = run(
+    cliPath,
+    [
+      'capabilities',
+      '--manifest',
+      resolve(root, 'fixtures/capabilities/AGENT_CAPABILITIES.json'),
+      '--attempts',
+      resolve(root, 'fixtures/capabilities/attempts.json'),
+      '--output',
+      'json',
+    ],
+    fixtureDirectory,
+  );
+  await writeFile(capabilityAuditPath, capabilityAudit);
+  const capabilityVerification = JSON.parse(
+    run(
+      cliPath,
+      [
+        'capabilities',
+        'verify-audit',
+        '--audit',
+        capabilityAuditPath,
+        '--manifest',
+        resolve(root, 'fixtures/capabilities/AGENT_CAPABILITIES.json'),
+        '--format',
+        'json',
+      ],
+      fixtureDirectory,
+    ),
+  );
+  if (
+    capabilityVerification.schemaVersion !== 1 ||
+    capabilityVerification.status !== 'complete' ||
+    capabilityVerification.verification?.valid !== true
+  ) {
+    throw new Error('Packed CLI capability audit verification returned an unexpected contract');
   }
 
   process.stdout.write('Packed packages install and execute successfully.\n');

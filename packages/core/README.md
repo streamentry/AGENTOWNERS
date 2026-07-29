@@ -28,11 +28,18 @@ scope, privilege, budget, escalation, and audit fields; `evaluateCapabilities()`
 returns a hash-chained audit without performing dispatch or I/O.
 
 ```ts
-import { evaluateCapabilities } from '@agent-owners/core';
+import { evaluateCapabilities, verifyCapabilityAudit } from '@agent-owners/core';
 
 const result = evaluateCapabilities(manifestJson, attemptsJson);
-// result.summary.denied and result.auditDigest are stable across runs.
+const verification = verifyCapabilityAudit(result, result.manifestDigest);
+// verification.valid proves the event chain, summary, and manifest binding.
 ```
+
+`verifyCapabilityAudit()` accepts an untrusted saved result and returns only a
+stable status code, event count, and digest. The result digest covers the
+canonical manifest fingerprint, event-chain head, and summary, so a downstream
+adapter can reject tampered logs or evidence from the wrong manifest without
+exposing scopes or targets.
 
 ## Contract
 
