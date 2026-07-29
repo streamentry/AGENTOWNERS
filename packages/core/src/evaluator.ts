@@ -207,7 +207,8 @@ function evaluateAgentActions(input: EvaluationInput): MatchedRule | null {
       ? 'block'
       : approval.length > 0
         ? 'require_approval'
-        : allowed.length === input.detectedActions.length
+        : input.agentDetection.confidence === 'confirmed' &&
+            allowed.length === input.detectedActions.length
           ? 'allow'
           : null;
   if (effect === null) return null;

@@ -55,6 +55,16 @@ export function matchesAgentPolicy(
   return null;
 }
 
+function matchesAgentLabelPolicy(labels: string[], policy: AgentOwnersPolicy): string | null {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    if (agentPolicy.match?.labels?.some((label) => labels.includes(label))) {
+      return name;
+    }
+  }
+  return null;
+}
+
 function matchesConfiguredPattern(value: string | undefined, pattern: string): boolean {
   if (!value) return false;
   try {
@@ -84,7 +94,10 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
+      const agentPolicy = policy.agents?.[matchedAgent];
+      if (agentPolicy?.match?.actors?.includes(actor)) {
+        signals.push(`policy match: agents.${matchedAgent}.match.actors`);
+      }
       return { agentName: matchedAgent, confidence: 'confirmed', signals };
     }
 
@@ -135,6 +148,19 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
 
   if (signals.length > 0) {
     return { confidence: 'likely', signals };
+  }
+
+  // Configured labels are useful routing evidence, but labels can be added by
+  // collaborators and therefore must not be promoted to confirmed identity.
+  if (policy) {
+    const matchedLabelAgent = matchesAgentLabelPolicy(labels, policy);
+    if (matchedLabelAgent) {
+      return {
+        agentName: matchedLabelAgent,
+        confidence: 'possible',
+        signals: [`policy label match: agents.${matchedLabelAgent}.match.labels`],
+      };
+    }
   }
 
   // 5. Labels (possible)

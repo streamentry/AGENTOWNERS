@@ -271,6 +271,36 @@ describe('evaluatePolicy', () => {
     },
   );
 
+  it('does not let a spoofable candidate label authorize allowed actions', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'release-agent': {
+          match: { labels: ['automation:release-agent'] },
+          allowed: ['open_pr'],
+        },
+      },
+      defaults: { unknown_agent: 'require_approval' },
+    };
+
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        agentDetection: {
+          agentName: 'release-agent',
+          confidence: 'possible',
+          signals: ['policy label match'],
+        },
+        detectedActions: ['open_pr'],
+      }),
+    );
+
+    expect(decision.effect).toBe('require_approval');
+    expect(decision.matchedRules).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Agent policy: release-agent' })]),
+    );
+  });
+
   it('enforces blocked actions from the matched agent policy', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

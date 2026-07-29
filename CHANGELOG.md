@@ -53,6 +53,9 @@ semantic versioning.
   currently exposed `agentowners init --profile` option.
 - Kept policy-diff structural changes consistent with canonical digests when
   public callers provide explicitly undefined optional fields.
+- Configured `agents[name].match.labels` entries now retain the candidate agent
+  name at `possible` confidence instead of falling through to generic label
+  heuristics; mutable labels cannot authorize an otherwise unknown action.
 
 ### Changed
 

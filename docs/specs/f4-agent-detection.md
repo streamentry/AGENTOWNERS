@@ -11,7 +11,7 @@ Detect whether a PR, issue, comment, or commit likely came from an AI agent.
 
 ## Detection Signals (in priority order)
 
-### 1. Explicit policy match (confirmed)
+### 1. Explicit actor policy match (confirmed)
 Actor matches a configured `agents[name].match.actors` entry.
 
 ### 2. Known bot actor (confirmed)
@@ -35,7 +35,10 @@ PR body contains known agent-specific footers or summaries:
 - `Co-authored-by:.*\[bot\]`
 
 ### 5. Labels (possible)
-PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`
+PR/issue has labels: `ai-generated`, `agent`, `copilot`, `codex`, `claude`, or a
+configured `agents[name].match.labels` entry. A configured label records the
+candidate agent name but remains `possible`; labels are mutable repository
+metadata and cannot establish confirmed identity.
 
 ### 6. Configured body patterns (from policy)
 Pull request, issue, or comment body matches

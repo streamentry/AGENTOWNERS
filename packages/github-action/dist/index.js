@@ -33376,6 +33376,15 @@ function matchesAgentPolicy(actor, policy) {
   }
   return null;
 }
+function matchesAgentLabelPolicy(labels, policy) {
+  if (!policy.agents) return null;
+  for (const [name, agentPolicy] of Object.entries(policy.agents)) {
+    if (agentPolicy.match?.labels?.some((label) => labels.includes(label))) {
+      return name;
+    }
+  }
+  return null;
+}
 function matchesConfiguredPattern(value, pattern) {
   if (!value) return false;
   try {
@@ -33402,7 +33411,10 @@ function detectAgent(input) {
   if (policy) {
     const matchedAgent = matchesAgentPolicy(actor, policy);
     if (matchedAgent) {
-      signals.push(`policy match: agents.${matchedAgent}.match.actors`);
+      const agentPolicy = policy.agents?.[matchedAgent];
+      if (agentPolicy?.match?.actors?.includes(actor)) {
+        signals.push(`policy match: agents.${matchedAgent}.match.actors`);
+      }
       return { agentName: matchedAgent, confidence: "confirmed", signals };
     }
     if (policy.agents) {
@@ -33444,6 +33456,16 @@ function detectAgent(input) {
   }
   if (signals.length > 0) {
     return { confidence: "likely", signals };
+  }
+  if (policy) {
+    const matchedLabelAgent = matchesAgentLabelPolicy(labels, policy);
+    if (matchedLabelAgent) {
+      return {
+        agentName: matchedLabelAgent,
+        confidence: "possible",
+        signals: [`policy label match: agents.${matchedLabelAgent}.match.labels`]
+      };
+    }
   }
   const matchedLabels = labels.filter((l) => AGENT_LABELS.includes(l));
   if (matchedLabels.length > 0) {
@@ -33942,7 +33964,7 @@ function evaluateAgentActions(input) {
     (action) => agentPolicy.requires_approval?.includes(action)
   );
   const allowed = input.detectedActions.filter((action) => agentPolicy.allowed?.includes(action));
-  const effect = blocked.length > 0 ? "block" : approval.length > 0 ? "require_approval" : allowed.length === input.detectedActions.length ? "allow" : null;
+  const effect = blocked.length > 0 ? "block" : approval.length > 0 ? "require_approval" : input.agentDetection.confidence === "confirmed" && allowed.length === input.detectedActions.length ? "allow" : null;
   if (effect === null) return null;
   const matchedActions = effect === "block" ? blocked : effect === "require_approval" ? approval : allowed;
   return {

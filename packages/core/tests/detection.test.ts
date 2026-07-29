@@ -163,6 +163,56 @@ describe('detectAgent', () => {
     expect(result.agentName).toBe('code-agent');
   });
 
+  it('policy label match → possible candidate agent', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'release-agent': {
+          match: {
+            labels: ['automation:release-agent'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      labels: ['automation:release-agent'],
+      policy,
+    });
+
+    expect(result.confidence).toBe('possible');
+    expect(result.agentName).toBe('release-agent');
+    expect(result.signals).toContain(
+      'policy label match: agents.release-agent.match.labels',
+    );
+  });
+
+  it('policy label match names the configured candidate over built-in evidence', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        'custom-agent': {
+          match: {
+            labels: ['claude'],
+          },
+        },
+      },
+    };
+
+    const result = detectAgent({
+      actor: 'human-user',
+      labels: ['claude'],
+      policy,
+    });
+
+    expect(result).toEqual({
+      agentName: 'custom-agent',
+      confidence: 'possible',
+      signals: ['policy label match: agents.custom-agent.match.labels'],
+    });
+  });
+
   it('policy body pattern matches an issue comment body', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

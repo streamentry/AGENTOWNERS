@@ -26,6 +26,11 @@ network calls, clocks, randomness, or persistent state.
 - `tests/repository-policy.test.ts`: strict-schema regression coverage for the
   repository's checked-in policy and copyable policy template
 
+Configured agent labels are candidate identity signals, not confirmed
+identity. Keep `agents[name].match.labels` wired through `detectAgent()` while
+preserving `possible` confidence so a mutable label cannot authorize an
+otherwise unknown action. Blocking and approval rules may still fail closed.
+
 ## Diagrams
 
 ```mermaid
