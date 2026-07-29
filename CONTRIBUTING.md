@@ -26,10 +26,16 @@ revising the change. Input and environment failures use exits `64` through
 git clone https://github.com/streamentry/AGENTOWNERS.git
 cd AGENTOWNERS
 pnpm install
+pnpm demo
 pnpm verify
 ```
 
 Node.js 22+ and pnpm 9+ required.
+
+`pnpm demo` is the fastest product proof: it builds the production packages
+and runs the strict-OSS fixture suite through the public CLI. Use it to confirm
+the checkout is executable before making a contribution; use `pnpm verify` for
+the complete gate.
 
 ### Development workflow
 
