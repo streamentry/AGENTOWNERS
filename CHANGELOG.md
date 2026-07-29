@@ -7,6 +7,11 @@ semantic versioning.
 
 ### Added
 
+- Versioned `agentowners validate --output json` results for deterministic CI
+  and agent integrations, with text output preserved as the default.
+- Explicit `open_issue` action inference for `issues.opened` events, allowing
+  policies to govern agent-created issues separately from issue comments.
+
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a
@@ -36,6 +41,27 @@ semantic versioning.
 
 ### Fixed
 
+- The core audit renderer no longer reads the system clock. Adapters supply an
+  explicit timestamp, making identical audit contexts deterministic.
+- Malformed YAML diagnostics now retain line and column information without
+  echoing source snippets that may contain secrets.
+- CLI validation diagnostics redact received values from schema errors while
+  preserving field paths and actionable type guidance.
+- Human-readable fixture-test output now escapes control characters in case
+  names, preventing ANSI terminal injection from repository-authored fixtures.
+- SARIF rule identities now preserve distinct matched rules that share a display
+  name, preventing audit descriptors from collapsing together.
+- `inferActions()` now reuses the canonical file classifier, preventing
+  standalone callers from drifting from CLI and Action behavior on nested
+  documentation and other classified paths.
+- GitHub Action mode inputs now fail closed when they are outside the declared
+  `comment`, `check`, `both`, and `dry-run` contract.
+- The copyable `.github/AGENTOWNERS.yml.example` now uses the current strict
+  policy schema instead of retired default and audit keys, and a repository
+  test prevents the template from drifting invalid again.
+- Documentation classification now recognizes Markdown, reStructuredText, and
+  AsciiDoc files at any repository depth, keeping monorepo docs-only policies
+  deterministic.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

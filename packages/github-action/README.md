@@ -26,4 +26,5 @@ moving major-version tag.
 
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes `agentowners-decision.json` for downstream audit
-artifact upload.
+artifact upload. Invalid `mode` values fail the Action instead of silently
+skipping comments or checks.

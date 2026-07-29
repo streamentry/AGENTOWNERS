@@ -1,5 +1,5 @@
 import type { AgentAction, GitHubEventType } from './types.js';
-import type { FilesClassification } from './classifier.js';
+import { classifyFiles, type FilesClassification } from './classifier.js';
 
 export type { GitHubEventType } from './types.js';
 
@@ -21,53 +21,6 @@ export type ActionInferenceInput = {
   filesClassification?: LocalFilesClassification | FilesClassification;
 };
 
-const DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
-const TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
-const DEPENDENCY_PATTERNS = [
-  /^package\.json$/,
-  /^package-lock\.json$/,
-  /^yarn\.lock$/,
-  /^pnpm-lock\.yaml$/,
-  /^Cargo\.toml$/,
-  /^Cargo\.lock$/,
-  /^go\.mod$/,
-  /^go\.sum$/,
-  /^requirements.*\.txt$/,
-  /^pyproject\.toml$/,
-  /^Pipfile/,
-  /^Gemfile/,
-];
-const WORKFLOW_PATTERNS = [/^\.github\/workflows\//];
-const AUTH_PATTERNS = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-const INFRA_PATTERNS = [
-  /^terraform\//i,
-  /\.tf$/,
-  /^infra\//i,
-  /^deploy\//i,
-  /dockerfile$/i,
-  /docker-compose/i,
-  /^k8s\//i,
-  /^kubernetes\//i,
-  /^helm\//i,
-];
-const SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
-
-function classifyFilesLocal(files: string[]): LocalFilesClassification {
-  if (files.length === 0) return {};
-
-  const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS.some((p) => p.test(f)));
-  const hasAuth = files.some((f) => AUTH_PATTERNS.some((p) => p.test(f)));
-  const hasInfra = files.some((f) => INFRA_PATTERNS.some((p) => p.test(f)));
-  const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
-  const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS.some((p) => p.test(f)));
-  const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
-
-  const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
-  const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
-}
-
 function hasClassifiedTests(classification: Record<string, unknown>): boolean {
   if (typeof classification['hasTests'] === 'boolean') {
     return classification['hasTests'];
@@ -87,15 +40,43 @@ function hasClassifiedTests(classification: Record<string, unknown>): boolean {
   return classification['testsOnly'] === true;
 }
 
-export function inferFileBasedActions(classification: LocalFilesClassification): AgentAction[] {
+function normalizeClassification(
+  input: LocalFilesClassification | FilesClassification,
+): LocalFilesClassification {
+  const classification = input as Record<string, unknown>;
+  return {
+    docsOnly: classification['docsOnly'] as boolean | undefined,
+    hasTests: hasClassifiedTests(classification),
+    hasDependencies:
+      (classification['hasDependencies'] as boolean | undefined) ??
+      (classification['changesDependencies'] as boolean | undefined),
+    hasWorkflows:
+      (classification['hasWorkflows'] as boolean | undefined) ??
+      (classification['changesWorkflows'] as boolean | undefined),
+    hasAuth:
+      (classification['hasAuth'] as boolean | undefined) ??
+      (classification['changesAuth'] as boolean | undefined),
+    hasInfra:
+      (classification['hasInfra'] as boolean | undefined) ??
+      (classification['changesInfra'] as boolean | undefined),
+    hasSecrets:
+      (classification['hasSecrets'] as boolean | undefined) ??
+      (classification['secretFilesDetected'] as boolean | undefined),
+  };
+}
+
+export function inferFileBasedActions(
+  classification: LocalFilesClassification | FilesClassification,
+): AgentAction[] {
+  const normalized = normalizeClassification(classification);
   const actions: AgentAction[] = [];
-  if (classification.docsOnly) actions.push('modify_docs');
-  if (classification.hasTests) actions.push('modify_tests');
-  if (classification.hasDependencies) actions.push('modify_dependencies');
-  if (classification.hasWorkflows) actions.push('edit_workflows');
-  if (classification.hasAuth) actions.push('modify_auth');
-  if (classification.hasInfra) actions.push('modify_infra');
-  if (classification.hasSecrets) actions.push('touch_secrets');
+  if (normalized.docsOnly) actions.push('modify_docs');
+  if (normalized.hasTests) actions.push('modify_tests');
+  if (normalized.hasDependencies) actions.push('modify_dependencies');
+  if (normalized.hasWorkflows) actions.push('edit_workflows');
+  if (normalized.hasAuth) actions.push('modify_auth');
+  if (normalized.hasInfra) actions.push('modify_infra');
+  if (normalized.hasSecrets) actions.push('touch_secrets');
   return actions;
 }
 
@@ -103,29 +84,10 @@ export function inferActions(input: ActionInferenceInput): AgentAction[] {
   const { eventType, changedFiles, reviewState, filesClassification } = input;
   const actions = new Set<AgentAction>();
 
-  const fc = filesClassification as Record<string, unknown> | undefined;
-  const classification: LocalFilesClassification = fc
-    ? {
-        docsOnly:
-          (fc['docsOnly'] as boolean | undefined) ??
-          (fc['changesWorkflows'] === undefined && false),
-        hasTests: hasClassifiedTests(fc),
-        hasDependencies:
-          (fc['hasDependencies'] as boolean | undefined) ??
-          (fc['changesDependencies'] as boolean | undefined),
-        hasWorkflows:
-          (fc['hasWorkflows'] as boolean | undefined) ??
-          (fc['changesWorkflows'] as boolean | undefined),
-        hasAuth:
-          (fc['hasAuth'] as boolean | undefined) ?? (fc['changesAuth'] as boolean | undefined),
-        hasInfra:
-          (fc['hasInfra'] as boolean | undefined) ?? (fc['changesInfra'] as boolean | undefined),
-        hasSecrets:
-          (fc['hasSecrets'] as boolean | undefined) ??
-          (fc['secretFilesDetected'] as boolean | undefined),
-      }
+  const classification = filesClassification
+    ? normalizeClassification(filesClassification)
     : changedFiles
-      ? classifyFilesLocal(changedFiles)
+      ? normalizeClassification(classifyFiles(changedFiles))
       : {};
 
   switch (eventType) {
@@ -165,6 +127,7 @@ export function inferActions(input: ActionInferenceInput): AgentAction[] {
       break;
     }
     case 'issues.opened': {
+      actions.add('open_issue');
       break;
     }
   }

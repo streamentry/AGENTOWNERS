@@ -165,7 +165,7 @@ Required libraries:
 - TypeScript
 - zod for schema validation
 - js-yaml for YAML parsing
-- minimatch for glob matching
+- picomatch for glob matching
 - commander for CLI
 - @actions/core for GitHub Action
 - @actions/github for GitHub context
@@ -305,6 +305,7 @@ Supported actions in v1:
 ```ts
 export type AgentAction =
   | 'open_pr'
+  | 'open_issue'
   | 'update_pr'
   | 'comment'
   | 'review_comment'
@@ -508,6 +509,14 @@ Detected action:
 
 ```text
 close_issue
+```
+
+### 13.7 Issue open
+
+Detected action:
+
+```text
+open_issue
 ```
 
 ## 14. Risk scoring

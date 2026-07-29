@@ -51,5 +51,7 @@ sequenceDiagram
 
 ## Verification
 
-Discussion form filenames must match category slugs. Validate YAML structure,
-run `pnpm verify`, and never modify workflows when policy self-check blocks it.
+Discussion form filenames must match category slugs. Validate both
+`.github/AGENTOWNERS.yml` and `.github/AGENTOWNERS.yml.example` against the
+strict public schema, run `pnpm verify`, and never modify workflows when policy
+self-check blocks it.

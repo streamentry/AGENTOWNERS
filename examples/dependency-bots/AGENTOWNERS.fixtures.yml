@@ -1,0 +1,51 @@
+version: 1
+
+cases:
+  - name: Dependabot dependency changes require approval
+    input:
+      event: pull_request.opened
+      actor: dependabot[bot]
+      changed_files:
+        - package.json
+    expect:
+      decision: require_approval
+      matched_agent: dependabot
+
+  - name: Renovate dependency changes require approval
+    input:
+      event: pull_request.opened
+      actor: renovate[bot]
+      changed_files:
+        - pnpm-lock.yaml
+    expect:
+      decision: require_approval
+      matched_agent: renovate
+
+  - name: dependency bots cannot edit workflows
+    input:
+      event: pull_request.opened
+      actor: dependabot[bot]
+      changed_files:
+        - .github/workflows/update.yml
+    expect:
+      decision: block
+      matched_agent: dependabot
+
+  - name: dependency bots cannot touch secrets
+    input:
+      event: pull_request.opened
+      actor: renovate[bot]
+      changed_files:
+        - .env.production
+    expect:
+      decision: block
+      matched_agent: renovate
+
+  - name: unknown agents are blocked
+    input:
+      event: pull_request.opened
+      actor: unknown-contributor
+      changed_files:
+        - src/app.ts
+    expect:
+      decision: block

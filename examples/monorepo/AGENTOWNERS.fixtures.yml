@@ -1,0 +1,40 @@
+version: 1
+
+cases:
+  - name: documentation is allowed
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - packages/cli/README.md
+    expect:
+      decision: allow
+
+  - name: core package changes require core review
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - packages/core/src/index.ts
+    expect:
+      decision: require_approval
+      required_reviewers:
+        - "@core-maintainers"
+
+  - name: workflow edits are blocked
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - .github/workflows/release.yml
+    expect:
+      decision: block
+
+  - name: dependency changes require approval
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - packages/cli/package.json
+    expect:
+      decision: require_approval

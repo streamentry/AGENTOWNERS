@@ -28,7 +28,7 @@ describe('parsePolicy', () => {
             actors: ['github-copilot[bot]'],
             labels: ['ai-generated'],
           },
-          allowed: ['open_pr', 'comment'],
+          allowed: ['open_pr', 'open_issue', 'comment'],
           requires_approval: ['modify_tests'],
           blocked: ['merge_pr', 'touch_secrets'],
         },
@@ -67,6 +67,7 @@ describe('parsePolicy', () => {
     expect(result.defaults?.unknown_agent).toBe('require_approval');
     expect(result.agents?.['github-copilot'].match.actors).toEqual(['github-copilot[bot]']);
     expect(result.agents?.['github-copilot'].allowed).toContain('open_pr');
+    expect(result.agents?.['github-copilot'].allowed).toContain('open_issue');
     expect(result.agents?.['github-copilot'].blocked).toContain('merge_pr');
     expect(result.rules).toHaveLength(2);
     expect(result.rules?.[0].name).toBe('Block workflow edits');

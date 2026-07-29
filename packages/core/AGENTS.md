@@ -10,13 +10,14 @@ network calls, clocks, randomness, or persistent state.
 - `types.ts`: public contract
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
-- `classifier.ts`: path and secret classification
+- `classifier.ts`: repository-depth-independent path and secret classification
+- `actions.ts`: event-to-action inference normalized to the canonical classifier
 - `detection.ts`: actor, commit, PR, issue, and comment evidence
-- `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
 - `scoring.ts`: deterministic risk score
 - `renderer.ts`: Markdown and audit output
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
+- `tests/repository-policies.test.ts`: repository policy templates stay schema-valid
 - `fixtures.ts`: strict portable suites and assertion comparison
 - `sarif.ts`: deterministic SARIF 2.1.0 output
 
@@ -63,6 +64,7 @@ sequenceDiagram
   participant Adapter
   participant Core
   Adapter->>Core: normalized PR, issue, or comment input
+  Adapter->>Core: explicit audit timestamp
   Core->>Core: match event-specific metadata
   Core->>Core: pure evaluation
   Core-->>Adapter: immutable decision
@@ -85,10 +87,17 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
+When classifier patterns change, run the action-inference tests too; the public
+`inferActions()` path reuses the canonical file classification contract.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
-identifiers.
+identifiers. Rule IDs must distinguish matched rules even when their display
+names are identical.
+Audit timestamps are supplied by adapters; the core renderer must never read
+the system clock.
+Policy-load errors must preserve useful line and column diagnostics without
+echoing malformed policy source text.

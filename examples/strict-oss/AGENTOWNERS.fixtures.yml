@@ -37,3 +37,15 @@ cases:
       matched_rules:
         - Require approval for dependencies
       risk_level: medium
+
+  - name: issue creation requires approval
+    input:
+      event: issues.opened
+      actor: github-copilot[bot]
+      issue_title: "Proposed documentation improvement"
+      issue_body: "Please review this agent-created issue."
+    expect:
+      decision: require_approval
+      detected_actions:
+        - open_issue
+      risk_level: low

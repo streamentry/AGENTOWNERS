@@ -21510,6 +21510,8 @@ var require_picomatch2 = __commonJS({
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  ACTION_MODES: () => ACTION_MODES,
+  normalizeActionMode: () => normalizeActionMode,
   run: () => run
 });
 module.exports = __toCommonJS(index_exports);
@@ -33094,6 +33096,7 @@ var {
 var import_picomatch = __toESM(require_picomatch2(), 1);
 var agentActionSchema = external_exports.enum([
   "open_pr",
+  "open_issue",
   "update_pr",
   "comment",
   "review_comment",
@@ -33209,8 +33212,8 @@ function parsePolicy(input) {
   return agentOwnersPolicySchema.parse(input);
 }
 var PolicyLoadError = class extends Error {
-  constructor(filePath, cause) {
-    const causeMsg = cause instanceof Error ? cause.message : String(cause);
+  constructor(filePath, cause, safeCauseMessage) {
+    const causeMsg = safeCauseMessage ?? (cause instanceof Error ? cause.message : String(cause));
     super(`Failed to load policy from ${filePath}: ${causeMsg}`);
     this.filePath = filePath;
     this.cause = cause;
@@ -33219,20 +33222,29 @@ var PolicyLoadError = class extends Error {
   filePath;
   cause;
 };
+function yamlErrorMessage(error2) {
+  if (typeof error2 === "object" && error2 !== null) {
+    const mark = error2.mark;
+    if (typeof mark?.line === "number" && typeof mark.column === "number") {
+      return `Invalid YAML syntax at line ${mark.line + 1}, column ${mark.column + 1}.`;
+    }
+  }
+  return "Invalid YAML syntax.";
+}
 function loadPolicyText(raw, source = "policy text") {
   let parsed;
   try {
     parsed = load(raw);
   } catch (err) {
-    throw new PolicyLoadError(source, err);
+    throw new PolicyLoadError(source, err, yamlErrorMessage(err));
   }
   try {
     return parsePolicy(parsed);
   } catch (err) {
-    throw new PolicyLoadError(source, err);
+    throw new PolicyLoadError(source, err, "Policy does not match the AGENTOWNERS schema.");
   }
 }
-var DOCS_PATTERNS = ["*.md", "docs/**", "*.rst", "*.adoc"];
+var DOCS_PATTERNS = ["**/*.md", "docs/**", "**/*.rst", "**/*.adoc"];
 var TESTS_PATTERNS = ["**/*.test.*", "**/*.spec.*", "tests/**", "__tests__/**"];
 var DEPENDENCY_PATTERNS = [
   "package.json",
@@ -33453,48 +33465,6 @@ function detectAgent(input) {
   }
   return { confidence: "unknown", signals };
 }
-var DOC_PATTERNS = [/\.md$/i, /\.mdx$/i, /\.rst$/i, /\.txt$/i, /^docs\//i];
-var TEST_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\/__tests__\//];
-var DEPENDENCY_PATTERNS2 = [
-  /^package\.json$/,
-  /^package-lock\.json$/,
-  /^yarn\.lock$/,
-  /^pnpm-lock\.yaml$/,
-  /^Cargo\.toml$/,
-  /^Cargo\.lock$/,
-  /^go\.mod$/,
-  /^go\.sum$/,
-  /^requirements.*\.txt$/,
-  /^pyproject\.toml$/,
-  /^Pipfile/,
-  /^Gemfile/
-];
-var WORKFLOW_PATTERNS2 = [/^\.github\/workflows\//];
-var AUTH_PATTERNS2 = [/auth/i, /login/i, /oauth/i, /jwt/i, /session/i, /password/i, /credential/i];
-var INFRA_PATTERNS2 = [
-  /^terraform\//i,
-  /\.tf$/,
-  /^infra\//i,
-  /^deploy\//i,
-  /dockerfile$/i,
-  /docker-compose/i,
-  /^k8s\//i,
-  /^kubernetes\//i,
-  /^helm\//i
-];
-var SECRET_PATTERNS = [/\.env/, /secret/i, /\.pem$/, /\.key$/, /private/i];
-function classifyFilesLocal(files) {
-  if (files.length === 0) return {};
-  const hasWorkflows = files.some((f) => WORKFLOW_PATTERNS2.some((p) => p.test(f)));
-  const hasAuth = files.some((f) => AUTH_PATTERNS2.some((p) => p.test(f)));
-  const hasInfra = files.some((f) => INFRA_PATTERNS2.some((p) => p.test(f)));
-  const hasSecrets = files.some((f) => SECRET_PATTERNS.some((p) => p.test(f)));
-  const hasDependencies = files.some((f) => DEPENDENCY_PATTERNS2.some((p) => p.test(f)));
-  const hasTests = files.some((f) => TEST_PATTERNS.some((p) => p.test(f)));
-  const nonDocFiles = files.filter((f) => !DOC_PATTERNS.some((p) => p.test(f)));
-  const docsOnly = nonDocFiles.length === 0 && files.length > 0;
-  return { docsOnly, hasTests, hasDependencies, hasWorkflows, hasAuth, hasInfra, hasSecrets };
-}
 function hasClassifiedTests(classification) {
   if (typeof classification["hasTests"] === "boolean") {
     return classification["hasTests"];
@@ -33507,30 +33477,34 @@ function hasClassifiedTests(classification) {
   }
   return classification["testsOnly"] === true;
 }
+function normalizeClassification(input) {
+  const classification = input;
+  return {
+    docsOnly: classification["docsOnly"],
+    hasTests: hasClassifiedTests(classification),
+    hasDependencies: classification["hasDependencies"] ?? classification["changesDependencies"],
+    hasWorkflows: classification["hasWorkflows"] ?? classification["changesWorkflows"],
+    hasAuth: classification["hasAuth"] ?? classification["changesAuth"],
+    hasInfra: classification["hasInfra"] ?? classification["changesInfra"],
+    hasSecrets: classification["hasSecrets"] ?? classification["secretFilesDetected"]
+  };
+}
 function inferFileBasedActions(classification) {
+  const normalized = normalizeClassification(classification);
   const actions = [];
-  if (classification.docsOnly) actions.push("modify_docs");
-  if (classification.hasTests) actions.push("modify_tests");
-  if (classification.hasDependencies) actions.push("modify_dependencies");
-  if (classification.hasWorkflows) actions.push("edit_workflows");
-  if (classification.hasAuth) actions.push("modify_auth");
-  if (classification.hasInfra) actions.push("modify_infra");
-  if (classification.hasSecrets) actions.push("touch_secrets");
+  if (normalized.docsOnly) actions.push("modify_docs");
+  if (normalized.hasTests) actions.push("modify_tests");
+  if (normalized.hasDependencies) actions.push("modify_dependencies");
+  if (normalized.hasWorkflows) actions.push("edit_workflows");
+  if (normalized.hasAuth) actions.push("modify_auth");
+  if (normalized.hasInfra) actions.push("modify_infra");
+  if (normalized.hasSecrets) actions.push("touch_secrets");
   return actions;
 }
 function inferActions(input) {
   const { eventType, changedFiles, reviewState, filesClassification } = input;
   const actions = /* @__PURE__ */ new Set();
-  const fc = filesClassification;
-  const classification = fc ? {
-    docsOnly: fc["docsOnly"] ?? (fc["changesWorkflows"] === void 0 && false),
-    hasTests: hasClassifiedTests(fc),
-    hasDependencies: fc["hasDependencies"] ?? fc["changesDependencies"],
-    hasWorkflows: fc["hasWorkflows"] ?? fc["changesWorkflows"],
-    hasAuth: fc["hasAuth"] ?? fc["changesAuth"],
-    hasInfra: fc["hasInfra"] ?? fc["changesInfra"],
-    hasSecrets: fc["hasSecrets"] ?? fc["secretFilesDetected"]
-  } : changedFiles ? classifyFilesLocal(changedFiles) : {};
+  const classification = filesClassification ? normalizeClassification(filesClassification) : changedFiles ? normalizeClassification(classifyFiles(changedFiles)) : {};
   switch (eventType) {
     case "pull_request.opened":
     case "pull_request.reopened":
@@ -33568,6 +33542,7 @@ function inferActions(input) {
       break;
     }
     case "issues.opened": {
+      actions.add("open_issue");
       break;
     }
   }
@@ -33769,10 +33744,10 @@ Unrecognized decision effect.`;
   return wrapWithMarker(content);
 }
 function renderAuditJson(context3) {
-  const { actor, repository, event, agentDetection, decision, changedFiles } = context3;
+  const { timestamp: timestamp2, actor, repository, event, agentDetection, decision, changedFiles } = context3;
   return {
     version: 1,
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    timestamp: timestamp2,
     repository,
     event,
     actor,
@@ -34310,10 +34285,17 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
 }
 
 // src/index.ts
+var ACTION_MODES = ["comment", "check", "both", "dry-run"];
+function normalizeActionMode(value) {
+  if (ACTION_MODES.includes(value)) {
+    return value;
+  }
+  throw new Error("Mode must be one of: comment, check, both, dry-run.");
+}
 async function run() {
   try {
     const policyPath = getInput("policy-path") || ".github/AGENTOWNERS.yml";
-    const mode = getInput("mode") || "comment";
+    const mode = normalizeActionMode(getInput("mode") || "comment");
     const failOnBlock = getInput("fail-on-block") !== "false";
     const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
     const addLabels = getInput("add-labels") !== "false";
@@ -34496,6 +34478,7 @@ async function run() {
       )
     );
     const auditRecord = renderAuditJson({
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
       actor,
       repository: `${owner}/${repo}`,
       event: eventName,
@@ -34551,6 +34534,8 @@ async function applyLabels(octokit, owner, repo, issueNumber, labels) {
 run();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  ACTION_MODES,
+  normalizeActionMode,
   run
 });
 /*! Bundled license information:

@@ -88,10 +88,20 @@ function formatValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
+function escapeControlCharacters(value: string): string {
+  return Array.from(value, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    const isControl = codePoint <= 0x1f || (codePoint >= 0x7f && codePoint <= 0x9f);
+    return isControl ? `\\u${codePoint.toString(16).padStart(4, '0')}` : character;
+  }).join('');
+}
+
 function writeText(result: PolicyFixtureSuiteResult): void {
   const lines: string[] = [];
   for (const fixture of result.cases) {
-    lines.push(`${fixture.passed ? 'PASS' : 'FAIL'} ${fixture.name}`);
+    lines.push(
+      `${fixture.passed ? 'PASS' : 'FAIL'} ${escapeControlCharacters(fixture.name)}`,
+    );
     for (const failure of fixture.failures) {
       lines.push(
         `  ${failure.field}: expected ${formatValue(failure.expected)}, received ${formatValue(failure.actual)}`,

@@ -65,8 +65,10 @@ secret-file changes are blocked.
 `packages/core/tests/integration.test.ts` runs directory fixtures.
 `packages/core/tests/adversarial-corpus.test.ts` runs the table-driven corpus.
 `packages/core/tests/examples.test.ts` discovers every example directory,
-requires one canonical `AGENTOWNERS.yml`, parses each policy through the public
-API, and verifies the dependency-bot behavior contract.
+requires one canonical `AGENTOWNERS.yml` and one
+`AGENTOWNERS.fixtures.yml`, parses each policy through the public API, and runs
+the fixture suite through the same public runner used by the CLI. The
+dependency-bot behavior assertions remain as focused identity tests.
 
 For each fixture:
 1. Load policy from fixture

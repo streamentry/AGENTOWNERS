@@ -1,0 +1,29 @@
+version: 1
+
+cases:
+  - name: documentation is allowed
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - docs/guide.md
+    expect:
+      decision: allow
+
+  - name: workflow edits are blocked
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - .github/workflows/ci.yml
+    expect:
+      decision: block
+
+  - name: dependency changes require approval
+    input:
+      event: pull_request.opened
+      actor: coding-agent
+      changed_files:
+        - package.json
+    expect:
+      decision: require_approval

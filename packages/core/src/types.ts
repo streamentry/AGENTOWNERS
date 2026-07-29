@@ -2,6 +2,7 @@
 
 export type AgentAction =
   | 'open_pr'
+  | 'open_issue'
   | 'update_pr'
   | 'comment'
   | 'review_comment'

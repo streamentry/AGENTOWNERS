@@ -45,7 +45,7 @@ packages/
 | vitest | Tests |
 | zod | Schema validation |
 | js-yaml | YAML parsing |
-| minimatch | Glob matching |
+| picomatch | Glob matching |
 | commander | CLI argument parsing |
 | @actions/core, @actions/github | GitHub Action runtime |
 

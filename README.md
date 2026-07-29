@@ -20,7 +20,7 @@ repository policy.
 
 ## Why
 
-AI agents can now open PRs, comment on issues, review code, and trigger automation in your repository. The missing layer is not another AI reviewer. It is **repo-native governance**:
+AI agents can now open PRs, open issues, comment on issues, review code, and trigger automation in your repository. The missing layer is not another AI reviewer. It is **repo-native governance**:
 
 - Which agent is acting?
 - What action is it trying to perform?
@@ -206,6 +206,9 @@ agentowners init --profile minimal
 # Validate a policy file
 agentowners validate .github/AGENTOWNERS.yml
 
+# Emit a versioned result for CI and agent integrations
+agentowners validate .github/AGENTOWNERS.yml --output json
+
 # Check local diff against policy
 agentowners check --base main --head HEAD
 
@@ -232,6 +235,10 @@ agentowners fingerprint --commit HEAD
 stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
 and a bounded next action. It makes no model or GitHub API calls and never
 modifies the repository.
+
+`validate --output json` returns a versioned success or error document without
+including policy contents or absolute filesystem paths. Human-readable output
+remains the default.
 
 `test` executes a strict, versioned fixture suite through the same detection,
 classification, action-inference, and evaluation pipeline used in production.
@@ -342,7 +349,7 @@ Priority: `block > require_approval > allow`
 
 AGENTOWNERS infers these actions from GitHub events and changed files:
 
-`open_pr` `update_pr` `comment` `review_comment` `approve_pr` `request_changes`
+`open_pr` `open_issue` `update_pr` `comment` `review_comment` `approve_pr` `request_changes`
 `label_issue` `close_issue` `reopen_issue` `assign_issue` `edit_workflows`
 `modify_tests` `modify_docs` `modify_dependencies` `modify_auth` `modify_infra`
 `touch_secrets` `change_permissions` `merge_pr`

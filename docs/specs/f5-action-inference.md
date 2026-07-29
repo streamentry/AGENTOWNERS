@@ -39,6 +39,9 @@ Infer what AgentActions are being performed based on GitHub event context and ch
 ### issues reopened
 - Always: `reopen_issue`
 
+### issues opened
+- Always: `open_issue`
+
 ## Types
 
 ```ts
@@ -68,6 +71,10 @@ export type ActionInferenceInput = {
 
 ### `inferActions(input: ActionInferenceInput): AgentAction[]`
 Return deduplicated list of inferred actions. Never return duplicates.
+When `filesClassification` is omitted, derive it with the canonical
+`classifyFiles()` implementation rather than maintaining a second pattern set.
+When a caller supplies an aggregate classification, normalize both the local
+field names and the canonical `FilesClassification` field names.
 
 ### `inferFileBasedActions(classification: FilesClassification): AgentAction[]`
 Infer actions from file classification only.
@@ -77,6 +84,7 @@ mean that tests changed.
 
 ## Tests (`packages/core/tests/actions.test.ts`)
 - PR opened with docs files → `[open_pr, modify_docs]`
+- Nested AsciiDoc files use the canonical classifier and infer `modify_docs`
 - PR opened with workflow files → `[open_pr, edit_workflows]`
 - PR opened with auth files → `[open_pr, modify_auth]`
 - PR opened with package.json → `[open_pr, modify_dependencies]`
@@ -87,4 +95,5 @@ mean that tests changed.
 - Review approved → `[review_comment, approve_pr]`
 - Review changes_requested → `[review_comment, request_changes]`
 - Issue labeled → `[label_issue]`
+- Issue opened → `[open_issue]`
 - No duplicates in output

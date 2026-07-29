@@ -84,6 +84,20 @@ try {
   run('git', ['config', 'user.email', 'verifier@example.invalid'], fixtureDirectory);
   run(cliPath, ['init', '--profile', 'minimal'], fixtureDirectory);
   run(cliPath, ['validate', '.github/AGENTOWNERS.yml'], fixtureDirectory);
+  const validateJson = JSON.parse(
+    run(
+      cliPath,
+      ['validate', '.github/AGENTOWNERS.yml', '--output', 'json'],
+      fixtureDirectory,
+    ),
+  );
+  if (
+    validateJson.schemaVersion !== 1 ||
+    validateJson.status !== 'complete' ||
+    validateJson.valid !== true
+  ) {
+    throw new Error('Packed CLI validate JSON returned an unexpected contract');
+  }
   run('git', ['add', '.github/AGENTOWNERS.yml'], fixtureDirectory);
   run('git', ['commit', '-m', 'chore: initialize policy'], fixtureDirectory);
   await writeFile(resolve(fixtureDirectory, 'README.md'), '# Fixture\n');

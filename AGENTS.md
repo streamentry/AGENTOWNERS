@@ -65,13 +65,14 @@ packages/core/tests/
   profiles.test.ts   — built-in profiles parse correctly
   integration.test.ts — end-to-end pipeline with fixtures
   fixtures-runner.test.ts — public fixture schema, runner, and loader contract
+  repository-policies.test.ts — repository-owned policy templates parse strictly
   fixtures/           — policies, events, exact outcomes, and corpus guidance
 
 packages/cli/src/
   index.ts           — commander entry point
   git.ts             — shell-free Git adapter (getChangedFiles, getCommitMessages)
   commands/init.ts   — agentowners init
-  commands/validate.ts — agentowners validate
+  commands/validate.ts — agentowners validate (text or versioned JSON)
   commands/check.ts  — agentowners check
   commands/explain.ts — agentowners explain
   commands/fingerprint.ts — agentowners fingerprint
@@ -80,6 +81,7 @@ packages/cli/src/
 
 packages/cli/tests/
   check.test.ts      — SARIF output and invalid-format boundaries
+  validate.integration.test.ts — real policy-file validation contract
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
 
@@ -97,6 +99,7 @@ examples/
   strict-oss/         — strict open-source project policy
   security-sensitive/ — maximum restriction for security-critical repos
   monorepo/           — per-package rules in a monorepo
+  */AGENTOWNERS.fixtures.yml — executable decision contract for every profile
 
 docs/specs/
   readme.md           — full product specification (canonical requirements)

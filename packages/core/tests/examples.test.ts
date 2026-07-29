@@ -8,7 +8,9 @@ import {
   detectAgent,
   evaluatePolicy,
   inferActions,
+  loadPolicyFixtureFile,
   parsePolicy,
+  runPolicyFixtureSuite,
   type AgentOwnersPolicy,
 } from '../src/index.js';
 
@@ -61,6 +63,19 @@ describe('checked-in examples', () => {
 
   it.each(directories)('%s parses through the public policy API', (directory) => {
     expect(() => loadExample(directory)).not.toThrow();
+  });
+
+  it.each(directories)('%s proves its documented behavior with portable fixtures', async (directory) => {
+    const policy = loadExample(directory);
+    const suite = await loadPolicyFixtureFile(
+      join(examplesRoot, directory, 'AGENTOWNERS.fixtures.yml'),
+    );
+    const result = runPolicyFixtureSuite(policy, suite);
+
+    expect(result).toMatchObject({
+      passed: true,
+      failedCount: 0,
+    });
   });
 });
 
