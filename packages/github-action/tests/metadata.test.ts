@@ -22,4 +22,10 @@ describe('GitHub Action metadata', () => {
     expect(readMetadata('../../../action.yml')).toMatch(/using: node24/);
     expect(readMetadata('../action.yml')).toMatch(/using: node24/);
   });
+
+  it('keeps the committed bundle aligned with the audit-output contract', () => {
+    const bundle = readMetadata('../dist/index.js');
+    expect(bundle).toContain('audit-artifact-sha256');
+    expect(bundle).toContain('agentowners-decision.json');
+  });
 });
