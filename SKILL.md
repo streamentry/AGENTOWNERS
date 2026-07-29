@@ -23,9 +23,9 @@ description: Implement or review deterministic AI-agent governance changes in AG
 11. If policy validation changed, run `pnpm generate:schema`.
 12. If decision behavior changed, update a portable fixture that proves the
    repository-facing contract.
-13. If capability-boundary behavior changed, run `pnpm test:capabilities` and
-   `node scripts/capability-demo.mjs`; verify the demo remains simulation-only
-   and does not print secret values.
+13. If capability-boundary behavior changed, run `pnpm build`,
+   `pnpm test:capabilities`, and `node scripts/capability-demo.mjs`; verify the
+   demo remains simulation-only and does not print secret values.
 14. If onboarding or product-proof behavior changed, run `pnpm demo` and verify
    both the production CLI fixture results and capability denials are present.
 15. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.

@@ -14,3 +14,4 @@ export * from './sarif.js';
 export * from './profiles.js';
 export * from './evaluator.js';
 export * from './fixtures.js';
+export * from './capabilities.js';

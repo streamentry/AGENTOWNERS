@@ -45,6 +45,7 @@ packages/core/src/
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
+  capabilities.ts — fail-closed capability manifests, evaluation, and audit hashing
   sarif.ts       — deterministic SARIF 2.1.0 rendering
   profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
   index.ts       — barrel export (all public API)
@@ -77,11 +78,13 @@ packages/cli/src/
   commands/fingerprint.ts — agentowners fingerprint
   commands/self-check.ts — versioned pre-PR machine contract
   commands/test.ts  — portable policy fixture runner
+  commands/capabilities.ts — capability manifest evaluation and audit output
 
 packages/cli/tests/
   check.test.ts      — SARIF output and invalid-format boundaries
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
+  capabilities.test.ts — capability output and denial exit contracts
 
 packages/github-action/src/
   index.ts    — main action entry

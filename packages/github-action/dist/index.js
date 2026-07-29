@@ -34166,6 +34166,68 @@ function isRepositoryPath(value) {
   const segments = value.split("/");
   return segments.every((segment) => segment.length > 0 && segment !== "." && segment !== "..");
 }
+var capabilityActionTypes = ["tool", "network", "secret", "data", "privilege"];
+var identityHashPattern = /^[a-f0-9]{64}$/;
+var zeroHash = "0".repeat(64);
+var identitySchema = external_exports.object({
+  id: external_exports.string().min(1),
+  issuer: external_exports.string().min(1),
+  identity_sha256: external_exports.string().regex(identityHashPattern)
+}).strict();
+var stringList = external_exports.array(external_exports.string().min(1));
+var capabilityManifestSchema = external_exports.object({
+  version: external_exports.literal(1),
+  agent: identitySchema,
+  repositories: stringList,
+  tools: external_exports.object({ allow: stringList }).strict(),
+  network: external_exports.object({ allowed_destinations: stringList }).strict(),
+  data: external_exports.object({
+    allowed_secret_scopes: stringList,
+    allowed_data_scopes: stringList
+  }).strict(),
+  privileges: external_exports.object({ allow: stringList }).strict(),
+  escalation: external_exports.object({
+    human_approval_required: stringList,
+    kill_on_violation: external_exports.boolean()
+  }).strict(),
+  budgets: external_exports.object({
+    max_actions: external_exports.number().int().nonnegative(),
+    max_network_requests: external_exports.number().int().nonnegative(),
+    max_secret_reads: external_exports.number().int().nonnegative(),
+    max_privileged_actions: external_exports.number().int().nonnegative()
+  }).strict(),
+  audit: external_exports.object({ required: external_exports.literal(true), hash_chain: external_exports.literal(true) }).strict()
+}).strict();
+var capabilityAttemptBaseSchema = external_exports.object({
+  attempt_id: external_exports.string().min(1),
+  agent_id: external_exports.string().min(1),
+  issuer: external_exports.string().min(1),
+  identity_sha256: external_exports.string().regex(identityHashPattern),
+  type: external_exports.enum(capabilityActionTypes),
+  tool: external_exports.string().min(1).optional(),
+  destination: external_exports.string().min(1).optional(),
+  scope: external_exports.string().min(1).optional(),
+  capability: external_exports.string().min(1).optional(),
+  repository: external_exports.string().min(1).optional(),
+  human_approved: external_exports.boolean().optional(),
+  expected: external_exports.enum(["allow", "deny"]).optional()
+}).strict();
+var capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine((attempt, context3) => {
+  const field = {
+    tool: "tool",
+    network: "destination",
+    secret: "scope",
+    data: "scope",
+    privilege: "capability"
+  }[attempt.type];
+  if (typeof attempt[field] !== "string" || attempt[field].length === 0) {
+    context3.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      path: [field],
+      message: `${field} is required for ${attempt.type} attempts`
+    });
+  }
+});
 
 // src/github.ts
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {

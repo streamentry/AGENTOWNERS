@@ -33,6 +33,9 @@ semantic versioning.
   and capability-boundary proof in one first-run command.
 - Capability requests now present and verify the manifest-bound identity hash,
   with an adversarial mismatch test.
+- Reusable capability validation/evaluation is now exported from `@agent-owners/core`
+  and exposed through `agentowners capabilities` with stable output and
+  `--fail-on-deny`.
 
 ### Changed
 

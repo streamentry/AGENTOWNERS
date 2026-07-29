@@ -16,6 +16,7 @@ The roadmap is ordered by user risk removed, not feature count.
 - Experimental capability manifest and deterministic denial/audit demonstration
 - Marketplace metadata parity and idempotent release preflight helpers
 - One-command, network-free product proof for new contributors
+- Reusable capability API and CLI surface for adapter integration
 
 ## Next: explainability and interoperability
 

@@ -92,8 +92,9 @@ pnpm demo
 
 The command builds the workspace, runs the strict-OSS fixture suite, and then
 summarizes the capability demo's one allowed read-only action and three denied
-authority attempts. Use `node scripts/capability-demo.mjs` when you need the
-full hash-chained audit. It is a local product proof, not a runtime sandbox.
+authority attempts. After `pnpm build`, use `node scripts/capability-demo.mjs`
+when you need the full hash-chained audit. It is a local product proof, not a
+runtime sandbox.
 
 ## Capability boundary demonstration
 
@@ -113,6 +114,15 @@ identity hash, allows one read-only Git operation, and records denials for
 unlisted egress, a token scope, and merge privilege. It is a simulator, not an OS
 sandbox or firewall; production adapters still need isolation and real
 credential, egress, identity, and log controls.
+
+For the reusable packaged contract, run:
+
+```bash
+agentowners capabilities \
+  --manifest fixtures/capabilities/AGENT_CAPABILITIES.json \
+  --attempts fixtures/capabilities/attempts.json \
+  --output json --fail-on-deny
+```
 
 Release readiness is independently checked with `pnpm verify:release`: it
 parses root and packaged Action metadata, checks their Marketplace-facing

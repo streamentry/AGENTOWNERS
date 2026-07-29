@@ -38,5 +38,8 @@ test('capability demo denies a mismatched identity binding', () => {
 });
 
 test('capability demo rejects malformed manifests', () => {
-  assert.throws(() => evaluateCapabilities({ ...manifest, network: {} }, []), /string array/);
+  assert.throws(
+    () => evaluateCapabilities({ ...manifest, network: {} }, []),
+    /allowed_destinations|Required/,
+  );
 });

@@ -30,7 +30,15 @@ The canonical example is [fixtures/capabilities/AGENT_CAPABILITIES.json](fixture
 Its adapter allows one read-only Git operation and denies an unlisted network
 destination, a GitHub token scope, and merge privilege. The demonstration in
 [`scripts/capability-demo.mjs`](scripts/capability-demo.mjs) performs no network
-requests, reads no real secrets, and does not change repository state.
+requests, reads no real secrets, and does not change repository state. Run
+`pnpm build` before invoking the script directly; `pnpm demo` handles that
+build automatically.
+
+The reusable implementation is exported by `@agent-owners/core` through
+`parseCapabilityManifest()`, `parseCapabilityAttempts()`, and
+`evaluateCapabilities()`. The packaged CLI exposes the same contract through
+`agentowners capabilities`; both surfaces remain pure evaluation and audit
+helpers, not dispatchers.
 
 ## Decision and audit algorithm
 

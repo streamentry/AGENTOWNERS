@@ -22,6 +22,18 @@ Portable policy suites use `parsePolicyFixtureSuite()` and
 `runPolicyFixtureSuite()`. They exercise detection, classification, inference,
 and evaluation without Git, GitHub, network access, or hidden state.
 
+The experimental capability API provides the same deterministic boundary for a
+pre-dispatch adapter. `parseCapabilityManifest()` validates strict identity,
+scope, privilege, budget, escalation, and audit fields; `evaluateCapabilities()`
+returns a hash-chained audit without performing dispatch or I/O.
+
+```ts
+import { evaluateCapabilities } from '@agent-owners/core';
+
+const result = evaluateCapabilities(manifestJson, attemptsJson);
+// result.summary.denied and result.auditDigest are stable across runs.
+```
+
 ## Contract
 
 - Same input produces the same decision.
