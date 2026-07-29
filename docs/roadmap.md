@@ -17,7 +17,8 @@ The roadmap is ordered by user risk removed, not feature count.
 - Marketplace metadata parity and idempotent release preflight helpers
 - One-command, network-free product proof for new contributors
 - Reusable capability API and CLI surface for adapter integration
-- Tamper-verifiable capability audit API and CLI output
+- Tamper-verifiable capability audit API and CLI output, including optional
+  exact-manifest binding
 
 ## Next: explainability and interoperability
 

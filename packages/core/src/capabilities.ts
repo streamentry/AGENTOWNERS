@@ -122,6 +122,7 @@ const capabilityEvaluationResultSchema = z
       })
       .strict(),
     audit: z.array(capabilityAuditEventSchema),
+    manifestDigest: z.string().regex(identityHashPattern),
     auditDigest: z.string().regex(identityHashPattern),
   })
   .strict();
@@ -142,6 +143,10 @@ export function hashCapabilityIdentity(agentId: string): string {
   return createHash('sha256').update(agentId).digest('hex');
 }
 
+export function hashCapabilityManifest(manifest: CapabilityManifest): string {
+  return createHash('sha256').update(stableCapabilityStringify(manifest)).digest('hex');
+}
+
 function hashCapabilityAuditEvent(event: Omit<CapabilityAuditEvent, 'event_hash'>): string {
   return createHash('sha256').update(stableCapabilityStringify(event)).digest('hex');
 }
@@ -149,9 +154,16 @@ function hashCapabilityAuditEvent(event: Omit<CapabilityAuditEvent, 'event_hash'
 function hashCapabilityAuditDigest(
   auditHead: string,
   summary: CapabilityEvaluationResult['summary'],
+  manifestDigest: string,
 ): string {
   return createHash('sha256')
-    .update(stableCapabilityStringify({ audit_head: auditHead, summary }))
+    .update(
+      stableCapabilityStringify({
+        audit_head: auditHead,
+        manifest_digest: manifestDigest,
+        summary,
+      }),
+    )
     .digest('hex');
 }
 
@@ -286,22 +298,28 @@ export function evaluateCapabilities(
     denied: audit.filter((event) => event.decision === 'deny').length,
     kill_triggered: killTriggered,
   };
+  const manifestDigest = hashCapabilityManifest(manifest);
   return {
     schemaVersion: 1,
     status: 'complete',
     summary,
     audit,
-    auditDigest: hashCapabilityAuditDigest(previousHash, summary),
+    manifestDigest,
+    auditDigest: hashCapabilityAuditDigest(previousHash, summary, manifestDigest),
   };
 }
 
-export function verifyCapabilityAudit(input: unknown): CapabilityAuditVerification {
+export function verifyCapabilityAudit(
+  input: unknown,
+  expectedManifestDigest?: string,
+): CapabilityAuditVerification {
   const parsed = capabilityEvaluationResultSchema.safeParse(input);
   if (!parsed.success) {
     return {
       valid: false,
       code: 'invalid_shape',
       eventsChecked: 0,
+      manifestDigest: null,
       auditDigest: null,
     };
   }
@@ -314,6 +332,7 @@ export function verifyCapabilityAudit(input: unknown): CapabilityAuditVerificati
         valid: false,
         code: 'invalid_sequence',
         eventsChecked: index,
+        manifestDigest: result.manifestDigest,
         auditDigest: result.auditDigest,
       };
     }
@@ -323,6 +342,7 @@ export function verifyCapabilityAudit(input: unknown): CapabilityAuditVerificati
         valid: false,
         code: 'invalid_hash',
         eventsChecked: index,
+        manifestDigest: result.manifestDigest,
         auditDigest: result.auditDigest,
       };
     }
@@ -340,15 +360,30 @@ export function verifyCapabilityAudit(input: unknown): CapabilityAuditVerificati
       valid: false,
       code: 'invalid_summary',
       eventsChecked: result.audit.length,
+      manifestDigest: result.manifestDigest,
       auditDigest: result.auditDigest,
     };
   }
 
-  if (result.auditDigest !== hashCapabilityAuditDigest(previousHash, result.summary)) {
+  if (
+    result.auditDigest !==
+    hashCapabilityAuditDigest(previousHash, result.summary, result.manifestDigest)
+  ) {
     return {
       valid: false,
       code: 'invalid_digest',
       eventsChecked: result.audit.length,
+      manifestDigest: result.manifestDigest,
+      auditDigest: result.auditDigest,
+    };
+  }
+
+  if (expectedManifestDigest !== undefined && expectedManifestDigest !== result.manifestDigest) {
+    return {
+      valid: false,
+      code: 'manifest_mismatch',
+      eventsChecked: result.audit.length,
+      manifestDigest: result.manifestDigest,
       auditDigest: result.auditDigest,
     };
   }
@@ -357,6 +392,7 @@ export function verifyCapabilityAudit(input: unknown): CapabilityAuditVerificati
     valid: true,
     code: 'valid',
     eventsChecked: result.audit.length,
+    manifestDigest: result.manifestDigest,
     auditDigest: result.auditDigest,
   };
 }

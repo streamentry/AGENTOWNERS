@@ -57,11 +57,15 @@ and audit helpers, not dispatchers.
 
 Every audit event contains a sequence number, request identity, normalized
 target, decision, dispatch flag, reason, previous hash, and event hash. The
-final digest binds the event-chain head and summary, making it suitable for an
-append-only external log or signed release attestation. `verifyCapabilityAudit()`
-recomputes every event hash, checks the chain, digest, and summary counts, and
-returns generic failure codes without echoing untrusted fields. The manifest
-itself is policy data, never executable code.
+result includes a canonical SHA-256 `manifestDigest`, and the final digest binds
+that fingerprint, the event-chain head, and summary. This lets a downstream
+adapter reject evidence produced from a different manifest before accepting it
+as an append-only external log or signed release attestation.
+`verifyCapabilityAudit()` recomputes every event hash, checks the chain, digest,
+summary counts, and optional expected-manifest binding. It returns generic
+failure codes without echoing untrusted fields. The fingerprint binds exact
+content after canonicalization; it does not prove who authored the manifest.
+The manifest itself is policy data, never executable code.
 
 ```mermaid
 flowchart LR

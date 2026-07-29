@@ -51,6 +51,7 @@ agentowners capabilities \
 # Verify a saved hash-chained capability audit
 agentowners capabilities verify-audit \
   --audit capability-audit.json \
+  --manifest capability-manifest.json \
   --format json
 ```
 
@@ -77,8 +78,10 @@ hash-chained audit. It never invokes a tool, reads a secret, or makes a network
 request; `--fail-on-deny` changes only the process exit code.
 
 `capabilities verify-audit` validates the audit event schema, sequence, event
-hashes, final digest, and summary counts. It exits `0` only for a valid audit
-and returns generic failure codes without printing untrusted audit fields.
+hashes, manifest-bound final digest, and summary counts. Pass `--manifest` to
+require that the audit was produced from that exact canonical manifest. It exits
+`0` only for a valid audit and returns generic failure codes without printing
+untrusted audit fields.
 
 See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
 and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

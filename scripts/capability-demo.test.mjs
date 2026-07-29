@@ -5,6 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   evaluateCapabilities,
+  hashCapabilityManifest,
+  parseCapabilityManifest,
   stableStringify,
   verifyCapabilityAudit,
 } from './capability-demo.mjs';
@@ -33,12 +35,16 @@ test('capability demo denies unlisted authority and is deterministic', () => {
   assert.equal(first.summary.kill_triggered, true);
   assert.equal(first.audit.length, 4);
   assert.equal(first.audit[1].previous_hash, first.audit[0].event_hash);
-  assert.deepEqual(verifyCapabilityAudit(first), {
-    valid: true,
-    code: 'valid',
-    eventsChecked: 4,
-    auditDigest: first.auditDigest,
-  });
+  assert.deepEqual(
+    verifyCapabilityAudit(first, hashCapabilityManifest(parseCapabilityManifest(manifest))),
+    {
+      valid: true,
+      code: 'valid',
+      eventsChecked: 4,
+      manifestDigest: first.manifestDigest,
+      auditDigest: first.auditDigest,
+    },
+  );
   assert.equal(stableStringify(first), stableStringify(second));
   assert.doesNotMatch(JSON.stringify(first), /secret-value|ghp_[a-z0-9]+|token=/i);
 });

@@ -208,7 +208,16 @@ try {
   const capabilityVerification = JSON.parse(
     run(
       cliPath,
-      ['capabilities', 'verify-audit', '--audit', capabilityAuditPath, '--format', 'json'],
+      [
+        'capabilities',
+        'verify-audit',
+        '--audit',
+        capabilityAuditPath,
+        '--manifest',
+        resolve(root, 'fixtures/capabilities/AGENT_CAPABILITIES.json'),
+        '--format',
+        'json',
+      ],
       fixtureDirectory,
     ),
   );

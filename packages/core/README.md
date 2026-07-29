@@ -31,13 +31,14 @@ returns a hash-chained audit without performing dispatch or I/O.
 import { evaluateCapabilities, verifyCapabilityAudit } from '@agent-owners/core';
 
 const result = evaluateCapabilities(manifestJson, attemptsJson);
-const verification = verifyCapabilityAudit(result);
-// verification.valid proves the event chain and summary match the digest.
+const verification = verifyCapabilityAudit(result, result.manifestDigest);
+// verification.valid proves the event chain, summary, and manifest binding.
 ```
 
 `verifyCapabilityAudit()` accepts an untrusted saved result and returns only a
-stable status code, event count, and digest. The digest covers the event-chain
-head and summary, so a downstream adapter can reject tampered logs without
+stable status code, event count, and digest. The result digest covers the
+canonical manifest fingerprint, event-chain head, and summary, so a downstream
+adapter can reject tampered logs or evidence from the wrong manifest without
 exposing scopes or targets.
 
 ## Contract

@@ -125,7 +125,9 @@ agentowners capabilities \
 
 # Verify a saved audit before accepting it downstream
 agentowners capabilities verify-audit \
-  --audit capability-audit.json --format json
+  --audit capability-audit.json \
+  --manifest capability-manifest.json \
+  --format json
 ```
 
 Release readiness is independently checked with `pnpm verify:release`: it

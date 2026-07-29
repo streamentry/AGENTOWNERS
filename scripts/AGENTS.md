@@ -9,8 +9,8 @@ avoid network or secret side effects unless their contract explicitly says so.
 ## Key components
 
 - `capability-demo.mjs` evaluates the example capability manifest, emits a
-  hash-chained audit through the built core API and performs no external
-  dispatch; the packed-package smoke test verifies that audit contract.
+  manifest-bound hash-chained audit through the built core API and performs no
+  external dispatch; the packed-package smoke test verifies that audit contract.
 - `marketplace-metadata.mjs` verifies root and package Action metadata parity.
 - `marketplace-metadata.test.mjs` covers metadata drift and malformed input.
 - `release-automation.mjs` contains tested, argv-based idempotent publication

@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { Command } from 'commander';
 import {
   evaluateCapabilities,
+  hashCapabilityManifest,
   parseCapabilityAttempts,
   parseCapabilityManifest,
   verifyCapabilityAudit,
@@ -26,6 +27,7 @@ type ResolvedCapabilityOptions = {
 
 type AuditVerificationOptions = {
   audit: string;
+  manifest?: string;
   output: string;
 };
 
@@ -171,8 +173,20 @@ export async function runVerifyCapabilityAudit(options: AuditVerificationOptions
   const auditPath = path.resolve(process.cwd(), options.audit);
   const audit = await readJson(auditPath, 'INVALID_AUDIT', options.output);
   if (audit === null) return;
+  let expectedManifestDigest: string | undefined;
+  if (options.manifest !== undefined) {
+    const manifestPath = path.resolve(process.cwd(), options.manifest);
+    const manifest = await readJson(manifestPath, 'INVALID_MANIFEST', options.output);
+    if (manifest === null) return;
+    try {
+      expectedManifestDigest = hashCapabilityManifest(parseCapabilityManifest(manifest));
+    } catch {
+      writeError('INVALID_MANIFEST', options.output);
+      return;
+    }
+  }
   try {
-    writeAuditVerification(verifyCapabilityAudit(audit), options.output);
+    writeAuditVerification(verifyCapabilityAudit(audit, expectedManifestDigest), options.output);
   } catch {
     writeError('INTERNAL_ERROR', options.output);
   }
@@ -192,8 +206,13 @@ export function registerCapabilities(program: Command): void {
     .command('verify-audit')
     .description('Verify a hash-chained capability audit JSON file')
     .requiredOption('--audit <path>', 'Path to a capability evaluation result JSON file')
+    .option('--manifest <path>', 'Bind verification to this capability manifest JSON file')
     .option('--format <format>', 'Output format: text | json', 'text')
-    .action((options: { audit: string; format: string }) =>
-      runVerifyCapabilityAudit({ audit: options.audit, output: options.format }),
+    .action((options: { audit: string; manifest?: string; format: string }) =>
+      runVerifyCapabilityAudit({
+        audit: options.audit,
+        manifest: options.manifest,
+        output: options.format,
+      }),
     );
 }

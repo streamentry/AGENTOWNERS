@@ -129,20 +129,36 @@ describe('capabilities command', () => {
     const directory = await mkdtemp(join(tmpdir(), 'agentowners-capabilities-cli-'));
     temporaryDirectories.push(directory);
     const auditPath = join(directory, 'audit.json');
+    const manifestPath = join(directory, 'manifest.json');
     const manifest = JSON.parse(
       await readFile(join(fixtureRoot, 'AGENT_CAPABILITIES.json'), 'utf8'),
     ) as unknown;
     const attempts = JSON.parse(
       await readFile(join(fixtureRoot, 'attempts.json'), 'utf8'),
     ) as unknown;
+    await writeFile(manifestPath, JSON.stringify(manifest));
     await writeFile(auditPath, JSON.stringify(evaluateCapabilities(manifest, attempts)));
 
     stdout = '';
     process.exitCode = undefined;
-    await runVerifyCapabilityAudit({ audit: auditPath, output: 'text' });
+    await runVerifyCapabilityAudit({ audit: auditPath, manifest: manifestPath, output: 'text' });
     expect(stdout).toContain('Capability audit verified.');
     expect(stdout).toContain('4 events checked.');
     expect(process.exitCode).toBe(0);
+
+    await writeFile(
+      manifestPath,
+      JSON.stringify({ ...(manifest as Record<string, unknown>), repositories: ['other/repo'] }),
+    );
+    stdout = '';
+    process.exitCode = undefined;
+    await runVerifyCapabilityAudit({ audit: auditPath, manifest: manifestPath, output: 'json' });
+    expect(JSON.parse(stdout)).toMatchObject({
+      verification: { valid: false, code: 'manifest_mismatch' },
+    });
+    expect(process.exitCode).toBe(1);
+
+    await writeFile(manifestPath, JSON.stringify(manifest));
 
     const tampered = JSON.parse(await readFile(auditPath, 'utf8')) as {
       audit: Array<Record<string, unknown>>;

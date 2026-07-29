@@ -68,8 +68,8 @@ sequenceDiagram
 
 Capability adapters may persist the pure audit result and call the verifier
 before accepting it as evidence. Verification does not dispatch tools or
-provide storage; it only proves the result's schema, chain, digest, and summary
-are internally consistent.
+provide storage; it proves the result's schema, chain, digest, summary, and
+optional exact-manifest binding are internally consistent.
 
 ## Trust boundaries
 

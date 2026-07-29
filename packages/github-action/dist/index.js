@@ -34255,6 +34255,7 @@ var capabilityEvaluationResultSchema = external_exports.object({
     kill_triggered: external_exports.boolean()
   }).strict(),
   audit: external_exports.array(capabilityAuditEventSchema),
+  manifestDigest: external_exports.string().regex(identityHashPattern),
   auditDigest: external_exports.string().regex(identityHashPattern)
 }).strict();
 

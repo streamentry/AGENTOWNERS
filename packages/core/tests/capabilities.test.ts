@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   evaluateCapabilities,
+  hashCapabilityManifest,
   parseCapabilityAttempts,
   parseCapabilityManifest,
   verifyCapabilityAudit,
@@ -110,7 +111,13 @@ describe('capability contract', () => {
       valid: true,
       code: 'valid',
       eventsChecked: 4,
+      manifestDigest: hashCapabilityManifest(manifest),
       auditDigest: result.auditDigest,
+    });
+    expect(verifyCapabilityAudit(result, hashCapabilityManifest(manifest)).valid).toBe(true);
+    expect(verifyCapabilityAudit(result, '0'.repeat(64))).toMatchObject({
+      valid: false,
+      code: 'manifest_mismatch',
     });
   });
 
@@ -160,6 +167,7 @@ describe('capability contract', () => {
       valid: false,
       code: 'invalid_shape',
       eventsChecked: 0,
+      manifestDigest: null,
       auditDigest: null,
     });
   });

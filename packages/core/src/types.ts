@@ -252,6 +252,7 @@ export type CapabilityEvaluationResult = {
     kill_triggered: boolean;
   };
   audit: CapabilityAuditEvent[];
+  manifestDigest: string;
   auditDigest: string;
 };
 
@@ -263,8 +264,10 @@ export type CapabilityAuditVerification = {
     | 'invalid_sequence'
     | 'invalid_hash'
     | 'invalid_digest'
-    | 'invalid_summary';
+    | 'invalid_summary'
+    | 'manifest_mismatch';
   eventsChecked: number;
+  manifestDigest: string | null;
   auditDigest: string | null;
 };
 

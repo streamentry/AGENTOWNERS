@@ -3,12 +3,16 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import {
   evaluateCapabilities,
+  hashCapabilityManifest,
+  parseCapabilityManifest,
   stableCapabilityStringify,
   verifyCapabilityAudit,
 } from '../packages/core/dist/index.mjs';
 
 export {
   evaluateCapabilities,
+  hashCapabilityManifest,
+  parseCapabilityManifest,
   stableCapabilityStringify as stableStringify,
   verifyCapabilityAudit,
 };
@@ -23,7 +27,10 @@ export async function runDemo(
     await readFile(path.join(root, 'fixtures/capabilities/attempts.json'), 'utf8'),
   );
   const result = evaluateCapabilities(manifest, attempts);
-  const verification = verifyCapabilityAudit(result);
+  const verification = verifyCapabilityAudit(
+    result,
+    hashCapabilityManifest(parseCapabilityManifest(manifest)),
+  );
   if (!verification.valid) {
     throw new Error(`capability audit verification failed: ${verification.code}`);
   }
