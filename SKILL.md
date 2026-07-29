@@ -38,6 +38,8 @@ base commit. For CLI Git operations, treat refs as hostile options and use
 `--end-of-options`.
 Tests must not mutate contributor Git configuration; scope fixture identity to
 the exact subprocess that needs it.
+Keep dynamic verdict values inside delimiter-safe Markdown code spans and test
+backticks/control characters before changing renderer output.
 
 During review, report only findings that identify the violated invariant, exact
 mechanism, and cheapest disconfirming test. AI-assisted review prepares evidence

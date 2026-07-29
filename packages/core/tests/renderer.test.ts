@@ -125,6 +125,26 @@ describe('renderVerdict', () => {
     expect(result).toContain('src/auth/session.ts');
   });
 
+  it('keeps dynamic Markdown values inside safe code spans', () => {
+    const result = renderVerdict(
+      {
+        ...approvalDecision,
+        matchedRules: [
+          {
+            ...approvalDecision.matchedRules[0],
+            name: 'Review `unsafe` path',
+            matchedFiles: ['src/evil`path.ts\nnext'],
+          },
+        ],
+      },
+      { actor: 'agent`name' },
+    );
+
+    expect(result).toContain('This PR appears to be created by ``agent`name``.');
+    expect(result).toContain('1. ``Review `unsafe` path``');
+    expect(result).toContain('   - matched files: ``src/evil`path.ts\\u000anext``');
+  });
+
   it('suggested labels shown in require_approval verdict', () => {
     const result = renderVerdict(approvalDecision);
     expect(result).toContain('ai-agent');

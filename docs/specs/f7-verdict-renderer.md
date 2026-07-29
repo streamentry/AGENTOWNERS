@@ -81,7 +81,10 @@ Always wrap output with the sticky comment marker:
 ## Functions
 
 ### `renderVerdict(decision: Decision, options?: RenderOptions): string`
-Generate full markdown verdict.
+Generate full markdown verdict. Dynamic actor, rule-name, and changed-file
+values must be rendered inside delimiter-safe inline code spans. Backtick runs
+and control characters in those values must not be able to terminate a span or
+create new Markdown structure.
 
 ```ts
 export type RenderOptions = {
