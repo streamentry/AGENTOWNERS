@@ -16,6 +16,8 @@ import {
 import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
+import { applyLabels } from './labels.js';
+import { requestMissingReviewers } from './reviewers.js';
 import { requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
@@ -27,6 +29,7 @@ export async function run(): Promise<void> {
     const failOnBlock = core.getInput('fail-on-block') !== 'false';
     const failOnRequireApproval = core.getInput('fail-on-require-approval') === 'true';
     const addLabels = core.getInput('add-labels') !== 'false';
+    const requestReviewers = core.getInput('request-reviewers') === 'true';
     const knownAgentActorsRaw = core.getInput('known-agent-actors');
     const knownAgentActors = knownAgentActorsRaw
       ? knownAgentActorsRaw
@@ -237,7 +240,35 @@ export async function run(): Promise<void> {
 
     // 11. Apply labels
     if (addLabels && issueNumber !== undefined && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+      await applyLabels(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        labels,
+        decision.labelsToApply,
+      );
+    }
+
+    // Reviewer requests are opt-in and intentionally limited to PR events.
+    if (
+      requestReviewers &&
+      (eventName === 'pull_request' || eventName === 'pull_request_review') &&
+      issueNumber !== undefined &&
+      !isDryRun &&
+      decision.requiredReviewers.length > 0
+    ) {
+      const reviewerResult = await requestMissingReviewers(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        actor,
+        decision.requiredReviewers,
+      );
+      core.info(
+        `Reviewer requests: ${reviewerResult.requestedUsers.length} users, ${reviewerResult.requestedTeams.length} teams.`,
+      );
     }
 
     // 12. Set outputs
@@ -283,44 +314,6 @@ export async function run(): Promise<void> {
   } catch (error: unknown) {
     core.setFailed(error instanceof Error ? error.message : String(error));
   }
-}
-
-async function applyLabels(
-  octokit: ReturnType<typeof github.getOctokit>,
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  labels: string[],
-): Promise<void> {
-  // Ensure labels exist before applying
-  const labelColors: Record<string, string> = {
-    'ai-agent': 'a2eeef',
-    'risk-low': '0e8a16',
-    'risk-medium': 'fbca04',
-    'risk-high': 'e4e669',
-    'risk-critical': 'd73a4a',
-  };
-
-  for (const label of labels) {
-    try {
-      await octokit.rest.issues.getLabel({ owner, repo, name: label });
-    } catch {
-      // Label does not exist — create it
-      const color = labelColors[label] ?? 'ededed';
-      try {
-        await octokit.rest.issues.createLabel({ owner, repo, name: label, color });
-      } catch {
-        // Ignore creation errors (race condition, permissions, etc.)
-      }
-    }
-  }
-
-  await octokit.rest.issues.addLabels({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    labels,
-  });
 }
 
 run();

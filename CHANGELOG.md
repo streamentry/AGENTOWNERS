@@ -7,6 +7,10 @@ semantic versioning.
 
 ### Added
 
+- Opt-in pull-request reviewer requests with validation, author filtering, and
+  idempotent missing-reviewer reconciliation.
+- Reserved risk-label reconciliation that removes stale `risk-*` labels without
+  deleting user or policy labels.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a

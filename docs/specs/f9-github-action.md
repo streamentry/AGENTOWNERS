@@ -45,6 +45,10 @@ inputs:
     required: false
     default: "true"
     description: "Apply suggested labels to PR/issue"
+  request-reviewers:
+    required: false
+    default: "false"
+    description: "Request valid, missing policy reviewers for pull requests"
   known-agent-actors:
     required: false
     description: "Comma-separated list of known agent actor names"
@@ -87,9 +91,12 @@ runs:
 8. Evaluate policy
 9. Render verdict
 10. Post/update sticky comment (if mode includes "comment")
-11. Apply labels (if add-labels: true)
-12. Set outputs
-13. Fail if needed
+11. Apply labels (if add-labels: true), reconciling only reserved `risk-*`
+    labels
+12. Request missing, validated reviewers for pull requests only when
+    `request-reviewers: true`
+13. Set outputs
+14. Fail if needed
 ```
 
 ## Sticky Comment
@@ -105,6 +112,14 @@ Logic:
 ## Label Application
 Apply `labelsToApply` from Decision to the PR/issue.
 Create labels if they don't exist (with sensible colors).
+Remove stale `risk-low`, `risk-medium`, `risk-high`, and `risk-critical`
+labels only; preserve user and policy labels.
+
+## Reviewer Requests
+When enabled, parse reviewer values as `@user` or `@organization/team`.
+Resolve users through GitHub, resolve teams only in the repository's
+organization, skip the pull-request author, and request only reviewers not
+already pending. Issue and issue-comment events never request reviewers.
 
 ## Audit Artifact
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
@@ -117,6 +132,9 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Sticky comment updated on re-run
 - Audit JSON written correctly
 - Labels applied to PR
+- Opt-in reviewer requests filter invalid, foreign, duplicate, and author reviewers
+- Dry-run makes no reviewer or label mutation
+- Risk-label reconciliation preserves user and policy labels
 
 ## Security Requirements
 - Never print secret patterns from diff content

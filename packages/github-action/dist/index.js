@@ -34275,6 +34275,174 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
   }
 }
 
+// src/labels.ts
+var RESERVED_RISK_LABELS = [
+  "risk-low",
+  "risk-medium",
+  "risk-high",
+  "risk-critical"
+];
+var LABEL_COLORS = {
+  "ai-agent": "a2eeef",
+  "risk-low": "0e8a16",
+  "risk-medium": "fbca04",
+  "risk-high": "e4e669",
+  "risk-critical": "d73a4a"
+};
+function unique(values) {
+  return Array.from(new Set(values));
+}
+function labelsToAdd(existingLabels, desiredLabels) {
+  const existing = new Set(existingLabels.map((label) => label.toLowerCase()));
+  return unique(desiredLabels).filter((label) => !existing.has(label.toLowerCase()));
+}
+function riskLabelsToRemove(existingLabels, desiredLabels) {
+  const desiredRiskLabels = new Set(
+    desiredLabels.filter(
+      (label) => RESERVED_RISK_LABELS.includes(label)
+    )
+  );
+  return unique(
+    existingLabels.filter(
+      (label) => RESERVED_RISK_LABELS.includes(label) && !desiredRiskLabels.has(label)
+    )
+  );
+}
+async function ensureLabelsExist(octokit, owner, repo, labels) {
+  for (const label of labels) {
+    try {
+      await octokit.rest.issues.getLabel({ owner, repo, name: label });
+    } catch {
+      const color = LABEL_COLORS[label] ?? "ededed";
+      try {
+        await octokit.rest.issues.createLabel({ owner, repo, name: label, color });
+      } catch {
+      }
+    }
+  }
+}
+async function applyLabels(octokit, owner, repo, issueNumber, existingLabels, desiredLabels) {
+  const additions = labelsToAdd(existingLabels, desiredLabels);
+  const removals = riskLabelsToRemove(existingLabels, desiredLabels);
+  if (additions.length > 0) {
+    await ensureLabelsExist(octokit, owner, repo, additions);
+    await octokit.rest.issues.addLabels({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      labels: additions
+    });
+  }
+  for (const label of removals) {
+    await octokit.rest.issues.removeLabel({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      name: label
+    });
+  }
+}
+
+// src/reviewers.ts
+function normalize(value) {
+  return value.trim().replace(/^@/, "").toLowerCase();
+}
+function parseReviewer(value) {
+  const normalized = normalize(value);
+  if (/^[a-z0-9-]+$/i.test(normalized)) {
+    return { kind: "user", login: normalized };
+  }
+  const teamMatch = normalized.match(/^([a-z0-9-]+)\/([a-z0-9-]+)$/i);
+  if (teamMatch) {
+    return { kind: "team", organization: teamMatch[1], slug: teamMatch[2] };
+  }
+  return null;
+}
+function unique2(values) {
+  return Array.from(new Set(values));
+}
+function existingUserLogins(data) {
+  return new Set(
+    (data.users ?? []).map((user) => user.login).filter((login) => typeof login === "string").map(normalize)
+  );
+}
+function existingTeamSlugs(data) {
+  return new Set(
+    (data.teams ?? []).flatMap((team) => [team.slug, team.name]).filter((value) => typeof value === "string").map(normalize)
+  );
+}
+async function resolveUsers(octokit, users, existingUsers, author) {
+  const resolved = [];
+  for (const reviewer of users) {
+    if (existingUsers.has(normalize(reviewer.login))) continue;
+    try {
+      const response = await octokit.rest.users.getByUsername({ username: reviewer.login });
+      const login = response.data.login;
+      if (typeof login === "string" && normalize(login) !== normalize(author)) {
+        resolved.push(login);
+        existingUsers.add(normalize(login));
+      }
+    } catch {
+    }
+  }
+  return resolved;
+}
+async function resolveTeams(octokit, owner, teams, existingTeams) {
+  const resolved = [];
+  for (const reviewer of teams) {
+    if (normalize(reviewer.organization) !== normalize(owner)) continue;
+    if (existingTeams.has(normalize(reviewer.slug))) continue;
+    try {
+      const response = await octokit.rest.teams.getByName({
+        org: owner,
+        team_slug: reviewer.slug
+      });
+      const slug = response.data.slug;
+      if (typeof slug === "string") {
+        resolved.push(slug);
+        existingTeams.add(normalize(slug));
+      }
+    } catch {
+    }
+  }
+  return resolved;
+}
+async function requestMissingReviewers(octokit, owner, repo, pullNumber, author, requiredReviewers) {
+  const parsed = requiredReviewers.map(parseReviewer).filter((reviewer) => reviewer !== null);
+  const users = parsed.filter(
+    (reviewer) => reviewer.kind === "user" && normalize(reviewer.login) !== normalize(author)
+  );
+  const teams = parsed.filter(
+    (reviewer) => reviewer.kind === "team"
+  );
+  if (users.length === 0 && teams.length === 0) {
+    return { requestedUsers: [], requestedTeams: [] };
+  }
+  const current = await octokit.rest.pulls.listRequestedReviewers({
+    owner,
+    repo,
+    pull_number: pullNumber
+  });
+  const existingUsers = existingUserLogins(current.data);
+  const existingTeams = existingTeamSlugs(current.data);
+  const requestedUsers = await resolveUsers(octokit, users, existingUsers, author);
+  const requestedTeams = await resolveTeams(octokit, owner, teams, existingTeams);
+  if (requestedUsers.length === 0 && requestedTeams.length === 0) {
+    return { requestedUsers: [], requestedTeams: [] };
+  }
+  await octokit.rest.pulls.requestReviewers({
+    owner,
+    repo,
+    pull_number: pullNumber,
+    reviewers: unique2(requestedUsers),
+    team_reviewers: unique2(requestedTeams)
+  });
+  return {
+    requestedUsers: unique2(requestedUsers),
+    requestedTeams: unique2(requestedTeams)
+  };
+}
+
 // src/config.ts
 function requireGitHubToken(environmentToken, inputToken) {
   const token = environmentToken ?? inputToken;
@@ -34317,6 +34485,7 @@ async function run() {
     const failOnBlock = getInput("fail-on-block") !== "false";
     const failOnRequireApproval = getInput("fail-on-require-approval") === "true";
     const addLabels = getInput("add-labels") !== "false";
+    const requestReviewers = getInput("request-reviewers") === "true";
     const knownAgentActorsRaw = getInput("known-agent-actors");
     const knownAgentActors = knownAgentActorsRaw ? knownAgentActorsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
     const token = requireGitHubToken(process.env["GITHUB_TOKEN"], getInput("github-token"));
@@ -34484,7 +34653,27 @@ async function run() {
       info("Verdict comment posted/updated.");
     }
     if (addLabels && issueNumber !== void 0 && !isDryRun && decision.labelsToApply.length > 0) {
-      await applyLabels(octokit, owner, repo, issueNumber, decision.labelsToApply);
+      await applyLabels(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        labels,
+        decision.labelsToApply
+      );
+    }
+    if (requestReviewers && (eventName === "pull_request" || eventName === "pull_request_review") && issueNumber !== void 0 && !isDryRun && decision.requiredReviewers.length > 0) {
+      const reviewerResult = await requestMissingReviewers(
+        octokit,
+        owner,
+        repo,
+        issueNumber,
+        actor,
+        decision.requiredReviewers
+      );
+      info(
+        `Reviewer requests: ${reviewerResult.requestedUsers.length} users, ${reviewerResult.requestedTeams.length} teams.`
+      );
     }
     setOutput("decision", decision.effect);
     setOutput("risk-score", String(decision.riskScore));
@@ -34521,32 +34710,6 @@ async function run() {
   } catch (error2) {
     setFailed(error2 instanceof Error ? error2.message : String(error2));
   }
-}
-async function applyLabels(octokit, owner, repo, issueNumber, labels) {
-  const labelColors = {
-    "ai-agent": "a2eeef",
-    "risk-low": "0e8a16",
-    "risk-medium": "fbca04",
-    "risk-high": "e4e669",
-    "risk-critical": "d73a4a"
-  };
-  for (const label of labels) {
-    try {
-      await octokit.rest.issues.getLabel({ owner, repo, name: label });
-    } catch {
-      const color = labelColors[label] ?? "ededed";
-      try {
-        await octokit.rest.issues.createLabel({ owner, repo, name: label, color });
-      } catch {
-      }
-    }
-  }
-  await octokit.rest.issues.addLabels({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    labels
-  });
 }
 run();
 // Annotate the CommonJS export names for ESM import in node:
