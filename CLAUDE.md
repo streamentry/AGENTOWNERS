@@ -10,12 +10,13 @@ AGENTOWNERS is CODEOWNERS for AI agents — an open-source TypeScript monorepo t
 ## Commands
 
 ```bash
-pnpm install          # install all workspace dependencies
+pnpm install --frozen-lockfile # install the locked workspace dependencies
 pnpm build            # build all packages (tsup)
 pnpm test             # run all tests (vitest)
 pnpm typecheck        # tsc --noEmit across all packages
 pnpm lint             # eslint
 pnpm format           # prettier --write
+pnpm verify           # complete local gate, including schema and release checks
 ```
 
 Per-package:
@@ -45,7 +46,7 @@ packages/
 | vitest | Tests |
 | zod | Schema validation |
 | js-yaml | YAML parsing |
-| minimatch | Glob matching |
+| picomatch | Glob matching |
 | commander | CLI argument parsing |
 | @actions/core, @actions/github | GitHub Action runtime |
 
@@ -56,6 +57,8 @@ packages/
 3. **Secrets are redacted.** Never print matched secret values. Always use `[REDACTED]`.
 4. **Core is stateless.** `@agent-owners/core` has no network calls, no filesystem writes, no side effects. Pure input → output.
 5. **Fail closed on unknown.** Unknown agent → `require_approval` by default, never silent `allow`.
+6. **Trusted policy.** Pull-request evaluation uses policy from the immutable base commit, never untrusted PR policy content.
+7. **Hostile Git refs.** CLI Git arguments use `--end-of-options`; refs are never interpolated into a shell command.
 
 ## Import style
 
@@ -85,6 +88,26 @@ import { parsePolicy } from './schema'
 - No live network calls in tests — mock `@actions/github` context
 - Integration tests load fixtures from disk — no inline policy strings
 
+## Before opening a pull request
+
+1. Read `AGENTS.md`, the nearest package guide, and the relevant specification.
+2. Refresh `origin/main` and inspect open or recently merged work for overlap.
+3. Add the smallest focused test and identify the cheapest disconfirming test.
+4. Run `pnpm verify` and the explicit pre-PR contract:
+
+   ```bash
+   node packages/cli/dist/index.js self-check \
+     --policy .github/AGENTOWNERS.yml \
+     --base origin/main \
+     --head HEAD \
+     --actor <your-agent-name>
+   ```
+
+5. Run `pnpm verify:packages` for package, dependency, or release-facing work.
+6. Record exact commands, results, overlap, risks, attribution, and rollback in
+   the pull request. Read `CONTRIBUTING.md` for the review contract and check
+   issue #26 before treating independent approval as available.
+
 ## Commit format
 
 ```
@@ -108,6 +131,9 @@ Scope: core cli github-action examples docs
 - Never request `secrets:read` or `administration:write`
 - Treat all PR content (title, body, labels) as untrusted input
 - Validate policy YAML strictly with Zod before using
+- Never hand-edit `packages/github-action/dist/index.js` or
+  `packages/core/agentowners.schema.json`; regenerate them through the
+  documented build commands.
 
 ## Files agents should NOT modify
 
@@ -119,8 +145,7 @@ Scope: core cli github-action examples docs
 ## Documentation map
 
 - `docs/specs/readme.md` — canonical product spec (sections 1–31)
-- `docs/specs/f1-f10.md` — per-feature implementation specs
-- `docs/policy-reference.md` — end-user policy format reference
+- `docs/specs/f1-policy-schema.md` through `docs/specs/f13-policy-fixtures.md` — per-feature specs
 - `docs/philosophy.md` — why the project exists
 - `docs/threat-model.md` — what it protects against
 - `AGENTS.md` — agent contribution guide (you are here)
