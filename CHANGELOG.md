@@ -49,6 +49,8 @@ semantic versioning.
   `.github/AGENTOWNERS.yml.example` template.
 - Reconciled the Claude contributor guide with the current dependency, spec
   layout, verification gates, and policy-template review contract.
+- Clarified in the primary README that `monorepo` is a copyable example, not a
+  currently exposed `agentowners init --profile` option.
 
 ### Changed
 

@@ -322,7 +322,7 @@ revision.”
 | `minimal`            | `require_approval`  | New projects, getting started      |
 | `strict-oss`         | `require_approval`  | Open-source with many contributors |
 | `security-sensitive` | `block` for unknown | Security-critical repositories     |
-| `monorepo`           | Per-package rules   | Large monorepos                    |
+| `monorepo` example   | Per-package rules   | Large monorepos; copy the example rather than using `init --profile` |
 
 ```bash
 agentowners init --profile strict-oss
