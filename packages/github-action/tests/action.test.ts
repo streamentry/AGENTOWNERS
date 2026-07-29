@@ -26,12 +26,17 @@ const mockOctokit = {
     pulls: {
       listFiles: vi.fn(),
       get: vi.fn(),
+      listRequestedReviewers: vi.fn(),
+      requestReviewers: vi.fn(),
     },
+    users: { getByUsername: vi.fn() },
+    teams: { getByName: vi.fn() },
     issues: {
       listComments: vi.fn(),
       createComment: vi.fn(),
       updateComment: vi.fn(),
       addLabels: vi.fn(),
+      removeLabel: vi.fn(),
       getLabel: vi.fn(),
       createLabel: vi.fn(),
       get: vi.fn(),
@@ -134,6 +139,7 @@ function setupInputs(overrides: Record<string, string> = {}): void {
     'fail-on-block': 'true',
     'fail-on-require-approval': 'false',
     'add-labels': 'true',
+    'request-reviewers': 'false',
     'known-agent-actors': '',
   };
   const merged = { ...defaults, ...overrides };
@@ -385,6 +391,80 @@ describe('GitHub Action — integration via mocks', () => {
     // Outputs are still set
     mockCore.setOutput('decision', 'allow');
     expect(mockCore.setOutput).toHaveBeenCalledWith('decision', 'allow');
+  });
+
+  it('dry-run → no reviewer requests even when opt-in is enabled', async () => {
+    setupInputs({ mode: 'dry-run', 'request-reviewers': 'true' });
+    setupOctokitPR(['src/index.ts']);
+    const core = await import('@agent-owners/core');
+    vi.mocked(core.evaluatePolicy).mockReturnValue({
+      ...mockDecisionAllow,
+      effect: 'require_approval',
+      requiredReviewers: ['@security-team'],
+    });
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.pulls.listRequestedReviewers).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.pulls.requestReviewers).not.toHaveBeenCalled();
+  });
+
+  it('request-reviewers remains inert for issue events', async () => {
+    setupInputs({ 'request-reviewers': 'true' });
+    mockContext.eventName = 'issues';
+    mockContext.payload = {
+      action: 'opened',
+      issue: { number: 9 },
+      repository: { default_branch: 'main' },
+    };
+    mockOctokit.rest.issues.get.mockResolvedValue({
+      data: {
+        title: 'Issue title',
+        body: 'Issue body',
+        user: { login: 'issue-author' },
+        labels: [],
+        state: 'open',
+      },
+    });
+    const core = await import('@agent-owners/core');
+    vi.mocked(core.evaluatePolicy).mockReturnValue({
+      ...mockDecisionAllow,
+      effect: 'require_approval',
+      requiredReviewers: ['@security-team'],
+    });
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.pulls.listRequestedReviewers).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.pulls.requestReviewers).not.toHaveBeenCalled();
+  });
+
+  it('opt-in PR reviewer requests use the decision reviewers', async () => {
+    setupInputs({ 'request-reviewers': 'true' });
+    setupOctokitPR(['src/index.ts']);
+    mockOctokit.rest.pulls.listRequestedReviewers.mockResolvedValue({
+      data: { users: [], teams: [] },
+    });
+    mockOctokit.rest.users.getByUsername.mockResolvedValue({ data: { login: 'security-reviewer' } });
+    const core = await import('@agent-owners/core');
+    vi.mocked(core.evaluatePolicy).mockReturnValue({
+      ...mockDecisionAllow,
+      effect: 'require_approval',
+      requiredReviewers: ['@security-reviewer'],
+    });
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockOctokit.rest.pulls.requestReviewers).toHaveBeenCalledWith({
+      owner: 'test-owner',
+      repo: 'test-repo',
+      pull_number: 1,
+      reviewers: ['security-reviewer'],
+      team_reviewers: [],
+    });
   });
 
   it('sticky comment updated on re-run (upsert finds existing comment)', async () => {

@@ -87,6 +87,8 @@ packages/github-action/src/
   index.ts    — main action entry
   github.ts   — GitHub API helpers (PR files, PR metadata)
   comment.ts  — sticky comment upsert (VERDICT_MARKER)
+  labels.ts   — reserved risk-label reconciliation
+  reviewers.ts — opt-in, validated reviewer requests
 
 .github/agents/
   policy-engineer.agent.md — tests-first implementation specialist
@@ -266,6 +268,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 - [ ] No shell execution with user-controlled strings
 - [ ] Git subprocesses use argv APIs such as `execFileSync`, never interpolated commands
 - [ ] GitHub Action permissions are `contents: read`, `pull-requests: write`, `issues: write` only
+- [ ] Reviewer requests are opt-in, PR-only, author-filtered, and restricted to valid users or same-organization teams
 
 ## Generated release artifacts
 

@@ -35,6 +35,10 @@ inputs:
     description: Apply suggested labels to the PR or issue
     required: false
     default: "true"
+  request-reviewers:
+    description: Request configured reviewers for pull requests (opt-in)
+    required: false
+    default: "false"
   known-agent-actors:
     description: >
       Comma-separated list of GitHub actor logins to treat as known agents

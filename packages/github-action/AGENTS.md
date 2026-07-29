@@ -12,6 +12,8 @@ artifact and must be regenerated, never hand-edited.
 - `src/github.ts`: event metadata adapter
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
+- `src/reviewers.ts`: opt-in, validated, idempotent pull-request reviewer requests
+- `src/labels.ts`: reserved risk-label reconciliation without deleting user labels
 - `src/config.ts`: fail-closed runtime input validation
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
@@ -30,6 +32,7 @@ flowchart LR
   Core --> Decision
   Decision --> Comment
   Decision --> Labels
+  Decision --> ReviewerRequests
   Decision --> Outputs
   Decision --> Status
 ```
@@ -47,7 +50,7 @@ sequenceDiagram
   Action->>Core: distinct PR and issue fields
   Action->>Core: comment body as detection evidence
   Core-->>Action: decision
-  Action->>GitHub: verdict and labels
+  Action->>GitHub: verdict, labels, and optional reviewer requests
   Action-->>Runner: outputs and status
 ```
 

@@ -161,6 +161,11 @@ jobs:
 Open an agent-generated PR and inspect the verdict before switching from
 observation to enforcement.
 
+Reviewer requests are opt-in. Set `request-reviewers: 'true'` when the policy
+names maintainers and you want a `require_approval` verdict to request only
+valid, missing PR reviewers. The Action rejects foreign-organization teams,
+filters the PR author, and leaves the default disabled.
+
 ---
 
 ## Example verdict

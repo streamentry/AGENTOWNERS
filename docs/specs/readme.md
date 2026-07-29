@@ -690,6 +690,7 @@ jobs:
           mode: 'comment'
           fail-on-block: 'true'
           fail-on-require-approval: 'false'
+          request-reviewers: 'true'
 ```
 
 Action inputs:
@@ -716,6 +717,10 @@ inputs:
   add-labels:
     required: false
     default: 'true'
+  request-reviewers:
+    required: false
+    default: 'false'
+    description: 'Request valid, missing policy reviewers for pull requests'
   known-agent-actors:
     required: false
 ```
