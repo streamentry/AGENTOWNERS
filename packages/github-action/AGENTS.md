@@ -13,6 +13,7 @@ artifact and must be regenerated, never hand-edited.
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
+- `src/audit.ts`: symlink-safe audit artifact writing
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 
@@ -31,6 +32,7 @@ flowchart LR
   Decision --> Comment
   Decision --> Labels
   Decision --> Outputs
+  Decision --> Audit[Audit JSON with safe workspace path]
   Decision --> Status
 ```
 
@@ -50,6 +52,10 @@ sequenceDiagram
   Action->>GitHub: verdict and labels
   Action-->>Runner: outputs and status
 ```
+
+Audit output is opened with a no-follow file flag when the runner supports it;
+the Action rejects a checkout-provided symlink at the fixed output path before
+writing. New artifacts use owner-only permissions (`0600`).
 
 ## Verification
 

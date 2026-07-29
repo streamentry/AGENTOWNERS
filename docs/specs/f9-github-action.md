@@ -107,7 +107,11 @@ Apply `labelsToApply` from Decision to the PR/issue.
 Create labels if they don't exist (with sensible colors).
 
 ## Audit Artifact
-Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
+Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as an
+artifact. Reject a checkout-provided symlink at that path and open the file
+with a no-follow flag where the runner supports it; new files use owner-only
+permissions (`0600`). The Action must never follow repository-controlled links
+when writing its audit output.
 
 ## Tests (`packages/github-action/tests/`)
 - PR opened event → fetches files, evaluates, posts comment
@@ -116,6 +120,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Dry-run mode → no comment posted, no labels
 - Sticky comment updated on re-run
 - Audit JSON written correctly
+- Audit JSON refuses a checkout-provided symlink
 - Labels applied to PR
 
 ## Security Requirements
@@ -123,3 +128,4 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 - Treat all PR content as untrusted input
 - Do not execute content from policy as code
 - Use least-privilege permissions
+- Do not follow checkout-provided symlinks when writing the audit artifact

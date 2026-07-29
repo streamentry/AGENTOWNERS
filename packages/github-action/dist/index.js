@@ -5722,7 +5722,7 @@ var require_client_h1 = __commonJS({
       kResume,
       kHTTPContext
     } = require_symbols();
-    var constants3 = require_constants2();
+    var constants4 = require_constants2();
     var EMPTY_BUF = Buffer.alloc(0);
     var FastBuffer = Buffer[Symbol.species];
     var addListener = util2.addListener;
@@ -5797,7 +5797,7 @@ var require_client_h1 = __commonJS({
       constructor(client, socket, { exports: exports3 }) {
         assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports3;
-        this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
+        this.ptr = this.llhttp.llhttp_alloc(constants4.TYPE.RESPONSE);
         this.client = client;
         this.socket = socket;
         this.timeout = null;
@@ -5892,11 +5892,11 @@ var require_client_h1 = __commonJS({
             currentBufferRef = null;
           }
           const offset = llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr;
-          if (ret !== constants3.ERROR.OK) {
+          if (ret !== constants4.ERROR.OK) {
             const body = data.subarray(offset);
-            if (ret === constants3.ERROR.PAUSED_UPGRADE) {
+            if (ret === constants4.ERROR.PAUSED_UPGRADE) {
               this.onUpgrade(body);
-            } else if (ret === constants3.ERROR.PAUSED) {
+            } else if (ret === constants4.ERROR.PAUSED) {
               this.paused = true;
               socket.unshift(body);
             } else {
@@ -5919,10 +5919,10 @@ var require_client_h1 = __commonJS({
         } finally {
           currentParser = null;
         }
-        if (ret === constants3.ERROR.OK) {
+        if (ret === constants4.ERROR.OK) {
           return null;
         }
-        if (ret === constants3.ERROR.PAUSED || ret === constants3.ERROR.PAUSED_UPGRADE) {
+        if (ret === constants4.ERROR.PAUSED || ret === constants4.ERROR.PAUSED_UPGRADE) {
           this.paused = true;
           return null;
         }
@@ -5939,7 +5939,7 @@ var require_client_h1 = __commonJS({
           const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
           message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
         }
-        return new HTTPParserError(message, constants3.ERROR[ret], data);
+        return new HTTPParserError(message, constants4.ERROR[ret], data);
       }
       destroy() {
         assert(this.ptr != null);
@@ -6118,7 +6118,7 @@ var require_client_h1 = __commonJS({
           socket[kBlocking] = false;
           client[kResume]();
         }
-        return pause ? constants3.ERROR.PAUSED : 0;
+        return pause ? constants4.ERROR.PAUSED : 0;
       }
       onBody(buf) {
         const { client, socket, statusCode, maxResponseSize } = this;
@@ -6140,7 +6140,7 @@ var require_client_h1 = __commonJS({
         }
         this.bytesRead += buf.length;
         if (request2.onData(buf) === false) {
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         }
       }
       onMessageComplete() {
@@ -6176,13 +6176,13 @@ var require_client_h1 = __commonJS({
         if (socket[kWriting]) {
           assert(client[kRunning] === 0);
           util2.destroy(socket, new InformationalError("reset"));
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util2.destroy(socket, new InformationalError("reset"));
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         } else if (socket[kReset] && client[kRunning] === 0) {
           util2.destroy(socket, new InformationalError("reset"));
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         } else if (client[kPipelining] == null || client[kPipelining] === 1) {
           setImmediate(() => client[kResume]());
         } else {
@@ -20340,7 +20340,7 @@ var require_scan = __commonJS({
 var require_parse2 = __commonJS({
   "../../node_modules/.pnpm/picomatch@4.0.5/node_modules/picomatch/lib/parse.js"(exports2, module2) {
     "use strict";
-    var constants3 = require_constants6();
+    var constants4 = require_constants6();
     var utils = require_utils2();
     var {
       MAX_LENGTH,
@@ -20348,7 +20348,7 @@ var require_parse2 = __commonJS({
       REGEX_NON_SPECIAL_CHARS,
       REGEX_SPECIAL_CHARS_BACKREF,
       REPLACEMENTS
-    } = constants3;
+    } = constants4;
     var expandRange = (args, options) => {
       if (typeof options.expandRange === "function") {
         return options.expandRange(...args, options);
@@ -20557,7 +20557,7 @@ var require_parse2 = __commonJS({
       if (options.maxExtglobRecursion === false) {
         return { risky: false };
       }
-      const max = typeof options.maxExtglobRecursion === "number" ? options.maxExtglobRecursion : constants3.DEFAULT_MAX_EXTGLOB_RECURSION;
+      const max = typeof options.maxExtglobRecursion === "number" ? options.maxExtglobRecursion : constants4.DEFAULT_MAX_EXTGLOB_RECURSION;
       const branches = splitTopLevel(body).map((branch) => branch.trim());
       if (branches.length > 1) {
         if (branches.some((branch) => branch === "") || branches.some((branch) => /^[*?]+$/.test(branch)) || hasRepeatedCharPrefixOverlap(branches)) {
@@ -20603,8 +20603,8 @@ var require_parse2 = __commonJS({
       const bos = { type: "bos", value: "", output: opts.prepend || "" };
       const tokens = [bos];
       const capture = opts.capture ? "" : "?:";
-      const PLATFORM_CHARS = constants3.globChars(opts.windows);
-      const EXTGLOB_CHARS = constants3.extglobChars(PLATFORM_CHARS);
+      const PLATFORM_CHARS = constants4.globChars(opts.windows);
+      const EXTGLOB_CHARS = constants4.extglobChars(PLATFORM_CHARS);
       const {
         DOT_LITERAL,
         PLUS_LITERAL,
@@ -20733,16 +20733,16 @@ var require_parse2 = __commonJS({
         const analysis = analyzeRepeatedExtglob(body, opts);
         if ((token.type === "plus" || token.type === "star") && analysis.risky) {
           const safeOutput = analysis.safeOutput ? (token.output ? "" : ONE_CHAR) + (opts.capture ? `(${analysis.safeOutput})` : analysis.safeOutput) : void 0;
-          const open2 = tokens[token.tokensIndex];
-          open2.type = "text";
-          open2.value = literal;
-          open2.output = safeOutput || utils.escapeRegex(literal);
+          const open3 = tokens[token.tokensIndex];
+          open3.type = "text";
+          open3.value = literal;
+          open3.output = safeOutput || utils.escapeRegex(literal);
           for (let i = token.tokensIndex + 1; i < tokens.length; i++) {
             tokens[i].value = "";
             tokens[i].output = "";
             delete tokens[i].suffix;
           }
-          state.output = token.output + open2.output;
+          state.output = token.output + open3.output;
           state.backtrack = true;
           push({ type: "paren", extglob: true, value, output: "" });
           decrement("parens");
@@ -20962,15 +20962,15 @@ var require_parse2 = __commonJS({
         }
         if (value === "{" && opts.nobrace !== true) {
           increment("braces");
-          const open2 = {
+          const open3 = {
             type: "brace",
             value,
             output: "(",
             outputIndex: state.output.length,
             tokensIndex: state.tokens.length
           };
-          braces.push(open2);
-          push(open2);
+          braces.push(open3);
+          push(open3);
           continue;
         }
         if (value === "}") {
@@ -21299,7 +21299,7 @@ var require_parse2 = __commonJS({
         NO_DOTS_SLASH,
         STAR,
         START_ANCHOR
-      } = constants3.globChars(opts.windows);
+      } = constants4.globChars(opts.windows);
       const nodot = opts.dot ? NO_DOTS : NO_DOT;
       const slashDot = opts.dot ? NO_DOTS_SLASH : NO_DOT;
       const capture = opts.capture ? "" : "?:";
@@ -21357,7 +21357,7 @@ var require_picomatch = __commonJS({
     var scan = require_scan();
     var parse3 = require_parse2();
     var utils = require_utils2();
-    var constants3 = require_constants6();
+    var constants4 = require_constants6();
     var isObject = (val) => val && typeof val === "object" && !Array.isArray(val);
     var picomatch2 = (glob, options, returnState = false) => {
       if (Array.isArray(glob)) {
@@ -21485,7 +21485,7 @@ var require_picomatch = __commonJS({
         return /$^/;
       }
     };
-    picomatch2.constants = constants3;
+    picomatch2.constants = constants4;
     module2.exports = picomatch2;
   }
 });
@@ -25988,7 +25988,6 @@ function getOctokit(token, options, ...additionalPlugins) {
 }
 
 // src/index.ts
-var fs3 = __toESM(require("fs/promises"));
 var path2 = __toESM(require("path"));
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
@@ -34309,6 +34308,40 @@ async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
   return loadPolicyText(policyText, `${repositoryPath} at trusted ref ${ref}`);
 }
 
+// src/audit.ts
+var import_node_fs = require("fs");
+var import_promises = require("fs/promises");
+function errorCode(error2) {
+  if (typeof error2 !== "object" || error2 === null || !("code" in error2)) return void 0;
+  const code = error2.code;
+  return typeof code === "string" ? code : void 0;
+}
+function symlinkRefusal(path3) {
+  return new Error(`Refusing to write audit artifact through a symlink: ${path3}`);
+}
+async function writeAuditArtifact(artifactPath, content) {
+  try {
+    const metadata = await (0, import_promises.lstat)(artifactPath);
+    if (metadata.isSymbolicLink()) throw symlinkRefusal(artifactPath);
+  } catch (error2) {
+    if (errorCode(error2) !== "ENOENT") throw error2;
+  }
+  const noFollow = import_node_fs.constants.O_NOFOLLOW ?? 0;
+  const flags = import_node_fs.constants.O_WRONLY | import_node_fs.constants.O_CREAT | import_node_fs.constants.O_TRUNC | noFollow;
+  let handle;
+  try {
+    handle = await (0, import_promises.open)(artifactPath, flags, 384);
+  } catch (error2) {
+    if (errorCode(error2) === "ELOOP") throw symlinkRefusal(artifactPath);
+    throw error2;
+  }
+  try {
+    await handle.writeFile(content, "utf8");
+  } finally {
+    await handle.close();
+  }
+}
+
 // src/index.ts
 async function run() {
   try {
@@ -34507,7 +34540,7 @@ async function run() {
       changedFiles
     });
     const artifactPath = path2.join(workspace, "agentowners-decision.json");
-    await fs3.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), "utf8");
+    await writeAuditArtifact(artifactPath, JSON.stringify(auditRecord, null, 2));
     info(`Audit artifact written to ${artifactPath}`);
     if (decision.effect === "block" && failOnBlock) {
       setFailed("AGENTOWNERS: action blocked by policy.");
