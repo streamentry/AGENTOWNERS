@@ -45,6 +45,8 @@ semantic versioning.
   trusted policy ref, with matching `policy-digest` and `policy-ref` outputs.
 - A canonical policy authoring reference and AGENTOWNERS-specific evidence-first
   agent-team workflow replace broken and unrelated contributor guidance.
+- Strict-schema regression coverage for the repository policy and copyable
+  `.github/AGENTOWNERS.yml.example` template.
 
 ### Changed
 
@@ -74,6 +76,8 @@ semantic versioning.
   metadata instead of being silently ignored.
 - Issue comments now preserve whether their target is a pull request or issue,
   and their bodies participate in agent detection.
+- The copyable repository policy template no longer uses removed legacy fields
+  or claims that rule order overrides immutable effect precedence.
 
 ## [0.1.0] - 2026-07-28
 

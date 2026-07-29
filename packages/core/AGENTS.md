@@ -23,6 +23,8 @@ network calls, clocks, randomness, or persistent state.
   hash-chained audit output; no filesystem, network, or dispatch side effects
 - `policy-diff.ts`: canonical policy fingerprints and value-free structural
   diffs; no filesystem, network, or policy-value output
+- `tests/repository-policy.test.ts`: strict-schema regression coverage for the
+  repository's checked-in policy and copyable policy template
 
 ## Diagrams
 
@@ -94,6 +96,8 @@ identity-bound fixture behavior deterministic.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 Policy-diff changes must keep `tests/policy-diff.test.ts` deterministic and
 must not add policy values to the diff contract.
+Repository policy template changes must keep `tests/repository-policy.test.ts`
+green so copyable configuration cannot drift from the strict schema.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
