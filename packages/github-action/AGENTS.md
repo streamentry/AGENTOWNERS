@@ -53,9 +53,9 @@ sequenceDiagram
   Action-->>Runner: outputs and status
 ```
 
-Audit output is opened with a no-follow file flag when the runner supports it;
-the Action rejects a checkout-provided symlink at the fixed output path before
-writing. New artifacts use owner-only permissions (`0600`).
+Audit output is opened with a no-follow file flag; runners without that
+primitive fail closed. This rejects checkout-provided symlinks at the fixed
+output path. New artifacts use owner-only permissions (`0600`).
 
 ## Verification
 

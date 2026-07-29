@@ -6,19 +6,23 @@ import { writeAuditArtifact } from '../src/audit.js';
 
 describe('writeAuditArtifact', () => {
   let directory: string;
+  let originalDirectory: string;
 
   beforeEach(async () => {
     directory = await mkdtemp(join(tmpdir(), 'agentowners-audit-'));
+    originalDirectory = process.cwd();
+    process.chdir(directory);
   });
 
   afterEach(async () => {
+    process.chdir(originalDirectory);
     await rm(directory, { recursive: true, force: true });
   });
 
   it('creates a regular audit artifact', async () => {
     const artifactPath = join(directory, 'agentowners-decision.json');
 
-    await writeAuditArtifact(artifactPath, '{"decision":"allow"}');
+    await writeAuditArtifact('{"decision":"allow"}');
 
     await expect(readFile(artifactPath, 'utf8')).resolves.toBe('{"decision":"allow"}');
     const mode = (await stat(artifactPath)).mode & 0o777;
@@ -29,7 +33,7 @@ describe('writeAuditArtifact', () => {
     const artifactPath = join(directory, 'agentowners-decision.json');
     await writeFile(artifactPath, '{"decision":"allow"}', 'utf8');
 
-    await writeAuditArtifact(artifactPath, '{"decision":"block"}');
+    await writeAuditArtifact('{"decision":"block"}');
 
     await expect(readFile(artifactPath, 'utf8')).resolves.toBe('{"decision":"block"}');
   });
@@ -40,7 +44,7 @@ describe('writeAuditArtifact', () => {
     await writeFile(targetPath, 'keep this file', 'utf8');
     await symlink(targetPath, artifactPath);
 
-    await expect(writeAuditArtifact(artifactPath, '{"decision":"block"}')).rejects.toThrow(
+    await expect(writeAuditArtifact('{"decision":"block"}')).rejects.toThrow(
       'Refusing to write audit artifact through a symlink',
     );
     await expect(readFile(targetPath, 'utf8')).resolves.toBe('keep this file');

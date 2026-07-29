@@ -1,5 +1,5 @@
 import { constants } from 'node:fs';
-import { lstat, open } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 
 function errorCode(error: unknown): string | undefined {
   if (typeof error !== 'object' || error === null || !('code' in error)) return undefined;
@@ -13,17 +13,14 @@ function symlinkRefusal(path: string): Error {
 
 /**
  * Write the Action's audit output without following a checkout-provided link.
- * The no-follow open closes the lstat/write race on platforms that support it.
+ * The no-follow open closes the filesystem race; unsupported runners fail closed.
  */
-export async function writeAuditArtifact(artifactPath: string, content: string): Promise<void> {
-  try {
-    const metadata = await lstat(artifactPath);
-    if (metadata.isSymbolicLink()) throw symlinkRefusal(artifactPath);
-  } catch (error: unknown) {
-    if (errorCode(error) !== 'ENOENT') throw error;
+export async function writeAuditArtifact(content: string): Promise<void> {
+  const artifactPath = 'agentowners-decision.json';
+  const noFollow = constants.O_NOFOLLOW;
+  if (noFollow === undefined) {
+    throw new Error('Runner does not support safe no-follow audit artifact writes.');
   }
-
-  const noFollow = constants.O_NOFOLLOW ?? 0;
   const flags = constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | noFollow;
   let handle;
   try {
