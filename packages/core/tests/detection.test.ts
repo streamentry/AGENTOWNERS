@@ -112,6 +112,16 @@ describe('detectAgent', () => {
     expect(result.confidence).toBe('likely');
   });
 
+  it('processes adversarial co-author text in linear time', () => {
+    const body = 'Co-authored-by:'.repeat(8_000);
+    const startedAt = performance.now();
+
+    const result = detectAgent({ actor: 'human-user', prBody: body });
+
+    expect(performance.now() - startedAt).toBeLessThan(100);
+    expect(result.confidence).toBe('unknown');
+  });
+
   it('label ai-generated → possible', () => {
     const result = detectAgent({
       actor: 'human-user',

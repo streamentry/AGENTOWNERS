@@ -36,7 +36,13 @@ const PR_BODY_MARKERS = [
   '<!-- agentowners',
 ];
 
-const BOT_CO_AUTHOR_PATTERN = /Co-authored-by:.*\[bot\]/i;
+function hasBotCoAuthor(value: string): boolean {
+  return value.split('\n').some((line) => {
+    const normalized = line.toLowerCase();
+    const coAuthorIndex = normalized.indexOf('co-authored-by:');
+    return coAuthorIndex >= 0 && normalized.indexOf('[bot]', coAuthorIndex) >= 0;
+  });
+}
 
 export function isKnownBotActor(actor: string): boolean {
   return KNOWN_BOT_ACTORS.includes(actor);
@@ -129,7 +135,7 @@ export function detectAgent(input: AgentDetectionInput): AgentDetectionResult {
       signals.push(`body marker: "${marker}"`);
     }
   }
-  if (bodyTexts.some((body) => BOT_CO_AUTHOR_PATTERN.test(body))) {
+  if (bodyTexts.some(hasBotCoAuthor)) {
     signals.push('body co-author [bot] pattern');
   }
 

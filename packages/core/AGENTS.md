@@ -4,6 +4,8 @@
 
 Pure, deterministic policy evaluation. No filesystem writes, shell commands,
 network calls, clocks, randomness, or persistent state.
+Attacker-controlled filenames must be stored in null-prototype maps so special
+object keys remain data rather than mutating object inheritance.
 
 ## Key components
 
@@ -96,3 +98,5 @@ For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.
+Detection over uncontrolled text must remain linear; avoid unbounded regular
+expressions over pull request, issue, comment, or commit content.

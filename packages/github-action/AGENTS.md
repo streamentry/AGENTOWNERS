@@ -5,6 +5,8 @@
 The Action adapts GitHub events and API data to the core engine, then applies
 explicitly configured effects. The bundled `dist/index.js` is a release
 artifact and must be regenerated, never hand-edited.
+The fixed audit filename resolves from the runner working directory; do not
+derive write targets from event data or caller-controlled input.
 
 ## Key components
 

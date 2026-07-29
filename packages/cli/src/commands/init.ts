@@ -27,16 +27,31 @@ export function registerInit(program: Command): void {
 
       const outputPath = path.resolve(process.cwd(), output)
 
-      if (fs.existsSync(outputPath) && !force) {
-        process.stderr.write(
-          `Error: ${outputPath} already exists. Use --force to overwrite.\n`,
-        )
-        process.exit(1)
-      }
-
       const dir = path.dirname(outputPath)
       fs.mkdirSync(dir, { recursive: true })
-      fs.writeFileSync(outputPath, content, 'utf8')
+      try {
+        // `--force` is explicit authority from the local operator. Without it,
+        // exclusive creation prevents overwrites and closes the check/write race.
+        fs.writeFileSync(outputPath, content, {
+          encoding: 'utf8',
+          flag: force ? 'w' : 'wx',
+        })
+      } catch (error: unknown) {
+        if (
+          !force &&
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          error.code === 'EEXIST'
+        ) {
+          process.stderr.write(
+            `Error: ${outputPath} already exists. Use --force to overwrite.\n`,
+          )
+          process.exit(1)
+          return
+        }
+        throw error
+      }
 
       process.stdout.write(`\x1b[32m✓\x1b[0m Created ${outputPath} (profile: ${profile})\n`)
     })

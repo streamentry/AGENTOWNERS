@@ -9,7 +9,6 @@ vi.mock('fs', async () => {
   const actual = await vi.importActual<typeof fs>('fs')
   return {
     ...actual,
-    existsSync: vi.fn(),
     mkdirSync: vi.fn(),
     writeFileSync: vi.fn(),
   }
@@ -32,7 +31,6 @@ describe('init command', () => {
     exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
   })
 
   afterEach(() => {
@@ -87,7 +85,10 @@ describe('init command', () => {
   })
 
   it('errors when file exists without --force', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const error = Object.assign(new Error('already exists'), { code: 'EEXIST' })
+    vi.mocked(fs.writeFileSync).mockImplementationOnce(() => {
+      throw error
+    })
 
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'init'])
@@ -99,13 +100,26 @@ describe('init command', () => {
   })
 
   it('overwrites file when --force is passed', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
-
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'init', '--force'])
 
-    expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalled()
+    expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      { encoding: 'utf8', flag: 'w' },
+    )
     expect(exitSpy).not.toHaveBeenCalledWith(1)
+  })
+
+  it('creates a new file atomically when --force is absent', async () => {
+    const program = makeProgram()
+    await program.parseAsync(['node', 'agentowners', 'init'])
+
+    expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      { encoding: 'utf8', flag: 'wx' },
+    )
   })
 
   it('errors on unknown profile', async () => {
