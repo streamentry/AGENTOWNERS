@@ -61,7 +61,13 @@ const SECRET_DIFF_PATTERNS = [
 ];
 
 export function matchGlob(pattern: string, filePath: string): boolean {
-  return picomatch.isMatch(filePath, pattern, { dot: true });
+  try {
+    return picomatch.isMatch(filePath, pattern, { dot: true });
+  } catch {
+    // Policy globs are untrusted configuration. An invalid pattern must not
+    // abort evaluation or create a match that could bypass a stricter default.
+    return false;
+  }
 }
 
 export function matchGlobs(patterns: string[], filePath: string): boolean {

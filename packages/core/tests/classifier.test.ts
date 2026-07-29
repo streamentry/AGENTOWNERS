@@ -123,4 +123,8 @@ describe('matchGlob', () => {
     expect(matchGlob('.env.*', '.env.local')).toBe(true);
     expect(matchGlob('.github/workflows/**', '.github/workflows/ci.yml')).toBe(true);
   });
+
+  it('fails closed for an empty pattern', () => {
+    expect(matchGlob('', 'src/file.ts')).toBe(false);
+  });
 });

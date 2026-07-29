@@ -31,11 +31,18 @@ description: Implement or review deterministic AI-agent governance changes in AG
 17. In the pull request, disclose agent use, overlap, exact evidence, risks,
     attribution, and rollback.
 
+When an adapter writes a fixed file into a checked-out workspace, reject
+repository-controlled symlinks and use a no-follow open plus owner-only mode
+where the runner supports it, including when rewriting an existing regular
+file. Test a new file, an existing regular file, and an existing symlink.
+
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
 input reach a shell. For GitHub pull requests, load policy from the immutable
 base commit. For CLI Git operations, treat refs as hostile options and use
 `--end-of-options`.
+Treat invalid or empty policy file globs as non-matches; malformed
+configuration must fail closed rather than aborting evaluation.
 Tests must not mutate contributor Git configuration; scope fixture identity to
 the exact subprocess that needs it.
 

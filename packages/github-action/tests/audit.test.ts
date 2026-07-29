@@ -1,0 +1,62 @@
+import { beforeEach, afterEach, describe, expect, it } from 'vitest';
+import { chmod, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { writeAuditArtifact } from '../src/audit.js';
+
+describe('writeAuditArtifact', () => {
+  let directory: string;
+  let originalDirectory: string;
+
+  beforeEach(async () => {
+    directory = await mkdtemp(join(tmpdir(), 'agentowners-audit-'));
+    originalDirectory = process.cwd();
+    process.chdir(directory);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalDirectory);
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it('creates a regular audit artifact', async () => {
+    const artifactPath = join(directory, 'agentowners-decision.json');
+
+    await writeAuditArtifact('{"decision":"allow"}');
+
+    await expect(readFile(artifactPath, 'utf8')).resolves.toBe('{"decision":"allow"}');
+    const mode = (await stat(artifactPath)).mode & 0o777;
+    expect(mode & 0o077).toBe(0);
+  });
+
+  it('rewrites an existing regular artifact', async () => {
+    const artifactPath = join(directory, 'agentowners-decision.json');
+    await writeFile(artifactPath, '{"decision":"allow"}', 'utf8');
+
+    await writeAuditArtifact('{"decision":"block"}');
+
+    await expect(readFile(artifactPath, 'utf8')).resolves.toBe('{"decision":"block"}');
+  });
+
+  it('tightens permissions when rewriting an existing artifact', async () => {
+    const artifactPath = join(directory, 'agentowners-decision.json');
+    await writeFile(artifactPath, '{"decision":"allow"}', { encoding: 'utf8', mode: 0o644 });
+    await chmod(artifactPath, 0o644);
+
+    await writeAuditArtifact('{"decision":"block"}');
+
+    expect((await stat(artifactPath)).mode & 0o777).toBe(0o600);
+  });
+
+  it('rejects a symlink without writing through it', async () => {
+    const targetPath = join(directory, 'target.txt');
+    const artifactPath = join(directory, 'agentowners-decision.json');
+    await writeFile(targetPath, 'keep this file', 'utf8');
+    await symlink(targetPath, artifactPath);
+
+    await expect(writeAuditArtifact('{"decision":"block"}')).rejects.toThrow(
+      'Refusing to write audit artifact through a symlink',
+    );
+    await expect(readFile(targetPath, 'utf8')).resolves.toBe('keep this file');
+  });
+});

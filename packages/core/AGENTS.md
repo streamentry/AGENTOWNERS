@@ -90,5 +90,7 @@ After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
+Classifier file-glob matching treats invalid or empty policy patterns as
+non-matches so untrusted configuration cannot abort evaluation.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.

@@ -2,8 +2,6 @@
 
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import {
   classifyFiles,
   detectSecretPatterns,
@@ -18,6 +16,7 @@ import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import { writeAuditArtifact } from './audit.js';
 
 export async function run(): Promise<void> {
   try {
@@ -45,7 +44,6 @@ export async function run(): Promise<void> {
     core.info(`Policy: ${policyPath}`);
     core.info(`Mode: ${mode}`);
 
-    const workspace = process.env['GITHUB_WORKSPACE'] ?? process.cwd();
     let changedFiles: string[] = [];
     let diffContent = '';
     let patchesComplete = true;
@@ -264,9 +262,8 @@ export async function run(): Promise<void> {
       changedFiles,
     });
 
-    const artifactPath = path.join(workspace, 'agentowners-decision.json');
-    await fs.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), 'utf8');
-    core.info(`Audit artifact written to ${artifactPath}`);
+    await writeAuditArtifact(JSON.stringify(auditRecord, null, 2));
+    core.info('Audit artifact written to agentowners-decision.json');
 
     // 14. Fail if needed
     if (decision.effect === 'block' && failOnBlock) {

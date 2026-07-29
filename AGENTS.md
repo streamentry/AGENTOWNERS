@@ -266,6 +266,8 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 - [ ] No shell execution with user-controlled strings
 - [ ] Git subprocesses use argv APIs such as `execFileSync`, never interpolated commands
 - [ ] GitHub Action permissions are `contents: read`, `pull-requests: write`, `issues: write` only
+- [ ] Fixed workspace artifacts reject repository-controlled symlinks and use no-follow, owner-only writes for new and existing files where supported
+- [ ] Invalid or empty policy file globs fail closed without aborting evaluation
 
 ## Generated release artifacts
 

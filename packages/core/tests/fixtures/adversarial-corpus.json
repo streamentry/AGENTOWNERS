@@ -202,6 +202,39 @@
     }
   },
   {
+    "id": "empty-file-glob-fails-closed",
+    "invariant": "An empty file glob cannot abort evaluation or match a changed path.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "defaults": {
+        "unknown_agent": "block"
+      },
+      "rules": [
+        {
+          "name": "Empty file glob",
+          "when": {
+            "files": [""]
+          },
+          "effect": "allow",
+          "reason": "This rule must never match an invalid pattern."
+        }
+      ]
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "unrecognized-user",
+      "changedFiles": ["src/index.ts"]
+    },
+    "expected": {
+      "effect": "block",
+      "riskScore": 20,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr"],
+      "matchedRuleEffects": []
+    }
+  },
+  {
     "id": "duplicate-agent-action",
     "invariant": "The same action cannot be assigned twice within one agent action list.",
     "outcome": "validation_error",
