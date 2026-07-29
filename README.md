@@ -108,8 +108,9 @@ pnpm test:capabilities
 node scripts/capability-demo.mjs
 ```
 
-The fixture allows one read-only Git operation and records denials for unlisted
-egress, a token scope, and merge privilege. It is a simulator, not an OS
+The fixture binds every request to the manifest's agent ID, issuer, and
+identity hash, allows one read-only Git operation, and records denials for
+unlisted egress, a token scope, and merge privilege. It is a simulator, not an OS
 sandbox or firewall; production adapters still need isolation and real
 credential, egress, identity, and log controls.
 

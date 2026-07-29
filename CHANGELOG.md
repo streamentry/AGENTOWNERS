@@ -31,6 +31,8 @@ semantic versioning.
   isolated npm cache verification, and stable-tag safety tests.
 - A network-free `pnpm demo` that exercises the production CLI fixture pipeline
   and capability-boundary proof in one first-run command.
+- Capability requests now present and verify the manifest-bound identity hash,
+  with an adversarial mismatch test.
 
 ### Changed
 

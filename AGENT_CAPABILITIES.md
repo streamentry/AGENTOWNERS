@@ -34,7 +34,8 @@ requests, reads no real secrets, and does not change repository state.
 
 ## Decision and audit algorithm
 
-1. Verify `agent.id`, issuer, and identity binding.
+1. Verify the request's `agent.id`, issuer, and `identity_sha256` against the
+   manifest's authenticated identity binding.
 2. Normalize the action to one of `tool`, `network`, `secret`, `data`, or
    `privilege` and reject unknown action types.
 3. Check the action target against the relevant exact allowlist and repository

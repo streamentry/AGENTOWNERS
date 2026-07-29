@@ -65,9 +65,10 @@ function validateManifest(raw) {
 
 function normalizeAttempt(raw, index) {
   const attempt = asObject(raw, `attempt[${index}]`);
-  if (typeof attempt.attempt_id !== 'string' || typeof attempt.agent_id !== 'string' || typeof attempt.issuer !== 'string' || typeof attempt.type !== 'string') {
-    throw new Error(`attempt[${index}] requires attempt_id, agent_id, issuer, and type`);
+  if (typeof attempt.attempt_id !== 'string' || typeof attempt.agent_id !== 'string' || typeof attempt.issuer !== 'string' || typeof attempt.identity_sha256 !== 'string' || typeof attempt.type !== 'string') {
+    throw new Error(`attempt[${index}] requires attempt_id, agent_id, issuer, identity_sha256, and type`);
   }
+  if (!/^[a-f0-9]{64}$/.test(attempt.identity_sha256)) throw new Error(`attempt[${index}] identity_sha256 must be lowercase SHA-256`);
   if (!ACTION_TYPES.has(attempt.type)) throw new Error(`attempt[${index}] has unknown action type`);
   const target = attempt.type === 'tool' ? attempt.tool : attempt.type === 'network' ? attempt.destination : attempt.type === 'secret' ? attempt.scope : attempt.type === 'data' ? attempt.scope : attempt.capability;
   if (typeof target !== 'string' || target.length === 0) throw new Error(`attempt[${index}] target is required`);
@@ -75,6 +76,7 @@ function normalizeAttempt(raw, index) {
     attempt_id: attempt.attempt_id,
     agent_id: attempt.agent_id,
     issuer: attempt.issuer,
+    identity_sha256: attempt.identity_sha256,
     type: attempt.type,
     target,
     repository: typeof attempt.repository === 'string' ? attempt.repository : null,
@@ -96,7 +98,7 @@ export function evaluateCapabilities(rawManifest, rawAttempts) {
     const attempt = normalizeAttempt(rawAttempt, index);
     let decision = 'allow';
     let reason = 'allowlisted';
-    if (attempt.agent_id !== policy.agent.id || attempt.issuer !== policy.agent.issuer) {
+    if (attempt.agent_id !== policy.agent.id || attempt.issuer !== policy.agent.issuer || attempt.identity_sha256 !== policy.agent.identity_sha256) {
       decision = 'deny'; reason = 'agent identity is not authorized';
     } else if (attempt.type === 'tool' && (!policy.tools.includes(attempt.target) || attempt.repository === null || !policy.repositories.includes(attempt.repository))) {
       decision = 'deny'; reason = 'tool or repository is not allowlisted';
@@ -130,6 +132,7 @@ export function evaluateCapabilities(rawManifest, rawAttempts) {
       attempt_id: attempt.attempt_id,
       agent_id: attempt.agent_id,
       issuer: attempt.issuer,
+      identity_sha256: attempt.identity_sha256,
       type: attempt.type,
       target: attempt.target,
       repository: attempt.repository,

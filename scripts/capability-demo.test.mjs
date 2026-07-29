@@ -30,6 +30,13 @@ test('capability demo fails closed for an identity mismatch', () => {
   assert.equal(result.audit[0].dispatched, false);
 });
 
+test('capability demo denies a mismatched identity binding', () => {
+  const altered = [{ ...attempts[0], identity_sha256: '0'.repeat(64) }];
+  const result = evaluateCapabilities(manifest, altered);
+  assert.equal(result.audit[0].decision, 'deny');
+  assert.equal(result.audit[0].reason, 'agent identity is not authorized');
+});
+
 test('capability demo rejects malformed manifests', () => {
   assert.throws(() => evaluateCapabilities({ ...manifest, network: {} }, []), /string array/);
 });
