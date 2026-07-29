@@ -34250,6 +34250,9 @@ async function getIssueMetadata(octokit, owner, repo, issueNumber) {
 
 // src/comment.ts
 var MARKER = "<!-- agentowners-verdict -->";
+function isBotAuthored(comment) {
+  return comment.user?.type === "Bot" || comment.user?.login?.endsWith("[bot]") === true;
+}
 async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
   const comments = await octokit.rest.issues.listComments({
     owner,
@@ -34257,7 +34260,9 @@ async function upsertVerdictComment(octokit, owner, repo, issueNumber, body) {
     issue_number: issueNumber,
     per_page: 100
   });
-  const existing = comments.data.find((c) => c.body?.includes(MARKER));
+  const existing = comments.data.find(
+    (comment) => isBotAuthored(comment) && comment.body?.includes(MARKER)
+  );
   if (existing) {
     await octokit.rest.issues.updateComment({
       owner,
