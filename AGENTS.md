@@ -116,6 +116,8 @@ docs/specs/
   f16-action-mode.md — fail-closed Action mode input contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
+docs/policy-reference.md — end-user policy authoring and evaluation guide
+docs/CMD-agents-team.md — evidence-first contributor coordination and review handoff
 docs/assets/          — maintained documentation and social-preview media
 
 .github/DISCUSSION_TEMPLATE/

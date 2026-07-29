@@ -43,6 +43,8 @@ semantic versioning.
   output so pre-PR evidence can be bound to the policy it evaluated.
 - GitHub Action audit records now include the canonical policy digest and
   trusted policy ref, with matching `policy-digest` and `policy-ref` outputs.
+- A canonical policy authoring reference and AGENTOWNERS-specific evidence-first
+  agent-team workflow replace broken and unrelated contributor guidance.
 
 ### Changed
 

@@ -171,7 +171,7 @@ The first-line schema directive gives compatible YAML editors completion and
 validation against the same Zod contract used at runtime. The generated
 [JSON Schema](packages/core/agentowners.schema.json) rejects unknown fields,
 empty `match` and `when` objects, and actions assigned to conflicting policy
-lists.
+lists. The complete authoring guide is [the policy reference](docs/policy-reference.md).
 
 After a stable `v0` release exists, add the GitHub Action. Pin the immutable
 release commit SHA in high-trust repositories; the major tag below is the
