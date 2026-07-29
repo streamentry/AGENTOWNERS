@@ -81,6 +81,8 @@ runs:
    - pull_request_review → inspect review state
    - issue_comment → inspect comment actor/body and map the target title/body to
      PR or issue fields
+   - unsupported event actions → fail closed rather than coercing the event to a
+     different action
 5. Classify files
 6. Infer actions
 7. Detect agent
@@ -121,5 +123,7 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 ## Security Requirements
 - Never print secret patterns from diff content
 - Treat all PR content as untrusted input
+- Reject unsupported GitHub event actions; never reinterpret them as a supported
+  action or silently omit the action evidence
 - Do not execute content from policy as code
 - Use least-privilege permissions

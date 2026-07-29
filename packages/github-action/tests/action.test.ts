@@ -336,6 +336,19 @@ describe('GitHub Action — integration via mocks', () => {
     expect(mockCore.setFailed).not.toHaveBeenCalled();
   });
 
+  it('fails closed instead of coercing an unsupported pull request action', async () => {
+    setupInputs({ mode: 'dry-run' });
+    mockContext.payload = { action: 'closed', pull_request: { number: 1 } };
+
+    const { run } = await import('../src/index.js');
+    await run();
+
+    expect(mockCore.setFailed).toHaveBeenCalledWith(
+      'Unsupported pull_request action "closed".',
+    );
+    expect(mockOctokit.rest.pulls.get).not.toHaveBeenCalled();
+  });
+
   it('block with fail-on-block=true → setFailed called', async () => {
     // Test the fail logic directly
     const effect = mockDecisionBlock.effect;

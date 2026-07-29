@@ -50,6 +50,8 @@ semantic versioning.
   metadata instead of being silently ignored.
 - Issue comments now preserve whether their target is a pull request or issue,
   and their bodies participate in agent detection.
+- The GitHub Action now fails closed on unsupported event actions instead of
+  coercing them into a different policy action.
 
 ## [0.1.0] - 2026-07-28
 

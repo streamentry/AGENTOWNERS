@@ -55,3 +55,6 @@ sequenceDiagram
 
 Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 `pnpm verify:release`.
+Unsupported GitHub event actions must fail closed. Do not coerce an unknown
+pull-request action to `opened` or evaluate an unrecognized action with empty
+action evidence.

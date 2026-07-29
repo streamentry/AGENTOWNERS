@@ -19,6 +19,24 @@ import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
 import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
+const SUPPORTED_EVENT_ACTIONS = {
+  pull_request: ['opened', 'synchronize', 'reopened', 'ready_for_review'],
+  issues: ['opened', 'labeled', 'closed', 'reopened'],
+  issue_comment: ['created', 'edited'],
+  pull_request_review: ['submitted'],
+} as const satisfies Record<string, readonly string[]>;
+
+function requireSupportedEventAction(
+  eventName: keyof typeof SUPPORTED_EVENT_ACTIONS,
+  action: string,
+): GitHubEventType {
+  const supportedActions: readonly string[] = SUPPORTED_EVENT_ACTIONS[eventName];
+  if (!supportedActions.includes(action)) {
+    throw new Error(`Unsupported ${eventName} action "${action}".`);
+  }
+  return `${eventName}.${action}` as GitHubEventType;
+}
+
 export async function run(): Promise<void> {
   try {
     // 1. Inputs
@@ -70,14 +88,7 @@ export async function run(): Promise<void> {
       issueNumber = pr.number as number;
 
       const prAction = payload.action as string;
-      const validPrActions: GitHubEventType[] = [
-        'pull_request.opened',
-        'pull_request.synchronize',
-        'pull_request.reopened',
-        'pull_request.ready_for_review',
-      ];
-      const inferredEvent = `pull_request.${prAction}` as GitHubEventType;
-      eventType = validPrActions.includes(inferredEvent) ? inferredEvent : 'pull_request.opened';
+      eventType = requireSupportedEventAction('pull_request', prAction);
 
       const metadata = await getPRMetadata(octokit, owner, repo, issueNumber);
       const prFiles = await getPRFiles(octokit, owner, repo, issueNumber);
@@ -95,7 +106,7 @@ export async function run(): Promise<void> {
       issueNumber = issue.number as number;
 
       const issueAction = payload.action as string;
-      eventType = `issues.${issueAction}` as GitHubEventType;
+      eventType = requireSupportedEventAction('issues', issueAction);
 
       const metadata = await getIssueMetadata(octokit, owner, repo, issueNumber);
       actor = metadata.actor || actor;
@@ -108,7 +119,7 @@ export async function run(): Promise<void> {
       issueNumber = issue.number as number;
 
       const commentAction = payload.action as string;
-      eventType = `issue_comment.${commentAction}` as GitHubEventType;
+      eventType = requireSupportedEventAction('issue_comment', commentAction);
 
       const comment = payload.comment;
       actor = (comment?.user?.login as string) || actor;
@@ -128,7 +139,7 @@ export async function run(): Promise<void> {
       const pr = payload.pull_request;
       if (!pr) throw new Error('Missing pull_request payload for review');
       issueNumber = pr.number as number;
-      eventType = 'pull_request_review.submitted';
+      eventType = requireSupportedEventAction('pull_request_review', payload.action as string);
 
       const review = payload.review;
       reviewState = review?.state as 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | undefined;

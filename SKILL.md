@@ -15,6 +15,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
    what AGENTOWNERS does not control.
 6. Keep pull request and issue metadata in distinct evaluator fields so
    event-specific conditions cannot match the wrong event type.
+   Reject unsupported GitHub event actions instead of coercing them into a
+   supported action or silently dropping action evidence.
 7. Add the cheapest disconfirming test first.
 8. Implement the smallest complete change.
 9. For a safety invariant, prove the new test fails under a temporary relevant
