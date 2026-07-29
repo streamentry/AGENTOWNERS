@@ -21,7 +21,7 @@ Creates `.github/AGENTOWNERS.yml` from a profile.
 
 Options:
 
-- `--profile <name>` — `minimal` (default), `strict-oss`, `security-sensitive`
+- `--profile <name>` — `minimal` (default), `strict-oss`, `security-sensitive`, `monorepo`, `dependency-bots`
 - `--output <path>` — output path (default: `.github/AGENTOWNERS.yml`)
 - `--force` — overwrite if exists
 

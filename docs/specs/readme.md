@@ -778,6 +778,8 @@ Options:
 agentowners init --profile minimal
 agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
+agentowners init --profile monorepo
+agentowners init --profile dependency-bots
 ```
 
 ### 17.2 `agentowners validate`

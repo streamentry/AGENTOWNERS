@@ -110,7 +110,88 @@ rules:
     effect: require_approval
     reason: "Agents may weaken tests accidentally."
 `,
+
+  monorepo: `version: 1
+
+defaults:
+  unknown_agent: require_approval
+  known_agent: require_approval
+  workflows: block
+  secrets: block
+
+rules:
+  - name: "Allow docs-only changes in any package"
+    when:
+      docs_only: true
+    effect: allow
+    reason: "Docs are low risk."
+
+  - name: "Block workflow edits"
+    when:
+      files:
+        - ".github/workflows/**"
+    effect: block
+    reason: "Workflows must be changed by humans."
+
+  - name: "Require approval for packages/core changes"
+    when:
+      files:
+        - "packages/core/**"
+    effect: require_approval
+    reviewers:
+      - "@core-maintainers"
+    reason: "Core package changes need careful review."
+
+  - name: "Require approval for dependency changes"
+    when:
+      changes_package_files: true
+    effect: require_approval
+    reason: "Dependency changes affect supply-chain risk."
+`,
+
+  'dependency-bots': `version: 1
+
+agents:
+  dependabot:
+    match:
+      actors:
+        - "dependabot[bot]"
+    allowed:
+      - open_pr
+      - update_pr
+    requires_approval:
+      - modify_dependencies
+    blocked:
+      - edit_workflows
+      - modify_auth
+      - change_permissions
+      - touch_secrets
+
+  renovate:
+    match:
+      actors:
+        - "renovate[bot]"
+    allowed:
+      - open_pr
+      - update_pr
+    requires_approval:
+      - modify_dependencies
+    blocked:
+      - edit_workflows
+      - modify_auth
+      - change_permissions
+      - touch_secrets
+
+defaults:
+  known_agent: require_approval
+  unknown_agent: block
+  docs_only: require_approval
+  workflows: block
+  secrets: block
+`,
 };
+
+export const PROFILE_NAMES = Object.freeze(Object.keys(PROFILES));
 
 export function getProfile(name: string): string | null {
   return PROFILES[name] ?? null;

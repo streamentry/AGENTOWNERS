@@ -47,7 +47,7 @@ packages/core/src/
   fixtures.ts    — strict portable fixture parsing and deterministic execution
   capabilities.ts — fail-closed capability manifests, evaluation, and audit hashing
   sarif.ts       — deterministic SARIF 2.1.0 rendering
-  profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
+  profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive, monorepo, dependency-bots)
   index.ts       — barrel export (all public API)
 
 packages/core/tests/

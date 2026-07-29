@@ -14,6 +14,12 @@ npm install --global @agent-owners/cli
 # Create a conservative starter policy
 agentowners init --profile strict-oss
 
+# Generate a monorepo policy with package-aware review routing
+agentowners init --profile monorepo
+
+# Give Dependabot and Renovate explicit dependency gates
+agentowners init --profile dependency-bots
+
 # Reject malformed or misspelled policy fields
 agentowners validate .github/AGENTOWNERS.yml
 
