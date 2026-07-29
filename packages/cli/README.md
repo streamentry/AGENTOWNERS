@@ -40,6 +40,13 @@ agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
+
+# Evaluate a pre-dispatch capability manifest
+agentowners capabilities \
+  --manifest fixtures/capabilities/AGENT_CAPABILITIES.json \
+  --attempts fixtures/capabilities/attempts.json \
+  --output json \
+  --fail-on-deny
 ```
 
 Git refs are passed directly to Git as arguments, never interpolated into a
@@ -59,6 +66,10 @@ versioned machine result. See the
 
 SARIF output is deterministic and contains only non-allow policy results.
 Approval decisions are warnings and blocked decisions are errors.
+
+`capabilities` validates the manifest and records every attempt in a
+hash-chained audit. It never invokes a tool, reads a secret, or makes a network
+request; `--fail-on-deny` changes only the process exit code.
 
 See the [full documentation](https://github.com/streamentry/AGENTOWNERS#readme)
 and [policy examples](https://github.com/streamentry/AGENTOWNERS/tree/main/examples).

@@ -8,11 +8,21 @@ const packageDirectories = ['core', 'cli', 'github-action'];
 const temporaryRoot = await mkdtemp(join(tmpdir(), 'agentowners-pack-'));
 const packDirectory = join(temporaryRoot, 'packages');
 const consumerDirectory = join(temporaryRoot, 'consumer');
+const npmCacheDirectory = join(temporaryRoot, 'npm-cache');
+
+function commandEnvironment(command) {
+  if (command !== 'npm') return process.env;
+  const environment = Object.fromEntries(
+    Object.entries(process.env).filter(([name]) => !name.toLowerCase().startsWith('npm_config_')),
+  );
+  return { ...environment, npm_config_cache: npmCacheDirectory };
+}
 
 function run(command, args, cwd) {
   return execFileSync(command, args, {
     cwd,
     encoding: 'utf8',
+    env: commandEnvironment(command),
     stdio: ['ignore', 'pipe', 'inherit'],
   }).trim();
 }

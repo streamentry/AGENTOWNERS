@@ -81,6 +81,55 @@ node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 Run `pnpm verify` to execute lint, type checking, all tests, builds, and release
 artifact smoke tests.
 
+### One-command proof
+
+To exercise the production CLI policy pipeline and the capability boundary
+without GitHub, credentials, or network access, run:
+
+```bash
+pnpm demo
+```
+
+The command builds the workspace, runs the strict-OSS fixture suite, and then
+summarizes the capability demo's one allowed read-only action and three denied
+authority attempts. After `pnpm build`, use `node scripts/capability-demo.mjs`
+when you need the full hash-chained audit. It is a local product proof, not a
+runtime sandbox.
+
+## Capability boundary demonstration
+
+Repository policy is not the same thing as runtime authority. The experimental
+[`AGENT_CAPABILITIES.md`](AGENT_CAPABILITIES.md) specification defines a
+fail-closed pre-dispatch manifest for tools, repositories, network destinations,
+data and secret scopes, privileges, budgets, approvals, and hash-chained audit.
+Run the deterministic demonstration with:
+
+```bash
+pnpm test:capabilities
+node scripts/capability-demo.mjs
+```
+
+The fixture binds every request to the manifest's agent ID, issuer, and
+identity hash, allows one read-only Git operation, and records denials for
+unlisted egress, a token scope, and merge privilege. It is a simulator, not an OS
+sandbox or firewall; production adapters still need isolation and real
+credential, egress, identity, and log controls.
+
+For the reusable packaged contract, run:
+
+```bash
+agentowners capabilities \
+  --manifest fixtures/capabilities/AGENT_CAPABILITIES.json \
+  --attempts fixtures/capabilities/attempts.json \
+  --output json --fail-on-deny
+```
+
+Release readiness is independently checked with `pnpm verify:release`: it
+parses root and packaged Action metadata, checks their Marketplace-facing
+parity, and verifies the committed Node 24 bundle. This proves repository
+consistency only; Marketplace owner agreement, categories, 2FA, and public
+publication remain explicit maintainer actions in [the release runbook](docs/releasing.md).
+
 ## Configure a policy
 
 Add `.github/AGENTOWNERS.yml`:

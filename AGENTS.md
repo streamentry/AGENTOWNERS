@@ -45,6 +45,7 @@ packages/core/src/
   scoring.ts     — deterministic risk scoring 0–100
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
+  capabilities.ts — fail-closed capability manifests, evaluation, and audit hashing
   sarif.ts       — deterministic SARIF 2.1.0 rendering
   profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
   index.ts       — barrel export (all public API)
@@ -77,11 +78,13 @@ packages/cli/src/
   commands/fingerprint.ts — agentowners fingerprint
   commands/self-check.ts — versioned pre-PR machine contract
   commands/test.ts  — portable policy fixture runner
+  commands/capabilities.ts — capability manifest evaluation and audit output
 
 packages/cli/tests/
   check.test.ts      — SARIF output and invalid-format boundaries
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
+  capabilities.test.ts — capability output and denial exit contracts
 
 packages/github-action/src/
   index.ts    — main action entry
@@ -113,6 +116,11 @@ CONTRIBUTING.md       — contribution lanes, review contract, and required evid
 SKILL.md              — compact execution workflow for compatible coding agents
 
 scripts/
+  capability-demo.mjs   — fail-closed capability manifest simulator and audit
+  capability-demo.test.mjs — deterministic denial, budget, and redaction tests
+  marketplace-metadata.mjs — Marketplace metadata and distribution parity gate
+  release-automation.mjs — fail-closed package publication and tag primitives
+  publish-packages.mjs / update-major-tag.mjs — guarded release entry points
   generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks
@@ -178,6 +186,10 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+
+The experimental capability boundary is specified in `AGENT_CAPABILITIES.md`.
+Its demo is deliberately non-runtime: it makes no network calls, reads no real
+secrets, and cannot substitute for OS/container isolation or GitHub permissions.
 
 ## How to add a new feature
 
@@ -277,6 +289,11 @@ bundle whenever Action source changes.
 `packages/core/agentowners.schema.json` is also generated. Never edit it by
 hand. After changing `schema.ts` or `json-schema.ts`, run
 `pnpm generate:schema`; `pnpm verify:schema` fails on drift.
+
+Marketplace verification parses both Action metadata files and requires parity
+except for their distribution-specific `author` and `runs.main` values.
+Run `pnpm demo` for the network-free first-run proof; it invokes the built CLI
+and capability simulator and must not be mistaken for runtime containment.
 
 ## What NOT to build (v1 non-goals)
 

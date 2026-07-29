@@ -23,6 +23,19 @@ semantic versioning.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.
+- Experimental `AGENT_CAPABILITIES.md` specification with a deterministic,
+  fail-closed capability and hash-chained audit demonstration.
+- A tested Marketplace metadata gate covering YAML validity, listing identity,
+  bundle paths, and root/package metadata parity.
+- Idempotent release helper primitives with exact-version registry preflight,
+  isolated npm cache verification, and stable-tag safety tests.
+- A network-free `pnpm demo` that exercises the production CLI fixture pipeline
+  and capability-boundary proof in one first-run command.
+- Capability requests now present and verify the manifest-bound identity hash,
+  with an adversarial mismatch test.
+- Reusable capability validation/evaluation is now exported from `@agent-owners/core`
+  and exposed through `agentowners capabilities` with stable output and
+  `--fail-on-deny`.
 
 ### Changed
 

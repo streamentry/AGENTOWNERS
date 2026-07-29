@@ -13,7 +13,8 @@ artifact and must be regenerated, never hand-edited.
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
-- `action.yml`: package-local metadata
+- `action.yml`: package-local metadata, kept in parity with root Marketplace
+  metadata except for distribution-specific `author` and `runs.main`
 - `dist/index.js`: committed Node 24 bundle
 
 ## Diagrams
@@ -55,3 +56,5 @@ sequenceDiagram
 
 Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 `pnpm verify:release`.
+Marketplace metadata changes must keep the root and package files equivalent
+apart from their explicit distribution identity and bundle paths.

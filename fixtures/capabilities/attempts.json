@@ -1,0 +1,39 @@
+[
+  {
+    "attempt_id": "read-policy",
+    "agent_id": "demo-coding-agent",
+    "issuer": "demo.example.invalid",
+    "identity_sha256": "e537d36bef65ee4bcad8e6cb280591d9c71e4af88a1dcdd7eab99812af8591c4",
+    "type": "tool",
+    "tool": "git.read",
+    "repository": "streamentry/AGENTOWNERS",
+    "expected": "allow"
+  },
+  {
+    "attempt_id": "unlisted-egress",
+    "agent_id": "demo-coding-agent",
+    "issuer": "demo.example.invalid",
+    "identity_sha256": "e537d36bef65ee4bcad8e6cb280591d9c71e4af88a1dcdd7eab99812af8591c4",
+    "type": "network",
+    "destination": "https://example.invalid/egress",
+    "expected": "deny"
+  },
+  {
+    "attempt_id": "read-github-token",
+    "agent_id": "demo-coding-agent",
+    "issuer": "demo.example.invalid",
+    "identity_sha256": "e537d36bef65ee4bcad8e6cb280591d9c71e4af88a1dcdd7eab99812af8591c4",
+    "type": "secret",
+    "scope": "github.token",
+    "expected": "deny"
+  },
+  {
+    "attempt_id": "merge-pull-request",
+    "agent_id": "demo-coding-agent",
+    "issuer": "demo.example.invalid",
+    "identity_sha256": "e537d36bef65ee4bcad8e6cb280591d9c71e4af88a1dcdd7eab99812af8591c4",
+    "type": "privilege",
+    "capability": "merge_pr",
+    "expected": "deny"
+  }
+]

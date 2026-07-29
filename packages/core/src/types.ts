@@ -189,6 +189,72 @@ export type PolicyFixtureSuiteResult = {
   cases: PolicyFixtureCaseResult[];
 };
 
+export type CapabilityActionType = 'tool' | 'network' | 'secret' | 'data' | 'privilege';
+
+export type CapabilityManifest = {
+  version: 1;
+  agent: { id: string; issuer: string; identity_sha256: string };
+  repositories: string[];
+  tools: { allow: string[] };
+  network: { allowed_destinations: string[] };
+  data: { allowed_secret_scopes: string[]; allowed_data_scopes: string[] };
+  privileges: { allow: string[] };
+  escalation: { human_approval_required: string[]; kill_on_violation: boolean };
+  budgets: {
+    max_actions: number;
+    max_network_requests: number;
+    max_secret_reads: number;
+    max_privileged_actions: number;
+  };
+  audit: { required: true; hash_chain: true };
+};
+
+export type CapabilityAttempt = {
+  attempt_id: string;
+  agent_id: string;
+  issuer: string;
+  identity_sha256: string;
+  type: CapabilityActionType;
+  tool?: string;
+  destination?: string;
+  scope?: string;
+  capability?: string;
+  repository?: string;
+  human_approved?: boolean;
+  expected?: 'allow' | 'deny';
+};
+
+export type CapabilityDecision = 'allow' | 'deny';
+
+export type CapabilityAuditEvent = {
+  sequence: number;
+  attempt_id: string;
+  agent_id: string;
+  issuer: string;
+  identity_sha256: string;
+  type: CapabilityActionType;
+  target: string;
+  repository: string | null;
+  decision: CapabilityDecision;
+  dispatched: boolean;
+  reason: string;
+  previous_hash: string;
+  event_hash: string;
+};
+
+export type CapabilityEvaluationResult = {
+  schemaVersion: 1;
+  status: 'complete';
+  summary: {
+    attempts: number;
+    allowed: number;
+    denied: number;
+    kill_triggered: boolean;
+  };
+  audit: CapabilityAuditEvent[];
+  auditDigest: string;
+};
+
 export type SarifLevel = 'warning' | 'error';
 
 export type SarifLocation = {
