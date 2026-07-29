@@ -224,6 +224,9 @@ agentowners test \
   --policy .github/AGENTOWNERS.yml \
   --fixtures .agentowners/fixtures.yml
 
+# Explain CLI decisions or Action audit artifacts
+agentowners explain --decision agentowners-decision.json
+
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
 ```
@@ -237,6 +240,11 @@ modifies the repository.
 classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
+
+`explain` accepts either `check --output json` output or the Action's
+`agentowners-decision.json` audit artifact. Audit explanations retain the
+actor, repository, event, timestamp, detection confidence, and changed-file
+count before rendering the policy decision.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial

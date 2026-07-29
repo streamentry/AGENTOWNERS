@@ -7,6 +7,8 @@ semantic versioning.
 
 ### Added
 
+- `agentowners explain` support for versioned Action audit artifacts, with
+  provenance context and strict shape validation.
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
 - A manually invoked, read-only adversarial reviewer custom agent with a

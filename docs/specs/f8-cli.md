@@ -87,13 +87,18 @@ Exit codes:
 
 ### `agentowners explain`
 
-Explains a decision from a JSON file.
+Explains a decision from a JSON file. The input may be raw `check --output
+json` Decision data or the versioned `agentowners-decision.json` Action audit
+record. The command validates the recognized shape before rendering and fails
+with a bounded diagnostic for malformed or unknown JSON.
 
 Options:
 
 - `--decision <path>` — path to decision JSON file
 
-Output: Human-readable explanation of how the decision was reached.
+Output: Human-readable explanation of how the decision was reached. Audit
+records additionally show timestamp, actor, repository, event, detection
+confidence, and changed-file count.
 
 ### `agentowners fingerprint`
 

@@ -834,6 +834,10 @@ Explains why a decision happened.
 agentowners explain --decision decision.json
 ```
 
+The input may be raw `check --output json` Decision data or the Action's
+versioned `agentowners-decision.json` audit record. Unknown or malformed JSON
+fails with a bounded diagnostic rather than rendering undefined fields.
+
 ### 17.5 `agentowners fingerprint`
 
 Detects whether a PR/commit likely came from an AI agent.

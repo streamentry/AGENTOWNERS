@@ -13,7 +13,7 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/init.ts`: profile installation
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
-- `src/commands/explain.ts`: decision explanation
+- `src/commands/explain.ts`: Decision and Action audit explanation with strict parsing
 - `src/commands/fingerprint.ts`: agent-signal inspection
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
 - `src/commands/test.ts`: portable policy fixture execution
