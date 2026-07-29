@@ -55,7 +55,8 @@ sequenceDiagram
 
 Audit output is opened with a no-follow file flag; runners without that
 primitive fail closed. This rejects checkout-provided symlinks at the fixed
-output path. New artifacts use owner-only permissions (`0600`).
+output path. Every written artifact is forced to owner-only permissions
+(`0600`), including an existing regular file.
 
 ## Verification
 

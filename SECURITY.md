@@ -53,8 +53,8 @@ interpolated into shell commands. CLI Git ranges use Git's explicit
 The GitHub Action produces `agentowners-decision.json` as a workflow artifact.
 This file contains the decision, matched rules, and risk score, but never
 secret values or raw diff content. The fixed workspace path is opened with a
-no-follow primitive, and unsupported runners fail closed; new files use
-owner-only permissions (`0600`).
+no-follow primitive, and unsupported runners fail closed; every written file is
+forced to owner-only permissions (`0600`).
 
 ## What is in scope
 

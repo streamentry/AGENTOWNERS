@@ -37,7 +37,8 @@ semantic versioning.
 ### Fixed
 
 - GitHub Action audit artifacts now reject checkout-provided symlinks, fail
-  closed without no-follow support, and use owner-only file creation.
+  closed without no-follow support, and force owner-only permissions on every
+  written artifact.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

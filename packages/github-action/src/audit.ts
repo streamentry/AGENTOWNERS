@@ -31,6 +31,7 @@ export async function writeAuditArtifact(content: string): Promise<void> {
   }
 
   try {
+    await handle.chmod(0o600);
     await handle.writeFile(content, 'utf8');
   } finally {
     await handle.close();

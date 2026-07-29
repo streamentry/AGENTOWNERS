@@ -34331,6 +34331,7 @@ async function writeAuditArtifact(content) {
     throw error2;
   }
   try {
+    await handle.chmod(384);
     await handle.writeFile(content, "utf8");
   } finally {
     await handle.close();

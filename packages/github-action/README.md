@@ -27,4 +27,4 @@ moving major-version tag.
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes `agentowners-decision.json` for downstream audit
 artifact upload. It rejects checkout-provided symlinks at that fixed output
-path and creates new audit files with owner-only permissions.
+path and forces audit files to owner-only permissions (`0600`).

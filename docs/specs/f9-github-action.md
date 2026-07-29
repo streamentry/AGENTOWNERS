@@ -110,7 +110,8 @@ Create labels if they don't exist (with sensible colors).
 Write the fixed `agentowners-decision.json` file in the Action's current
 working directory, which GitHub sets to `$GITHUB_WORKSPACE`, for upload as an
 artifact. Open it with a no-follow flag and fail closed on runners that do not
-support that primitive; new files use owner-only permissions (`0600`). The
+support that primitive; every written file uses owner-only permissions
+(`0600`), including an existing regular file. The
 Action must never follow repository-controlled links when writing its audit
 output.
 
