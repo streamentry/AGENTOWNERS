@@ -57,3 +57,5 @@ Run `pnpm --filter @agent-owners/github-action test`, `pnpm build`, and
 `pnpm verify:release`.
 Sticky verdict updates may target only a bot-authored marker comment. A human
 comment can spoof the marker and must never be overwritten.
+Comment lookup must paginate through all pages so an older managed verdict is
+updated instead of duplicated after the first 100 comments.

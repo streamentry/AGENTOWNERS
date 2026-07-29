@@ -97,7 +97,7 @@ runs:
 Marker: `<!-- agentowners-verdict -->`
 
 Logic:
-1. List existing PR comments
+1. List existing PR comments, following pages until a short page is returned
 2. Find a bot-authored comment containing the marker
 3. If found → update it (PATCH)
 4. If not found, or if only a human-authored marker exists → create new comment (POST)

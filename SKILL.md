@@ -40,6 +40,8 @@ Tests must not mutate contributor Git configuration; scope fixture identity to
 the exact subprocess that needs it.
 When updating sticky comments, require bot authorship as well as the marker;
 markers in human comments are untrusted input.
+Paginate managed-comment lookup through the complete API result set; a first
+page is not evidence that no existing verdict exists.
 
 During review, report only findings that identify the violated invariant, exact
 mechanism, and cheapest disconfirming test. AI-assisted review prepares evidence

@@ -24,16 +24,24 @@ export async function upsertVerdictComment(
   issueNumber: number,
   body: string,
 ): Promise<void> {
-  const comments = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    per_page: 100,
-  });
+  let page = 1;
+  let existing: CommentCandidate | undefined;
 
-  const existing = comments.data.find(
-    (comment: CommentCandidate) => isBotAuthored(comment) && comment.body?.includes(MARKER),
-  );
+  while (true) {
+    const comments = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      per_page: 100,
+      page,
+    });
+
+    existing = comments.data.find(
+      (comment: CommentCandidate) => isBotAuthored(comment) && comment.body?.includes(MARKER),
+    );
+    if (existing || comments.data.length < 100) break;
+    page++;
+  }
 
   if (existing) {
     await octokit.rest.issues.updateComment({
