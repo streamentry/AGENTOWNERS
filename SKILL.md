@@ -33,7 +33,8 @@ description: Implement or review deterministic AI-agent governance changes in AG
 
 When an adapter writes a fixed file into a checked-out workspace, reject
 repository-controlled symlinks and use a no-follow open plus owner-only mode
-where the runner supports it. Test both a new file and an existing symlink.
+where the runner supports it, including when rewriting an existing regular
+file. Test a new file, an existing regular file, and an existing symlink.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
