@@ -13,6 +13,8 @@ artifact and must be regenerated, never hand-edited.
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
 - `src/config.ts`: fail-closed runtime input validation
+- Audit writes use a fixed workspace-relative filename; environment-controlled
+  paths must never reach the file sink.
 - `action.yml`: package-local metadata
 - `dist/index.js`: committed Node 24 bundle
 

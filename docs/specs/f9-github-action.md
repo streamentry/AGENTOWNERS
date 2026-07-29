@@ -117,6 +117,9 @@ the lowercase SHA-256 digest of those bytes through `audit-artifact-sha256`. A
 consumer should use `if: ${{ always() }}` on the upload step so blocked policy
 decisions do not discard the evidence.
 
+The filename is fixed and resolved from the Action working directory. No
+environment-provided path is accepted for this write.
+
 ```yaml
 - id: agentowners
   uses: streamentry/AGENTOWNERS@v0

@@ -46,7 +46,6 @@ export async function run(): Promise<void> {
     core.info(`Policy: ${policyPath}`);
     core.info(`Mode: ${mode}`);
 
-    const workspace = process.env['GITHUB_WORKSPACE'] ?? process.cwd();
     let changedFiles: string[] = [];
     let diffContent = '';
     let patchesComplete = true;
@@ -265,7 +264,9 @@ export async function run(): Promise<void> {
       changedFiles,
     });
 
-    const artifactPath = path.join(workspace, 'agentowners-decision.json');
+    // Actions execute with the repository workspace as the current directory.
+    // Keep the filename fixed so untrusted environment values cannot reach a file sink.
+    const artifactPath = path.resolve('agentowners-decision.json');
     const artifactContents = JSON.stringify(auditRecord, null, 2);
     await fs.writeFile(artifactPath, artifactContents, 'utf8');
     core.setOutput('audit-artifact', artifactPath);

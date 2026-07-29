@@ -44,6 +44,8 @@ semantic versioning.
 
 ### Fixed
 
+- The Action audit artifact now uses a fixed workspace-relative filename so
+  environment-controlled paths cannot reach the file-write sink.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.
