@@ -20,6 +20,7 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/test.ts`: portable policy fixture execution
 - `src/commands/capabilities.ts`: capability manifest evaluation and audit output
 - `src/commands/policy-diff.ts`: value-free policy comparison and CI exit contract
+- `src/version.ts`: published CLI version loaded from package metadata
 
 ## Diagrams
 

@@ -62,6 +62,8 @@ semantic versioning.
 - Configured body/title detection now remains `likely` and no longer outranks
   confirmed built-in bot actors, preventing contributor-controlled text from
   becoming an implicit authorization signal.
+- The CLI now reads its displayed version from `packages/cli/package.json`,
+  removing a second hard-coded release-version authority.
 
 ### Changed
 

@@ -11,13 +11,14 @@ import { registerSelfCheck } from './commands/self-check.js'
 import { registerTest } from './commands/test.js'
 import { registerCapabilities } from './commands/capabilities.js'
 import { registerPolicyDiff } from './commands/policy-diff.js'
+import { getCliVersion } from './version.js'
 
 const program = new Command()
 
 program
   .name('agentowners')
   .description('CODEOWNERS for AI agents')
-  .version('0.1.0')
+  .version(getCliVersion())
 
 registerInit(program)
 registerValidate(program)
