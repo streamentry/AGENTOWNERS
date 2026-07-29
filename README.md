@@ -167,7 +167,8 @@ jobs:
 
 Open an agent-generated PR and inspect the verdict before switching from
 observation to enforcement. The upload step retains the versioned audit record
-even when policy enforcement fails the Action.
+even when policy enforcement fails the Action. The companion
+`audit-artifact-sha256` output lets a later consumer verify the uploaded bytes.
 
 ---
 

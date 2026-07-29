@@ -34,4 +34,6 @@ moving major-version tag.
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes a versioned `agentowners-decision.json` audit artifact.
 The `audit-artifact` output exposes its exact path so a workflow can upload the
-record even when policy enforcement fails the step.
+record even when policy enforcement fails the step. The companion
+`audit-artifact-sha256` output is the lowercase SHA-256 digest of those exact
+bytes for downstream integrity checks.

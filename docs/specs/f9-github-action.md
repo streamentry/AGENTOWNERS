@@ -60,6 +60,8 @@ outputs:
     description: "JSON array of matched rules"
   audit-artifact:
     description: "Absolute path to the versioned agentowners-decision.json audit artifact"
+  audit-artifact-sha256:
+    description: "SHA-256 digest of the exact audit artifact bytes written by the Action"
 
 runs:
   using: node24
@@ -110,7 +112,8 @@ Create labels if they don't exist (with sensible colors).
 
 ## Audit Artifact
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as an
-artifact, and expose its exact path through the `audit-artifact` output. A
+artifact, expose its exact path through the `audit-artifact` output, and expose
+the lowercase SHA-256 digest of those bytes through `audit-artifact-sha256`. A
 consumer should use `if: ${{ always() }}` on the upload step so blocked policy
 decisions do not discard the evidence.
 

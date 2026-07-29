@@ -25988,6 +25988,7 @@ function getOctokit(token, options, ...additionalPlugins) {
 }
 
 // src/index.ts
+var import_node_crypto = require("crypto");
 var fs3 = __toESM(require("fs/promises"));
 var path2 = __toESM(require("path"));
 
@@ -34508,8 +34509,13 @@ async function run() {
       changedFiles
     });
     const artifactPath = path2.join(workspace, "agentowners-decision.json");
-    await fs3.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), "utf8");
+    const artifactContents = JSON.stringify(auditRecord, null, 2);
+    await fs3.writeFile(artifactPath, artifactContents, "utf8");
     setOutput("audit-artifact", artifactPath);
+    setOutput(
+      "audit-artifact-sha256",
+      (0, import_node_crypto.createHash)("sha256").update(artifactContents, "utf8").digest("hex")
+    );
     info(`Audit artifact written to ${artifactPath}`);
     if (decision.effect === "block" && failOnBlock) {
       setFailed("AGENTOWNERS: action blocked by policy.");

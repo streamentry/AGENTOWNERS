@@ -12,6 +12,9 @@ describe('GitHub Action metadata', () => {
       expect(metadata).toMatch(
         /audit-artifact:\n\s+description: .+agentowners-decision\.json audit artifact/,
       );
+      expect(metadata).toMatch(
+        /audit-artifact-sha256:\n\s+description: .*SHA-256 digest .*audit artifact bytes/,
+      );
     }
   });
 

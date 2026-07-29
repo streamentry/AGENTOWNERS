@@ -9,6 +9,8 @@ semantic versioning.
 
 - A stable `audit-artifact` GitHub Action output and upload recipe so
   policy evidence survives blocked runs.
+- A companion `audit-artifact-sha256` output for downstream verification of
+  retained audit bytes.
 - `agentowners explain` support for versioned Action audit artifacts, with
   provenance context and strict shape validation.
 - Action audit artifacts now preserve decision labels for faithful downstream

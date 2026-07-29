@@ -2,6 +2,7 @@
 
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import { createHash } from 'node:crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
@@ -265,8 +266,13 @@ export async function run(): Promise<void> {
     });
 
     const artifactPath = path.join(workspace, 'agentowners-decision.json');
-    await fs.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), 'utf8');
+    const artifactContents = JSON.stringify(auditRecord, null, 2);
+    await fs.writeFile(artifactPath, artifactContents, 'utf8');
     core.setOutput('audit-artifact', artifactPath);
+    core.setOutput(
+      'audit-artifact-sha256',
+      createHash('sha256').update(artifactContents, 'utf8').digest('hex'),
+    );
     core.info(`Audit artifact written to ${artifactPath}`);
 
     // 14. Fail if needed

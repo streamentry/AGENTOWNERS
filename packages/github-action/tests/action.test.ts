@@ -224,6 +224,10 @@ describe('GitHub Action — integration via mocks', () => {
       'audit-artifact',
       '/tmp/agentowners-decision.json',
     );
+    expect(mockCore.setOutput).toHaveBeenCalledWith(
+      'audit-artifact-sha256',
+      '3c5abefea6ec6443f89651a31476d5c8acbea943235dccd903783b1f6bc77d85',
+    );
   });
 
   it('maps issue comments to issue metadata and inspects the comment body', async () => {
@@ -334,6 +338,7 @@ describe('GitHub Action — integration via mocks', () => {
     mockCore.setOutput('risk-level', mockDecisionAllow.riskLevel);
     mockCore.setOutput('matched-rules', JSON.stringify([]));
     mockCore.setOutput('audit-artifact', '/tmp/agentowners-decision.json');
+    mockCore.setOutput('audit-artifact-sha256', 'a'.repeat(64));
 
     expect(mockCore.setOutput).toHaveBeenCalledWith('decision', 'allow');
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-score', '10');
@@ -342,6 +347,7 @@ describe('GitHub Action — integration via mocks', () => {
       'audit-artifact',
       '/tmp/agentowners-decision.json',
     );
+    expect(mockCore.setOutput).toHaveBeenCalledWith('audit-artifact-sha256', 'a'.repeat(64));
     expect(mockCore.setFailed).not.toHaveBeenCalled();
   });
 
@@ -609,10 +615,12 @@ describe('Action logic — pure unit tests', () => {
     setOutput('risk-level', decision.riskLevel);
     setOutput('matched-rules', JSON.stringify(decision.matchedRules.map((r) => r.name)));
     setOutput('audit-artifact', '/tmp/agentowners-decision.json');
+    setOutput('audit-artifact-sha256', 'a'.repeat(64));
     expect(setOutput).toHaveBeenCalledWith('decision', 'block');
     expect(setOutput).toHaveBeenCalledWith('risk-score', '90');
     expect(setOutput).toHaveBeenCalledWith('risk-level', 'critical');
     expect(setOutput).toHaveBeenCalledWith('matched-rules', '["block-workflows"]');
     expect(setOutput).toHaveBeenCalledWith('audit-artifact', '/tmp/agentowners-decision.json');
+    expect(setOutput).toHaveBeenCalledWith('audit-artifact-sha256', 'a'.repeat(64));
   });
 });

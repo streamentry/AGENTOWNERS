@@ -31,7 +31,7 @@ flowchart LR
   Decision --> Comment
   Decision --> Labels
   Decision --> Outputs
-  Decision --> AuditArtifact[Versioned audit artifact]
+  Decision --> AuditArtifact[Versioned audit artifact + SHA-256]
   Decision --> Status
 ```
 
@@ -49,7 +49,7 @@ sequenceDiagram
   Action->>Core: comment body as detection evidence
   Core-->>Action: decision
   Action->>GitHub: verdict and labels
-  Action-->>Runner: outputs, audit artifact, and status
+  Action-->>Runner: outputs, hashed audit artifact, and status
 ```
 
 ## Verification

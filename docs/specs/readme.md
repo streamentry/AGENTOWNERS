@@ -734,6 +734,8 @@ outputs:
     description: 'JSON array of matched rules'
   audit-artifact:
     description: 'Absolute path to the versioned agentowners-decision.json audit artifact'
+  audit-artifact-sha256:
+    description: 'SHA-256 digest of the exact audit artifact bytes written by the Action'
 ```
 
 Behavior:
