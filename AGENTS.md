@@ -116,6 +116,8 @@ scripts/
   capability-demo.mjs   — fail-closed capability manifest simulator and audit
   capability-demo.test.mjs — deterministic denial, budget, and redaction tests
   marketplace-metadata.mjs — Marketplace metadata and distribution parity gate
+  release-automation.mjs — fail-closed package publication and tag primitives
+  publish-packages.mjs / update-major-tag.mjs — guarded release entry points
   generate-json-schema.mjs   — regenerate or check the authoring schema
   verify-release.mjs         — version, export, CLI, and Action bundle checks
   verify-packed-packages.mjs — isolated npm install, audit, and runtime smoke checks

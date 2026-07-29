@@ -14,6 +14,7 @@ The roadmap is ordered by user risk removed, not feature count.
 - Dogfooded policy, contribution templates, and private vulnerability reporting
 - Stable policy examples and migration notes
 - Experimental capability manifest and deterministic denial/audit demonstration
+- Marketplace metadata parity and idempotent release preflight helpers
 
 ## Next: explainability and interoperability
 

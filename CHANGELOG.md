@@ -27,6 +27,8 @@ semantic versioning.
   fail-closed capability and hash-chained audit demonstration.
 - A tested Marketplace metadata gate covering YAML validity, listing identity,
   bundle paths, and root/package metadata parity.
+- Idempotent release helper primitives with exact-version registry preflight,
+  isolated npm cache verification, and stable-tag safety tests.
 
 ### Changed
 

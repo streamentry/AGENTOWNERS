@@ -99,6 +99,12 @@ egress, a token scope, and merge privilege. It is a simulator, not an OS
 sandbox or firewall; production adapters still need isolation and real
 credential, egress, identity, and log controls.
 
+Release readiness is independently checked with `pnpm verify:release`: it
+parses root and packaged Action metadata, checks their Marketplace-facing
+parity, and verifies the committed Node 24 bundle. This proves repository
+consistency only; Marketplace owner agreement, categories, 2FA, and public
+publication remain explicit maintainer actions in [the release runbook](docs/releasing.md).
+
 ## Configure a policy
 
 Add `.github/AGENTOWNERS.yml`:
