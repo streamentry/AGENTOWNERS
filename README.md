@@ -73,7 +73,8 @@ corepack enable
 pnpm install --frozen-lockfile
 pnpm build
 
-node packages/cli/dist/index.js init --profile strict-oss
+# Preview a starter profile without overwriting this repository's policy
+node packages/cli/dist/index.js init --profile strict-oss --dry-run
 node packages/cli/dist/index.js validate .github/AGENTOWNERS.yml
 node packages/cli/dist/index.js check --base main --head HEAD --mode enforcement
 ```

@@ -14,6 +14,9 @@ npm install --global @agent-owners/cli
 # Create a conservative starter policy
 agentowners init --profile strict-oss
 
+# Preview a profile without writing or overwriting a policy file
+agentowners init --profile strict-oss --dry-run
+
 # Reject malformed or misspelled policy fields
 agentowners validate .github/AGENTOWNERS.yml
 
