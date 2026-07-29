@@ -34228,6 +34228,19 @@ var capabilityAttemptSchema = capabilityAttemptBaseSchema.superRefine((attempt, 
     });
   }
 });
+var digestPattern = /^[a-f0-9]{64}$/;
+var policyDiffSchema = external_exports.object({
+  schemaVersion: external_exports.literal(1),
+  baseDigest: external_exports.string().regex(digestPattern),
+  proposedDigest: external_exports.string().regex(digestPattern),
+  identical: external_exports.boolean(),
+  changes: external_exports.array(
+    external_exports.object({
+      path: external_exports.string().min(1),
+      kind: external_exports.enum(["added", "removed", "changed"])
+    }).strict()
+  ).readonly()
+}).strict();
 
 // src/github.ts
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {

@@ -92,6 +92,7 @@ The project should ship as three things:
    - `agentowners init`
    - `agentowners validate`
    - `agentowners fingerprint`
+   - `agentowners policy-diff`
 
 Optional later:
 
@@ -848,7 +849,14 @@ agentowners fingerprint --commit HEAD
 Runs an explicit pre-PR contract against a Git range and returns versioned
 JSON. Policy, base, head, and actor are mandatory; identity is never inferred.
 
-### 17.7 `agentowners test`
+### 17.7 `agentowners policy-diff`
+
+Compares two valid policies without printing policy values. It returns stable
+SHA-256 fingerprints and sorted JSON Pointer paths with `added`, `removed`, or
+`changed` kinds. `--format json` emits the versioned machine contract and
+`--fail-on-change` exits `1` when any path differs.
+
+### 17.8 `agentowners test`
 
 Executes repository-owned policy fixtures without GitHub or network access.
 

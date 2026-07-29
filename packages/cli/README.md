@@ -41,6 +41,12 @@ agentowners check --base main --head HEAD --output sarif > agentowners.sarif
 # Inspect agent signals
 agentowners fingerprint --commit HEAD
 
+# Compare policy structure without printing policy values
+agentowners policy-diff \
+  --base .github/AGENTOWNERS.yml \
+  --proposed /tmp/AGENTOWNERS.yml \
+  --format json --fail-on-change
+
 # Evaluate a pre-dispatch capability manifest
 agentowners capabilities \
   --manifest fixtures/capabilities/AGENT_CAPABILITIES.json \
@@ -63,6 +69,11 @@ invalid command input, `65` for invalid policy data, `66` for invalid fixture
 data, and `70` for an unexpected internal failure. Use `--output json` for the
 versioned machine result. See the
 [fixture specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f13-policy-fixtures.md).
+
+`policy-diff` emits canonical base/proposed SHA-256 fingerprints and sorted
+JSON Pointer paths with `added`, `removed`, or `changed` kinds. It never emits
+policy values. Add `--fail-on-change` to return exit `1` when any path differs.
+See [F14](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f14-policy-diff.md).
 
 SARIF output is deterministic and contains only non-allow policy results.
 Approval decisions are warnings and blocked decisions are errors.

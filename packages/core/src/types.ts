@@ -102,6 +102,19 @@ export type AgentOwnersPolicy = {
   audit?: AuditConfig;
 };
 
+export type PolicyDiffChange = {
+  path: string;
+  kind: 'added' | 'removed' | 'changed';
+};
+
+export type PolicyDiff = {
+  schemaVersion: 1;
+  baseDigest: string;
+  proposedDigest: string;
+  identical: boolean;
+  changes: PolicyDiffChange[];
+};
+
 export type MatchedRule = {
   name: string;
   effect: 'allow' | 'require_approval' | 'block';

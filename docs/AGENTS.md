@@ -8,6 +8,7 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 ## Key Components
 
 - `specs/`: canonical product and feature requirements
+- `specs/f14-policy-diff.md`: value-free deterministic policy-change evidence
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
 - `philosophy.md`: durable design principles

@@ -46,6 +46,7 @@ packages/core/src/
   renderer.ts    — markdown verdict generation, audit JSON
   fixtures.ts    — strict portable fixture parsing and deterministic execution
   capabilities.ts — fail-closed capability manifests, evaluation, and audit hashing
+  policy-diff.ts  — value-free canonical policy fingerprints and structural diffs
   sarif.ts       — deterministic SARIF 2.1.0 rendering
   profiles.ts    — built-in policy profiles (minimal, strict-oss, security-sensitive)
   index.ts       — barrel export (all public API)
@@ -79,12 +80,14 @@ packages/cli/src/
   commands/self-check.ts — versioned pre-PR machine contract
   commands/test.ts  — portable policy fixture runner
   commands/capabilities.ts — capability manifest evaluation and audit output
+  commands/policy-diff.ts — deterministic value-free policy change evidence
 
 packages/cli/tests/
   check.test.ts      — SARIF output and invalid-format boundaries
   self-check.test.ts — output contract, exit codes, and hostile-ref coverage
   test-command.test.ts — fixture diagnostics, JSON output, and exit codes
   capabilities.test.ts — capability output and denial exit contracts
+  policy-diff.test.ts — stable, value-free policy change contracts
 
 packages/github-action/src/
   index.ts    — main action entry
@@ -105,6 +108,7 @@ docs/specs/
   readme.md           — full product specification (canonical requirements)
   f1-policy-schema.md through f11-agent-self-check.md — per-feature specs
   f13-policy-fixtures.md — portable executable policy-suite contract
+  f14-policy-diff.md — value-free deterministic policy diff contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
 docs/assets/          — maintained documentation and social-preview media

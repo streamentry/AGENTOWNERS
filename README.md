@@ -46,7 +46,7 @@ claim.
 | Package                       | Responsibility                                                          | Trust boundary                                            |
 | ----------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
 | `@agent-owners/core`          | Schema, detection, classification, evaluation, scoring, rendering       | Pure and stateless; no shell, network, clock, or database |
-| `@agent-owners/cli`           | Local policy creation, validation, fingerprinting, and Git-range checks | Git refs are passed as argv, never through a shell        |
+| `@agent-owners/cli`           | Local policy creation, validation, fingerprinting, policy diffs, and Git-range checks | Git refs are passed as argv, never through a shell        |
 | `@agent-owners/github-action` | Event ingestion, sticky verdicts, labels, audit output, CI status       | Least-privilege GitHub token permissions                  |
 
 The engine detects agent signals, classifies changed paths, infers actions,
@@ -275,6 +275,12 @@ agentowners test \
 
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
+
+# Review a policy change without printing policy values
+agentowners policy-diff \
+  --base .github/AGENTOWNERS.yml \
+  --proposed /tmp/AGENTOWNERS.yml \
+  --format json --fail-on-change
 ```
 
 `self-check` always uses explicit policy, refs, and actor inputs. It returns
@@ -286,6 +292,10 @@ modifies the repository.
 classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
+
+`policy-diff` compares two valid policies using canonical SHA-256 fingerprints
+and sorted JSON Pointer paths. It never prints policy values; use
+`--fail-on-change` when a CI or agent preflight must reject governance drift.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial

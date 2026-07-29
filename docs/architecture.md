@@ -22,6 +22,8 @@ flowchart LR
   G --> H[Markdown verdict]
   G --> I[Audit JSON]
   G --> J[CI exit status]
+  P --> K[Value-free policy diff]
+  K --> L[Stable fingerprints and changed paths]
 ```
 
 ## Component diagram
@@ -44,6 +46,9 @@ flowchart TB
   CLI --> CORE
   ACTION --> CORE
   CORE -. no network, shell, or state .-> CORE
+  POLICY --> DIFF[Policy diff]
+  CLI --> DIFF
+  DIFF --> CORE
 ```
 
 ## Sequence diagram
@@ -62,6 +67,11 @@ sequenceDiagram
   Action->>API: upsert verdict and labels
   Action-->>Event: outputs and optional failing status
 ```
+
+Policy-change evidence follows a separate pure path: the CLI loads two
+explicit policy files, the core canonicalizes and validates both, and the
+result contains only fingerprints and JSON Pointer change paths. It never
+prints policy values or dispatches an action.
 
 ## Trust boundaries
 

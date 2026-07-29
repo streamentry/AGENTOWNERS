@@ -21,6 +21,8 @@ avoid network or secret side effects unless their contract explicitly says so.
   they are not invoked by the current protected workflow until a maintainer
   integrates and reviews that change.
 - `verify-release.mjs` and `verify-packed-packages.mjs` check release artifacts.
+  The packed consumer smoke test also exercises the installed value-free
+  `policy-diff` contract.
 
 ## Flow
 

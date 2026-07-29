@@ -36,6 +36,9 @@ semantic versioning.
 - Reusable capability validation/evaluation is now exported from `@agent-owners/core`
   and exposed through `agentowners capabilities` with stable output and
   `--fail-on-deny`.
+- Deterministic `diffPolicies()` / `hashPolicy()` evidence and the
+  `agentowners policy-diff` CLI command report policy fingerprints and changed
+  paths without printing policy values.
 
 ### Changed
 

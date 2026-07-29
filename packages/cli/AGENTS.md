@@ -18,6 +18,7 @@ from interpreting a ref that begins with `-` as an option.
 - `src/commands/self-check.ts`: versioned machine-readable pre-PR contract
 - `src/commands/test.ts`: portable policy fixture execution
 - `src/commands/capabilities.ts`: capability manifest evaluation and audit output
+- `src/commands/policy-diff.ts`: value-free policy comparison and CI exit contract
 
 ## Diagrams
 
@@ -99,6 +100,8 @@ Run `pnpm --filter @agent-owners/cli test`, `pnpm build`, and
 `pnpm verify:release`.
 The `capabilities` command performs no dispatch; use `--fail-on-deny` when a
 caller needs a nonzero result for denied attempts.
+The `policy-diff` command reads only the two explicit policy paths, never emits
+policy values, and uses `--fail-on-change` for CI drift enforcement.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.

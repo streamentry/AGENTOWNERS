@@ -3,7 +3,7 @@
 ## Objective
 
 Implement the `agentowners` CLI commands: init, validate, check, explain,
-fingerprint, and self-check.
+fingerprint, policy-diff, and self-check.
 
 ## Package
 
@@ -113,6 +113,21 @@ Output:
 Provides the versioned, machine-readable pre-PR contract defined in
 `docs/specs/f11-agent-self-check.md`. Policy, base, head, and actor are explicit
 inputs. The command never calls a model, network, or GitHub API.
+
+### `agentowners policy-diff`
+
+Compares two valid policy files without printing policy values.
+
+Options:
+
+- `--base <path>` — base policy file
+- `--proposed <path>` — proposed policy file
+- `--format <format>` — `text` (default) or `json`
+- `--fail-on-change` — exit `1` when any policy path differs
+
+The output contains canonical SHA-256 fingerprints and sorted JSON Pointer
+paths with `added`, `removed`, or `changed` kinds. Invalid input exits `64`,
+invalid policies exit `65`, and unexpected failures exit `70`.
 Agent detection result:
   Confidence: likely
   Signals:
@@ -137,6 +152,7 @@ Agent detection result:
 - `packages/cli/src/commands/explain.ts`
 - `packages/cli/src/commands/fingerprint.ts`
 - `packages/cli/src/commands/self-check.ts`
+- `packages/cli/src/commands/policy-diff.ts`
 - `packages/cli/src/git.ts` — git helper functions
 - `packages/cli/tests/` — unit tests for each command
 
@@ -149,3 +165,4 @@ Agent detection result:
 - `check` returns correct exit code by mode
 - `fingerprint` detects Co-Authored-By signals
 - `self-check` covers every public exit code and hostile Git refs
+- `policy-diff` is stable across YAML key order and never prints policy values

@@ -21,6 +21,8 @@ network calls, clocks, randomness, or persistent state.
 - `sarif.ts`: deterministic SARIF 2.1.0 output
 - `capabilities.ts`: strict pre-dispatch capability validation, evaluation, and
   hash-chained audit output; no filesystem, network, or dispatch side effects
+- `policy-diff.ts`: canonical policy fingerprints and value-free structural
+  diffs; no filesystem, network, or policy-value output
 
 ## Diagrams
 
@@ -90,6 +92,8 @@ Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
 Capability contract changes must keep `capabilities.test.ts` and the checked-in
 identity-bound fixture behavior deterministic.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
+Policy-diff changes must keep `tests/policy-diff.test.ts` deterministic and
+must not add policy values to the diff contract.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.
 For safety invariants, add a case to the adversarial corpus and prove it fails
