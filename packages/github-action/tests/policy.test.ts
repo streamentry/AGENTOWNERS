@@ -1,9 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  buildPolicyEvidence,
   loadTrustedPolicy,
   normalizeRepositoryPolicyPath,
   selectTrustedPolicyRef,
 } from '../src/policy.js';
+import { hashPolicy } from '@agent-owners/core';
+
+const evidencePolicy = { version: 1 as const, defaults: { unknown_agent: 'block' as const } };
 
 describe('selectTrustedPolicyRef', () => {
   it('uses the immutable base SHA for pull request events', () => {
@@ -25,6 +29,15 @@ describe('selectTrustedPolicyRef', () => {
     expect(() => selectTrustedPolicyRef('issues', 'irrelevant-sha', undefined)).toThrow(
       'Missing trusted repository ref',
     );
+  });
+});
+
+describe('buildPolicyEvidence', () => {
+  it('binds the canonical policy digest to the trusted ref', () => {
+    expect(buildPolicyEvidence(evidencePolicy, 'base-sha')).toEqual({
+      policyDigest: hashPolicy(evidencePolicy),
+      policyRef: 'base-sha',
+    });
   });
 });
 

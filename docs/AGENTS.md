@@ -9,6 +9,9 @@ positioning. Time-sensitive ecosystem claims require dated official sources.
 
 - `specs/`: canonical product and feature requirements
 - `specs/f14-policy-diff.md`: value-free deterministic policy-change evidence
+- `specs/f7-verdict-renderer.md` and `specs/f9-github-action.md`: policy-bound
+  audit evidence and Action outputs
+- `specs/f15-policy-bound-audit.md`: versioned policy provenance contract
 - `architecture.md`: component and trust-boundary design
 - `ecosystem.md`: source-backed control-surface comparison
 - `philosophy.md`: durable design principles

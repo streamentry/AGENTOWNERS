@@ -33092,6 +33092,7 @@ var {
 
 // ../core/dist/index.mjs
 var import_picomatch = __toESM(require_picomatch2(), 1);
+var import_crypto = require("crypto");
 var agentActionSchema = external_exports.enum([
   "open_pr",
   "update_pr",
@@ -33769,10 +33770,21 @@ Unrecognized decision effect.`;
   return wrapWithMarker(content);
 }
 function renderAuditJson(context3) {
-  const { actor, repository, event, agentDetection, decision, changedFiles } = context3;
+  const {
+    actor,
+    policyDigest,
+    policyRef,
+    repository,
+    event,
+    agentDetection,
+    decision,
+    changedFiles
+  } = context3;
   return {
     version: 1,
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    ...policyDigest !== void 0 ? { policyDigest } : {},
+    ...policyRef !== void 0 ? { policyRef } : {},
     repository,
     event,
     actor,
@@ -34241,6 +34253,21 @@ var policyDiffSchema = external_exports.object({
     }).strict()
   ).readonly()
 }).strict();
+function stablePolicyStringify(value) {
+  if (value === null || typeof value !== "object") {
+    const serialized = JSON.stringify(value);
+    if (serialized === void 0) throw new TypeError("policy contains an unsupported value");
+    return serialized;
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stablePolicyStringify).join(",")}]`;
+  }
+  const record = value;
+  return `{${Object.keys(record).filter((key) => record[key] !== void 0).sort().map((key) => `${JSON.stringify(key)}:${stablePolicyStringify(record[key])}`).join(",")}}`;
+}
+function hashPolicy(policy) {
+  return (0, import_crypto.createHash)("sha256").update(stablePolicyStringify(policy)).digest("hex");
+}
 
 // src/github.ts
 async function getRepositoryFileContent(octokit, owner, repo, filePath, ref) {
@@ -34377,6 +34404,9 @@ function normalizeRepositoryPolicyPath(policyPath) {
   }
   return normalized;
 }
+function buildPolicyEvidence(policy, policyRef) {
+  return { policyDigest: hashPolicy(policy), policyRef };
+}
 async function loadTrustedPolicy(octokit, owner, repo, policyPath, ref) {
   if (!ref) throw new Error("Missing trusted repository ref for policy load.");
   const repositoryPath = normalizeRepositoryPolicyPath(policyPath);
@@ -34504,6 +34534,7 @@ async function run() {
       policyPath,
       trustedPolicyRef
     );
+    const { policyDigest, policyRef } = buildPolicyEvidence(policy, trustedPolicyRef);
     if (!eventType) {
       warning("Could not determine event type. Skipping.");
       return;
@@ -34570,8 +34601,12 @@ async function run() {
         decision.matchedRules.map((r) => r.name)
       )
     );
+    setOutput("policy-digest", policyDigest);
+    setOutput("policy-ref", policyRef);
     const auditRecord = renderAuditJson({
       actor,
+      policyDigest,
+      policyRef,
       repository: `${owner}/${repo}`,
       event: eventName,
       agentDetection: {

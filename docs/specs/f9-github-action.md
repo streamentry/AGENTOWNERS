@@ -58,6 +58,10 @@ outputs:
     description: "low | medium | high | critical"
   matched-rules:
     description: "JSON array of matched rules"
+  policy-digest:
+    description: "Canonical SHA-256 digest of the policy used for this decision"
+  policy-ref:
+    description: "Immutable Git ref used to load the policy used for this decision"
 
 runs:
   using: node24
@@ -108,6 +112,11 @@ Create labels if they don't exist (with sensible colors).
 
 ## Audit Artifact
 Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
+The record includes the canonical SHA-256 digest of the evaluated policy and
+the trusted Git ref used to load it. For pull requests this is the immutable
+base SHA; for issue events it is the repository's default branch ref. The same values are exposed as
+`policy-digest` and `policy-ref` outputs so downstream evidence can bind a
+decision to the exact policy revision rather than only to the artifact bytes.
 
 ## Tests (`packages/github-action/tests/`)
 - PR opened event → fetches files, evaluates, posts comment

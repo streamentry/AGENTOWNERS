@@ -43,7 +43,7 @@ packages/core/src/
   actions.ts     — action inference from GitHub event types
   evaluator.ts   — event-specific rule evaluation, decision logic, default policy
   scoring.ts     — deterministic risk scoring 0–100
-  renderer.ts    — markdown verdict generation, audit JSON
+  renderer.ts    — markdown verdict generation, audit JSON, policy evidence binding
   fixtures.ts    — strict portable fixture parsing and deterministic execution
   capabilities.ts — fail-closed capability manifests, evaluation, and audit hashing
   policy-diff.ts  — value-free canonical policy fingerprints and structural diffs
@@ -93,6 +93,7 @@ packages/github-action/src/
   index.ts    — main action entry
   github.ts   — GitHub API helpers (PR files, PR metadata)
   comment.ts  — sticky comment upsert (VERDICT_MARKER)
+  policy.ts   — trusted policy loading and policy evidence binding
 
 .github/agents/
   policy-engineer.agent.md — tests-first implementation specialist
@@ -109,6 +110,7 @@ docs/specs/
   f1-policy-schema.md through f11-agent-self-check.md — per-feature specs
   f13-policy-fixtures.md — portable executable policy-suite contract
   f14-policy-diff.md — value-free deterministic policy diff contract
+  f15-policy-bound-audit.md — policy digest and trusted-ref evidence contract
 
 docs/ecosystem.md     — dated control-surface comparison and product boundaries
 docs/assets/          — maintained documentation and social-preview media

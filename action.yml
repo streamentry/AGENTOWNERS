@@ -48,6 +48,10 @@ outputs:
     description: "Risk level: low | medium | high | critical"
   matched-rules:
     description: JSON array of matched rule names
+  policy-digest:
+    description: Canonical SHA-256 digest of the policy used for this decision
+  policy-ref:
+    description: Trusted Git ref used to load the policy used for this decision
 
 runs:
   using: node24

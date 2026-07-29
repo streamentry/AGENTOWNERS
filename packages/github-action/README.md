@@ -26,4 +26,6 @@ moving major-version tag.
 
 The Action uses Node 24, requests no administrative or secrets-reading
 permission, and writes `agentowners-decision.json` for downstream audit
-artifact upload.
+artifact upload. The artifact and the `policy-digest` / `policy-ref` outputs
+bind each decision to the canonical policy content and trusted Git ref used to
+evaluate it.

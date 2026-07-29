@@ -303,6 +303,12 @@ fingerprints, and repository-relative locations are stable across equivalent
 runs. Upload the file with `github/codeql-action/upload-sarif@v4` where GitHub
 code scanning is available.
 
+The GitHub Action also emits `policy-digest` and `policy-ref` outputs and binds
+the same values into its audit artifact. Together with the artifact SHA-256,
+they let a downstream verifier distinguish “this file was not modified” from
+the stronger claim “this decision was produced from this exact trusted policy
+revision.”
+
 ---
 
 ## Policy profiles

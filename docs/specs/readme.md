@@ -733,6 +733,10 @@ outputs:
     description: 'low | medium | high | critical'
   matched-rules:
     description: 'JSON array of matched rules'
+  policy-digest:
+    description: 'Canonical SHA-256 digest of the policy used for this decision'
+  policy-ref:
+    description: 'Trusted Git ref used to load the policy used for this decision'
 ```
 
 Behavior:
@@ -746,6 +750,7 @@ Behavior:
   - evaluate policy
   - post or update a sticky comment
   - optionally apply labels
+  - emit the canonical policy digest and trusted policy ref
   - fail check if decision is block
 
 - On issue events:

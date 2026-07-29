@@ -41,6 +41,8 @@ semantic versioning.
   paths without printing policy values.
 - `agentowners self-check` now includes the canonical policy digest in success
   output so pre-PR evidence can be bound to the policy it evaluated.
+- GitHub Action audit records now include the canonical policy digest and
+  trusted policy ref, with matching `policy-digest` and `policy-ref` outputs.
 
 ### Changed
 

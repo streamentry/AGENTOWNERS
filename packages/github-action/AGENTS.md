@@ -8,7 +8,7 @@ artifact and must be regenerated, never hand-edited.
 
 ## Key components
 
-- `src/index.ts`: orchestration and outputs
+- `src/index.ts`: orchestration, policy evidence binding, and outputs
 - `src/github.ts`: event metadata adapter
 - `src/policy.ts`: repository-relative policy validation and trusted-ref loading
 - `src/comment.ts`: sticky verdict upsert
@@ -32,6 +32,9 @@ flowchart LR
   Decision --> Comment
   Decision --> Labels
   Decision --> Outputs
+  TrustedPolicy --> Evidence[Policy digest and trusted ref]
+  Evidence --> Outputs
+  Evidence --> Audit[Audit artifact]
   Decision --> Status
 ```
 

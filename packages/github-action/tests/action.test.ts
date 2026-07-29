@@ -88,6 +88,7 @@ const mockDecisionBlock = {
 
 vi.mock('@agent-owners/core', () => ({
   loadPolicyText: vi.fn().mockReturnValue({ version: 1, rules: [], defaults: {} }),
+  hashPolicy: vi.fn().mockReturnValue('a'.repeat(64)),
   classifyFiles: vi.fn().mockReturnValue({
     docsOnly: false,
     testsOnly: false,
@@ -218,6 +219,12 @@ describe('GitHub Action — integration via mocks', () => {
           prTitle: undefined,
           prBody: undefined,
         }),
+      );
+      expect(core.hashPolicy).toHaveBeenCalled();
+      expect(mockCore.setOutput).toHaveBeenCalledWith('policy-digest', 'a'.repeat(64));
+      expect(mockCore.setOutput).toHaveBeenCalledWith('policy-ref', 'main');
+      expect(core.renderAuditJson).toHaveBeenCalledWith(
+        expect.objectContaining({ policyDigest: 'a'.repeat(64), policyRef: 'main' }),
       );
     });
   });

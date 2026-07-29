@@ -17,7 +17,7 @@ import type { GitHubEventType } from '@agent-owners/core';
 import { getPRFiles, getPRMetadata, getIssueMetadata } from './github.js';
 import { upsertVerdictComment } from './comment.js';
 import { requireGitHubToken } from './config.js';
-import { loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
+import { buildPolicyEvidence, loadTrustedPolicy, selectTrustedPolicyRef } from './policy.js';
 
 export async function run(): Promise<void> {
   try {
@@ -161,6 +161,7 @@ export async function run(): Promise<void> {
       policyPath,
       trustedPolicyRef,
     );
+    const { policyDigest, policyRef } = buildPolicyEvidence(policy, trustedPolicyRef);
 
     if (!eventType) {
       core.warning('Could not determine event type. Skipping.');
@@ -250,10 +251,14 @@ export async function run(): Promise<void> {
         decision.matchedRules.map((r: import('@agent-owners/core').MatchedRule) => r.name),
       ),
     );
+    core.setOutput('policy-digest', policyDigest);
+    core.setOutput('policy-ref', policyRef);
 
     // 13. Write audit artifact
     const auditRecord = renderAuditJson({
       actor,
+      policyDigest,
+      policyRef,
       repository: `${owner}/${repo}`,
       event: eventName,
       agentDetection: {

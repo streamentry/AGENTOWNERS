@@ -15,7 +15,7 @@ network calls, clocks, randomness, or persistent state.
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
 - `scoring.ts`: deterministic risk score
-- `renderer.ts`: Markdown and audit output
+- `renderer.ts`: Markdown and audit output, including optional policy evidence
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
 - `fixtures.ts`: strict portable suites and assertion comparison
 - `sarif.ts`: deterministic SARIF 2.1.0 output
