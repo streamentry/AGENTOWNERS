@@ -58,6 +58,8 @@ outputs:
     description: "low | medium | high | critical"
   matched-rules:
     description: "JSON array of matched rules"
+  audit-artifact:
+    description: "Absolute path to the versioned agentowners-decision.json audit artifact"
 
 runs:
   using: node24
@@ -107,7 +109,21 @@ Apply `labelsToApply` from Decision to the PR/issue.
 Create labels if they don't exist (with sensible colors).
 
 ## Audit Artifact
-Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
+Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as an
+artifact, and expose its exact path through the `audit-artifact` output. A
+consumer should use `if: ${{ always() }}` on the upload step so blocked policy
+decisions do not discard the evidence.
+
+```yaml
+- id: agentowners
+  uses: streamentry/AGENTOWNERS@v0
+- if: ${{ always() }}
+  uses: actions/upload-artifact@v4
+  with:
+    name: agentowners-decision
+    path: ${{ steps.agentowners.outputs.audit-artifact }}
+    if-no-files-found: error
+```
 
 ## Tests (`packages/github-action/tests/`)
 - PR opened event → fetches files, evaluates, posts comment

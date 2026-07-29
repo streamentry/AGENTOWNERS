@@ -34509,6 +34509,7 @@ async function run() {
     });
     const artifactPath = path2.join(workspace, "agentowners-decision.json");
     await fs3.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), "utf8");
+    setOutput("audit-artifact", artifactPath);
     info(`Audit artifact written to ${artifactPath}`);
     if (decision.effect === "block" && failOnBlock) {
       setFailed("AGENTOWNERS: action blocked by policy.");

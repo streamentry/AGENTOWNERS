@@ -220,6 +220,10 @@ describe('GitHub Action — integration via mocks', () => {
         }),
       );
     });
+    expect(mockCore.setOutput).toHaveBeenCalledWith(
+      'audit-artifact',
+      '/tmp/agentowners-decision.json',
+    );
   });
 
   it('maps issue comments to issue metadata and inspects the comment body', async () => {
@@ -329,10 +333,15 @@ describe('GitHub Action — integration via mocks', () => {
     mockCore.setOutput('risk-score', String(mockDecisionAllow.riskScore));
     mockCore.setOutput('risk-level', mockDecisionAllow.riskLevel);
     mockCore.setOutput('matched-rules', JSON.stringify([]));
+    mockCore.setOutput('audit-artifact', '/tmp/agentowners-decision.json');
 
     expect(mockCore.setOutput).toHaveBeenCalledWith('decision', 'allow');
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-score', '10');
     expect(mockCore.setOutput).toHaveBeenCalledWith('risk-level', 'low');
+    expect(mockCore.setOutput).toHaveBeenCalledWith(
+      'audit-artifact',
+      '/tmp/agentowners-decision.json',
+    );
     expect(mockCore.setFailed).not.toHaveBeenCalled();
   });
 
@@ -599,9 +608,11 @@ describe('Action logic — pure unit tests', () => {
     setOutput('risk-score', String(decision.riskScore));
     setOutput('risk-level', decision.riskLevel);
     setOutput('matched-rules', JSON.stringify(decision.matchedRules.map((r) => r.name)));
+    setOutput('audit-artifact', '/tmp/agentowners-decision.json');
     expect(setOutput).toHaveBeenCalledWith('decision', 'block');
     expect(setOutput).toHaveBeenCalledWith('risk-score', '90');
     expect(setOutput).toHaveBeenCalledWith('risk-level', 'critical');
     expect(setOutput).toHaveBeenCalledWith('matched-rules', '["block-workflows"]');
+    expect(setOutput).toHaveBeenCalledWith('audit-artifact', '/tmp/agentowners-decision.json');
   });
 });

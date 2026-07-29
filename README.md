@@ -151,15 +151,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: streamentry/AGENTOWNERS@v0
+      - id: agentowners
+        uses: streamentry/AGENTOWNERS@v0
         with:
           policy-path: '.github/AGENTOWNERS.yml'
           mode: 'both'
           fail-on-block: 'true'
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentowners-decision
+          path: ${{ steps.agentowners.outputs.audit-artifact }}
+          if-no-files-found: error
 ```
 
 Open an agent-generated PR and inspect the verdict before switching from
-observation to enforcement.
+observation to enforcement. The upload step retains the versioned audit record
+even when policy enforcement fails the Action.
 
 ---
 

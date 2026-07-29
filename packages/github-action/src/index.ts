@@ -266,6 +266,7 @@ export async function run(): Promise<void> {
 
     const artifactPath = path.join(workspace, 'agentowners-decision.json');
     await fs.writeFile(artifactPath, JSON.stringify(auditRecord, null, 2), 'utf8');
+    core.setOutput('audit-artifact', artifactPath);
     core.info(`Audit artifact written to ${artifactPath}`);
 
     // 14. Fail if needed
