@@ -186,6 +186,7 @@ These are immutable safety rules. Never change them:
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |
+| Git path framing | Changed paths use NUL delimiters and retain valid UTF-8 exactly; invalid records fail closed |
 
 The experimental capability boundary is specified in `AGENT_CAPABILITIES.md`.
 Its demo is deliberately non-runtime: it makes no network calls, reads no real
@@ -277,6 +278,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 - [ ] No `eval`, `new Function`, or dynamic `require` from policy input
 - [ ] No shell execution with user-controlled strings
 - [ ] Git subprocesses use argv APIs such as `execFileSync`, never interpolated commands
+- [ ] Git path lists use NUL delimiters; never parse pathnames by line
 - [ ] GitHub Action permissions are `contents: read`, `pull-requests: write`, `issues: write` only
 
 ## Generated release artifacts
@@ -313,9 +315,11 @@ These are roadmap items for v2+ (see spec section 27).
 2. **Mutating `MatchedRule`** — return new objects, never mutate
 3. **Changing decision priority** — `block > require_approval > allow` is immutable
 4. **Printing secret values** — always redact with `[REDACTED]`
-5. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
-6. **Skipping barrel export** — always add new exports to `src/index.ts`
-7. **Writing Git config in tests** — pass fixture identity through the commit
+5. **Line-splitting Git paths** — legal pathnames may contain newlines; request
+   `-z` output and parse NUL-delimited records
+6. **Adding network calls to `@agent-owners/core`** — core is pure/stateless
+7. **Skipping barrel export** — always add new exports to `src/index.ts`
+8. **Writing Git config in tests** — pass fixture identity through the commit
    subprocess environment; never mutate contributor repository configuration
 
 ## Roadmap hooks (design for these, don't build yet)

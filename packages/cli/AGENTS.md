@@ -6,6 +6,9 @@ The CLI adapts local Git state to the pure core engine. Git refs are untrusted
 input and must be passed as argv through `execFileSync`, never through a shell.
 Place refs after `--end-of-options`; argv separation alone does not stop Git
 from interpreting a ref that begins with `-` as an option.
+Changed paths are opaque repository data. Request `-z` output and parse NUL
+records; never trim paths or split them on lines. Reject malformed framing and
+bytes that cannot round-trip through UTF-8.
 
 ## Key components
 
@@ -39,7 +42,7 @@ sequenceDiagram
   participant Core
   User->>CLI: check --base --head
   CLI->>Git: argv with option boundary
-  Git-->>CLI: files and commits
+  Git-->>CLI: NUL-framed files and commit text
   CLI->>Core: evaluation input
   Core-->>CLI: decision
   CLI-->>User: Markdown, JSON, or SARIF and exit code
@@ -101,4 +104,6 @@ The `capabilities` command performs no dispatch; use `--fail-on-deny` when a
 caller needs a nonzero result for denied attempts.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
+Path-boundary fixtures must use real Git repositories and legal adversarial
+pathnames, including embedded newlines.
 Unknown output formats must fail before reading Git.

@@ -10,7 +10,8 @@ network calls, clocks, randomness, or persistent state.
 - `types.ts`: public contract
 - `schema.ts`: untrusted YAML validation
 - `json-schema.ts`: deterministic authoring schema derived from Zod
-- `classifier.ts`: path and secret classification
+- `classifier.ts`: opaque path and secret classification, including legal
+  newline characters
 - `detection.ts`: actor, commit, PR, issue, and comment evidence
 - `actions.ts`: event-to-action inference
 - `evaluator.ts`: event-specific rule matching, precedence, and decision construction
@@ -64,7 +65,7 @@ flowchart TB
 sequenceDiagram
   participant Adapter
   participant Core
-  Adapter->>Core: normalized PR, issue, or comment input
+  Adapter->>Core: opaque repository paths and normalized event metadata
   Core->>Core: match event-specific metadata
   Core->>Core: pure evaluation
   Core-->>Adapter: immutable decision

@@ -67,7 +67,8 @@ export type FilesClassification = {
 ## Functions
 
 ### `classifyFile(filePath: string): FileClassification`
-Classify a single file path against all category patterns using `minimatch`.
+Classify a single, opaque repository path against all category patterns using
+`picomatch`.
 
 ### `classifyFiles(filePaths: string[]): FilesClassification`
 Classify a list of changed files. Compute aggregate properties:
@@ -79,7 +80,9 @@ Classify a list of changed files. Compute aggregate properties:
 Scan diff content for secret-like patterns. Return list of matched pattern names (NOT the values). Never include the actual secret value in output — redact with `[REDACTED]`.
 
 ### `matchGlob(pattern: string, filePath: string): boolean`
-Wrapper around `minimatch` with consistent options (`{ dot: true, matchBase: false }`).
+Wrapper around `picomatch` with consistent options (`{ dot: true, flags: 's' }`).
+The dot-all flag lets wildcards cover legal newline characters in Git
+pathnames. `/` remains the path-segment boundary.
 
 ### `matchGlobs(patterns: string[], filePath: string): boolean`
 Returns true if any pattern matches.
@@ -97,3 +100,4 @@ Returns true if any pattern matches.
 - Secret pattern detection in diff content
 - Secret file detection for `.env`
 - `matchGlob` handles `**` patterns correctly
+- Workflow paths containing newlines remain classified as workflows

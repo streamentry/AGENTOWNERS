@@ -28,6 +28,11 @@ describe('classifyFile', () => {
     expect(r.isWorkflow).toBe(true);
   });
 
+  it('classifies workflow paths containing legal newline characters', () => {
+    const r = classifyFile('.github/workflows/stealth\n.yml');
+    expect(r.isWorkflow).toBe(true);
+  });
+
   it('classifies package.json as dependency', () => {
     const r = classifyFile('package.json');
     expect(r.isDependency).toBe(true);
@@ -122,5 +127,9 @@ describe('matchGlob', () => {
   it('handles dot files with dot: true option', () => {
     expect(matchGlob('.env.*', '.env.local')).toBe(true);
     expect(matchGlob('.github/workflows/**', '.github/workflows/ci.yml')).toBe(true);
+  });
+
+  it('matches newline characters as pathname content', () => {
+    expect(matchGlob('.github/workflows/**', '.github/workflows/stealth\n.yml')).toBe(true);
   });
 });

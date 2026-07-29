@@ -69,7 +69,9 @@ Options:
 Behavior:
 
 1. Load policy
-2. Get changed files via `git diff --name-only <base> <head>`
+2. Get changed files via `git diff --name-only -z <base> <head>` and parse
+   NUL-delimited paths without trimming or line splitting. Reject malformed
+   framing and path bytes that cannot round-trip through UTF-8.
 3. Classify files
 4. Infer actions
 5. Detect agent (from actor flag + git log)
@@ -125,7 +127,9 @@ Agent detection result:
 - Use `commander` for argument parsing
 - Use `chalk` or `picocolors` for colored output
 - Exit code handling via `process.exit()`
-- All git operations via `child_process.execSync` or `execa`
+- All Git operations use `child_process.execFileSync` with explicit argv
+- Changed paths use NUL delimiters because legal Git pathnames may contain
+  newlines
 - Never run shell commands from policy content (security)
 
 ## Files
@@ -149,3 +153,5 @@ Agent detection result:
 - `check` returns correct exit code by mode
 - `fingerprint` detects Co-Authored-By signals
 - `self-check` covers every public exit code and hostile Git refs
+- Real Git fixtures preserve adversarial pathname characters through
+  classification

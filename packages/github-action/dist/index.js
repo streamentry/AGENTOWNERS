@@ -33297,7 +33297,7 @@ var SECRET_DIFF_PATTERNS = [
   "TOKEN="
 ];
 function matchGlob(pattern, filePath) {
-  return import_picomatch.default.isMatch(filePath, pattern, { dot: true });
+  return import_picomatch.default.isMatch(filePath, pattern, { dot: true, flags: "s" });
 }
 function matchGlobs(patterns, filePath) {
   return patterns.some((p) => matchGlob(p, filePath));

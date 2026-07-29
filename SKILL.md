@@ -43,7 +43,9 @@ Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted
 input reach a shell. For GitHub pull requests, load policy from the immutable
 base commit. For CLI Git operations, treat refs as hostile options and use
-`--end-of-options`.
+`--end-of-options`. Request changed paths with `-z` and parse NUL-delimited
+records so legal newlines and other unusual pathname characters remain opaque.
+Reject malformed framing and path bytes that cannot round-trip through UTF-8.
 Tests must not mutate contributor Git configuration; scope fixture identity to
 the exact subprocess that needs it.
 
