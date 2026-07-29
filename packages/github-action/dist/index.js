@@ -33096,6 +33096,7 @@ var {
 var import_picomatch = __toESM(require_picomatch2(), 1);
 var agentActionSchema = external_exports.enum([
   "open_pr",
+  "open_issue",
   "update_pr",
   "comment",
   "review_comment",
@@ -33541,6 +33542,7 @@ function inferActions(input) {
       break;
     }
     case "issues.opened": {
+      actions.add("open_issue");
       break;
     }
   }

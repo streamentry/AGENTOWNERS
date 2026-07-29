@@ -38,7 +38,7 @@ Implement the TypeScript types and Zod schema for the AGENTOWNERS policy format.
 ```
 
 ### AgentAction (union type)
-All 18 actions: open_pr, update_pr, comment, review_comment, approve_pr, request_changes, label_issue, close_issue, reopen_issue, assign_issue, edit_workflows, modify_tests, modify_docs, modify_dependencies, modify_auth, modify_infra, touch_secrets, change_permissions, merge_pr
+All 20 actions: open_pr, open_issue, update_pr, comment, review_comment, approve_pr, request_changes, label_issue, close_issue, reopen_issue, assign_issue, edit_workflows, modify_tests, modify_docs, modify_dependencies, modify_auth, modify_infra, touch_secrets, change_permissions, merge_pr
 
 ### Rule
 ```ts

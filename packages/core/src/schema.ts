@@ -3,6 +3,7 @@ import type { AgentOwnersPolicy } from './types.js';
 
 export const agentActionSchema = z.enum([
   'open_pr',
+  'open_issue',
   'update_pr',
   'comment',
   'review_comment',

@@ -39,6 +39,9 @@ Infer what AgentActions are being performed based on GitHub event context and ch
 ### issues reopened
 - Always: `reopen_issue`
 
+### issues opened
+- Always: `open_issue`
+
 ## Types
 
 ```ts
@@ -92,4 +95,5 @@ mean that tests changed.
 - Review approved → `[review_comment, approve_pr]`
 - Review changes_requested → `[review_comment, request_changes]`
 - Issue labeled → `[label_issue]`
+- Issue opened → `[open_issue]`
 - No duplicates in output

@@ -127,6 +127,7 @@ export function inferActions(input: ActionInferenceInput): AgentAction[] {
       break;
     }
     case 'issues.opened': {
+      actions.add('open_issue');
       break;
     }
   }

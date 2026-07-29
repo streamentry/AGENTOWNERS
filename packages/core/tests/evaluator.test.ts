@@ -309,6 +309,29 @@ describe('evaluatePolicy', () => {
     );
   });
 
+  it('can block issue creation independently from issue comments', () => {
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      agents: {
+        copilot: {
+          match: { actors: ['github-copilot[bot]'] },
+          blocked: ['open_issue'],
+        },
+      },
+    };
+    const decision = evaluatePolicy(
+      baseInput({
+        policy,
+        actor: 'github-copilot[bot]',
+        agentDetection: { confidence: 'confirmed', agentName: 'copilot', signals: [] },
+        detectedActions: ['open_issue'],
+      }),
+    );
+
+    expect(decision.effect).toBe('block');
+    expect(decision.matchedRules[0]?.matchedConditions).toContain('actions: open_issue');
+  });
+
   it('enforces approval actions from the matched agent policy', () => {
     const policy: AgentOwnersPolicy = {
       version: 1,

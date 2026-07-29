@@ -20,7 +20,7 @@ repository policy.
 
 ## Why
 
-AI agents can now open PRs, comment on issues, review code, and trigger automation in your repository. The missing layer is not another AI reviewer. It is **repo-native governance**:
+AI agents can now open PRs, open issues, comment on issues, review code, and trigger automation in your repository. The missing layer is not another AI reviewer. It is **repo-native governance**:
 
 - Which agent is acting?
 - What action is it trying to perform?
@@ -349,7 +349,7 @@ Priority: `block > require_approval > allow`
 
 AGENTOWNERS infers these actions from GitHub events and changed files:
 
-`open_pr` `update_pr` `comment` `review_comment` `approve_pr` `request_changes`
+`open_pr` `open_issue` `update_pr` `comment` `review_comment` `approve_pr` `request_changes`
 `label_issue` `close_issue` `reopen_issue` `assign_issue` `edit_workflows`
 `modify_tests` `modify_docs` `modify_dependencies` `modify_auth` `modify_infra`
 `touch_secrets` `change_permissions` `merge_pr`

@@ -397,6 +397,7 @@ describe('runPolicyFixtureSuite', () => {
           expect: {
             decision: 'require_approval',
             matched_rules: ['Escalate security issues'],
+            detected_actions: ['open_issue'],
           },
         },
       ],

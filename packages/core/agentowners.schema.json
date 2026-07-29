@@ -66,6 +66,7 @@
                   "type": "string",
                   "enum": [
                     "open_pr",
+                    "open_issue",
                     "update_pr",
                     "comment",
                     "review_comment",
@@ -122,6 +123,28 @@
                       "type": "array",
                       "contains": {
                         "const": "open_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "requires_approval"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_issue"
+                      }
+                    },
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_issue"
                       }
                     }
                   }
@@ -540,6 +563,28 @@
                       "type": "array",
                       "contains": {
                         "const": "open_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "allowed",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_issue"
                       }
                     }
                   }
@@ -958,6 +1003,28 @@
                       "type": "array",
                       "contains": {
                         "const": "open_pr"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "requires_approval",
+                    "blocked"
+                  ],
+                  "properties": {
+                    "requires_approval": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_issue"
+                      }
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "contains": {
+                        "const": "open_issue"
                       }
                     }
                   }

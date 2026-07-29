@@ -213,6 +213,11 @@ describe('inferActions', () => {
     expect(result).toEqual(['reopen_issue']);
   });
 
+  it('issue opened → [open_issue]', () => {
+    const result = inferActions({ eventType: 'issues.opened' });
+    expect(result).toEqual(['open_issue']);
+  });
+
   it('no duplicates when multiple signals match', () => {
     const result = inferActions({
       eventType: 'pull_request.opened',

@@ -9,6 +9,8 @@ semantic versioning.
 
 - Versioned `agentowners validate --output json` results for deterministic CI
   and agent integrations, with text output preserved as the default.
+- Explicit `open_issue` action inference for `issues.opened` events, allowing
+  policies to govern agent-created issues separately from issue comments.
 
 - A source-backed ecosystem boundary matrix and structured Ideas discussion
   form for falsifiable proposals.
