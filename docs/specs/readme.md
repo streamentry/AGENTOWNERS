@@ -732,6 +732,8 @@ outputs:
     description: 'low | medium | high | critical'
   matched-rules:
     description: 'JSON array of matched rules'
+  audit-artifact:
+    description: 'Absolute path to the versioned agentowners-decision.json audit artifact'
 ```
 
 Behavior:
