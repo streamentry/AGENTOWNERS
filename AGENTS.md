@@ -175,6 +175,7 @@ These are immutable safety rules. Never change them:
 | Determinism | Same inputs → same output. No randomness, no timestamps in evaluation |
 | No database | The core engine is stateless: policy file + event context → Decision |
 | Least privilege | GitHub Action never requests `repo:admin` or `secrets:read` permissions |
+| Comment ownership | Sticky verdict updates require a bot-authored marker; human comments are never overwritten |
 | Fail closed | Unknown agent defaults to `require_approval`, never silently `allow` |
 | Trusted policy | Pull requests are evaluated against policy from the immutable base commit |
 | Git option boundary | Untrusted refs must follow `--end-of-options` |

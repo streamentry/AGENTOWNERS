@@ -4,6 +4,19 @@ import type { Octokit } from './github.js';
 
 export const MARKER = '<!-- agentowners-verdict -->';
 
+type CommentCandidate = {
+  id: number;
+  body?: string | null;
+  user?: {
+    login?: string | null;
+    type?: string | null;
+  } | null;
+};
+
+function isBotAuthored(comment: CommentCandidate): boolean {
+  return comment.user?.type === 'Bot' || comment.user?.login?.endsWith('[bot]') === true;
+}
+
 export async function upsertVerdictComment(
   octokit: Octokit,
   owner: string,
@@ -11,14 +24,24 @@ export async function upsertVerdictComment(
   issueNumber: number,
   body: string,
 ): Promise<void> {
-  const comments = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    per_page: 100,
-  });
+  let page = 1;
+  let existing: CommentCandidate | undefined;
 
-  const existing = comments.data.find((c: { id: number; body?: string | null }) => c.body?.includes(MARKER));
+  while (true) {
+    const comments = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      per_page: 100,
+      page,
+    });
+
+    existing = comments.data.find(
+      (comment: CommentCandidate) => isBotAuthored(comment) && comment.body?.includes(MARKER),
+    );
+    if (existing || comments.data.length < 100) break;
+    page++;
+  }
 
   if (existing) {
     await octokit.rest.issues.updateComment({

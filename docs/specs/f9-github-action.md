@@ -97,10 +97,10 @@ runs:
 Marker: `<!-- agentowners-verdict -->`
 
 Logic:
-1. List existing PR comments
-2. Find comment containing the marker
+1. List existing PR comments, following pages until a short page is returned
+2. Find a bot-authored comment containing the marker
 3. If found → update it (PATCH)
-4. If not found → create new comment (POST)
+4. If not found, or if only a human-authored marker exists → create new comment (POST)
 
 ## Label Application
 Apply `labelsToApply` from Decision to the PR/issue.
@@ -121,5 +121,6 @@ Write `agentowners-decision.json` to `$GITHUB_WORKSPACE` for upload as artifact.
 ## Security Requirements
 - Never print secret patterns from diff content
 - Treat all PR content as untrusted input
+- Never overwrite a human-authored comment solely because it contains the verdict marker
 - Do not execute content from policy as code
 - Use least-privilege permissions

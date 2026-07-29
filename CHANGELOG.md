@@ -50,6 +50,10 @@ semantic versioning.
   metadata instead of being silently ignored.
 - Issue comments now preserve whether their target is a pull request or issue,
   and their bodies participate in agent detection.
+- Sticky verdict updates now require bot authorship, preventing marker-spoofed
+  human comments from being overwritten.
+- Sticky verdict lookup now paginates through all comments before creating a
+  duplicate managed verdict.
 
 ## [0.1.0] - 2026-07-28
 

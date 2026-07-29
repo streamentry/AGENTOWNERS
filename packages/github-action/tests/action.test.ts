@@ -393,6 +393,7 @@ describe('GitHub Action — integration via mocks', () => {
         {
           id: 99,
           body: '<!-- agentowners-verdict -->\nOld verdict\n<!-- /agentowners-verdict -->',
+          user: { type: 'Bot', login: 'github-actions[bot]' },
         },
       ],
     });
@@ -432,7 +433,13 @@ describe('upsertVerdictComment', () => {
     const { upsertVerdictComment } = await import('../src/comment.js');
 
     mockOctokit.rest.issues.listComments.mockResolvedValue({
-      data: [{ id: 55, body: '<!-- agentowners-verdict -->\nOld content' }],
+      data: [
+        {
+          id: 55,
+          body: '<!-- agentowners-verdict -->\nOld content',
+          user: { type: 'Bot', login: 'github-actions[bot]' },
+        },
+      ],
     });
     mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 55 } });
 
@@ -440,6 +447,65 @@ describe('upsertVerdictComment', () => {
 
     expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
       expect.objectContaining({ comment_id: 55, body: 'new body' }),
+    );
+    expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite a human comment that spoofs the marker', async () => {
+    const { upsertVerdictComment } = await import('../src/comment.js');
+
+    mockOctokit.rest.issues.listComments.mockResolvedValue({
+      data: [
+        {
+          id: 77,
+          body: '<!-- agentowners-verdict -->\nHuman content',
+          user: { type: 'User', login: 'contributor' },
+        },
+      ],
+    });
+    mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 78 } });
+
+    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+
+    expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
+    expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
+      expect.objectContaining({ issue_number: 1, body: 'new body' }),
+    );
+  });
+
+  it('paginates until it finds the managed bot comment', async () => {
+    const { upsertVerdictComment } = await import('../src/comment.js');
+
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      id: index + 1,
+      body: `human comment ${index + 1}`,
+      user: { type: 'User', login: `contributor-${index + 1}` },
+    }));
+    mockOctokit.rest.issues.listComments
+      .mockResolvedValueOnce({ data: firstPage })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 101,
+            body: '<!-- agentowners-verdict -->\nOld content',
+            user: { type: 'Bot', login: 'github-actions[bot]' },
+          },
+        ],
+      });
+    mockOctokit.rest.issues.updateComment.mockResolvedValue({ data: { id: 101 } });
+
+    await upsertVerdictComment(mockOctokit as never, 'owner', 'repo', 1, 'new body');
+
+    expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ page: 1 }),
+    );
+    expect(mockOctokit.rest.issues.listComments).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ page: 2 }),
+    );
+    expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith(
+      expect.objectContaining({ comment_id: 101, body: 'new body' }),
     );
     expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
   });
