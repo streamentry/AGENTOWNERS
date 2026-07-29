@@ -1137,7 +1137,8 @@ Schema:
       "reason": "Auth and permission changes require human review."
     }
   ],
-  "requiredReviewers": ["@maintainers/security"]
+  "requiredReviewers": ["@maintainers/security"],
+  "labelsToApply": ["ai-agent", "needs-human-review", "risk-high"]
 }
 ```
 

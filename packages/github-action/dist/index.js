@@ -33788,7 +33788,8 @@ function renderAuditJson(context3) {
       effect: mr.effect,
       reason: mr.reason
     })),
-    requiredReviewers: decision.requiredReviewers
+    requiredReviewers: decision.requiredReviewers,
+    labelsToApply: decision.labelsToApply
   };
 }
 function matchesTextPattern(value, patterns) {

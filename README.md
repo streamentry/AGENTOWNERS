@@ -245,6 +245,8 @@ and returns nonzero when expectations drift.
 `agentowners-decision.json` audit artifact. Audit explanations retain the
 actor, repository, event, timestamp, detection confidence, and changed-file
 count before rendering the policy decision.
+Current artifacts also preserve decision labels for downstream reconciliation;
+legacy v1 artifacts without labels remain readable.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial

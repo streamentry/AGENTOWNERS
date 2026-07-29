@@ -105,7 +105,10 @@ function isAuditRecord(value: unknown): value is AuditRecord {
     Array.isArray(value.matchedRules) &&
     value.matchedRules.every(isMatchedRule) &&
     Array.isArray(value.requiredReviewers) &&
-    value.requiredReviewers.every((reviewer): reviewer is string => typeof reviewer === 'string')
+    value.requiredReviewers.every((reviewer): reviewer is string => typeof reviewer === 'string') &&
+    (value.labelsToApply === undefined ||
+      (Array.isArray(value.labelsToApply) &&
+        value.labelsToApply.every((label): label is string => typeof label === 'string')))
   );
 }
 
@@ -122,7 +125,7 @@ function decisionFromAudit(audit: AuditRecord): Decision {
     riskScore: audit.riskScore,
     riskLevel: audit.riskLevel as RiskLevel,
     requiredReviewers: audit.requiredReviewers,
-    labelsToApply: [],
+    labelsToApply: audit.labelsToApply ?? [],
     explanation: '',
   };
 }

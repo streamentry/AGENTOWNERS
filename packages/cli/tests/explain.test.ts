@@ -72,6 +72,7 @@ describe('explain command', () => {
         changedFiles: ['.github/workflows/release.yml'],
         matchedRules: [{ name: 'workflows', effect: 'block', reason: 'No workflow edits.' }],
         requiredReviewers: [],
+        labelsToApply: ['risk-critical'],
       }),
     );
 
@@ -82,6 +83,30 @@ describe('explain command', () => {
     expect(stdout).toContain('Changed files: 1');
     expect(stdout).toContain('Decision: \x1b[1mBLOCK\x1b[0m');
     expect(stdout).toContain('No workflow edits.');
+    expect(stdout).toContain('Labels to apply: risk-critical');
+  });
+
+  it('accepts legacy v1 audit artifacts without labels', async () => {
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({
+        version: 1,
+        timestamp: '2026-07-29T00:00:00.000Z',
+        actor: 'github-copilot[bot]',
+        confidence: 'confirmed',
+        decision: 'allow',
+        riskScore: 5,
+        riskLevel: 'low',
+        detectedActions: [],
+        changedFiles: [],
+        matchedRules: [],
+        requiredReviewers: [],
+      }),
+    );
+
+    await program().parseAsync(['node', 'agentowners', 'explain']);
+
+    expect(stdout).toContain('Decision: \x1b[1mALLOW\x1b[0m');
+    expect(stderr).toBe('');
   });
 
   it('rejects malformed or unrecognized decision JSON with a bounded error', async () => {

@@ -23,6 +23,8 @@ export type AuditRecord = {
   changedFiles: string[];
   matchedRules: Array<{ name: string; effect: string; reason: string }>;
   requiredReviewers: string[];
+  /** Labels emitted by the decision; optional when reading legacy v1 artifacts. */
+  labelsToApply?: string[];
 };
 
 export type AuditContext = {
@@ -218,5 +220,6 @@ export function renderAuditJson(context: AuditContext): AuditRecord {
       reason: mr.reason,
     })),
     requiredReviewers: decision.requiredReviewers,
+    labelsToApply: decision.labelsToApply,
   };
 }

@@ -114,6 +114,8 @@ export type AuditRecord = {
   changedFiles: string[];
   matchedRules: Array<{ name: string; effect: string; reason: string }>;
   requiredReviewers: string[];
+  /** Emitted by current renderers; omitted by legacy v1 artifacts. */
+  labelsToApply?: string[];
 };
 ```
 
@@ -126,3 +128,4 @@ export type AuditRecord = {
 - Sticky comment marker included by default
 - `compact: true` produces shorter output
 - `renderAuditJson` produces correct structure
+- audit records preserve the decision's labels for downstream reconciliation

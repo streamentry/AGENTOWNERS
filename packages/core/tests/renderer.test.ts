@@ -166,6 +166,7 @@ describe('renderAuditJson', () => {
     expect(record.matchedRules).toHaveLength(1);
     expect(record.matchedRules[0].name).toBe('Require approval for auth changes');
     expect(record.requiredReviewers).toContain('@maintainers/security');
+    expect(record.labelsToApply).toEqual(['ai-agent', 'needs-human-review', 'risk-high']);
     expect(typeof record.timestamp).toBe('string');
   });
 
@@ -189,6 +190,16 @@ describe('renderAuditJson', () => {
     });
     expect(record.repository).toBeUndefined();
     expect(record.event).toBeUndefined();
+  });
+
+  it('emits an empty labels array for decisions without labels', () => {
+    const record = renderAuditJson({
+      actor: 'test',
+      agentDetection: { confidence: 'unknown' },
+      decision: allowDecision,
+      changedFiles: [],
+    });
+    expect(record.labelsToApply).toEqual([]);
   });
 });
 
