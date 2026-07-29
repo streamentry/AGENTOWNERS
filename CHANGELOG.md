@@ -49,6 +49,8 @@ semantic versioning.
 
 ### Fixed
 
+- The CLI now rejects unsupported `check --mode` values before reading policy
+  or Git, preventing a misspelled enforcement mode from silently failing open.
 - Malformed configured detection regex patterns no longer abort policy
   evaluation.
 - Source-only changes no longer produce a false `modify_tests` action.

@@ -317,6 +317,8 @@ These are roadmap items for v2+ (see spec section 27).
 6. **Skipping barrel export** — always add new exports to `src/index.ts`
 7. **Writing Git config in tests** — pass fixture identity through the commit
    subprocess environment; never mutate contributor repository configuration
+8. **Trusting typed CLI options at runtime** — validate enforcement controls
+   before policy or repository access; invalid modes use exit code `64`
 
 ## Roadmap hooks (design for these, don't build yet)
 

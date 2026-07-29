@@ -77,7 +77,8 @@ Behavior:
 7. Render verdict
 
 SARIF output follows `f12-sarif-output.md`. Unsupported formats exit `64`
-before reading Git.
+before reading Git. Unsupported modes also exit `64` before loading policy or
+reading Git; unknown values must never degrade enforcement to advisory mode.
 
 Exit codes:
 
@@ -147,5 +148,6 @@ Agent detection result:
 - `validate` exits 0 on valid policy
 - `validate` exits 1 with error messages on invalid policy
 - `check` returns correct exit code by mode
+- `check` rejects unsupported modes before policy or Git access
 - `fingerprint` detects Co-Authored-By signals
 - `self-check` covers every public exit code and hostile Git refs

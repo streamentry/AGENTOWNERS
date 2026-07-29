@@ -31,6 +31,12 @@ const approval: Decision = {
   explanation: 'Review required.',
 };
 
+const blocked: Decision = {
+  ...approval,
+  effect: 'block',
+  explanation: 'Blocked.',
+};
+
 function program(): Command {
   const command = new Command();
   command.exitOverride();
@@ -89,5 +95,29 @@ describe('check command SARIF output', () => {
     expect(stderr).toContain('Output format must be one of: text, json, sarif.');
     expect(getChangedFiles).not.toHaveBeenCalled();
     expect(stdout).toBe('');
+  });
+
+  it('fails loudly for an unsupported mode before loading policy or reading Git', async () => {
+    await program().parseAsync(['node', 'agentowners', 'check', '--mode', 'enforcemnt']);
+
+    expect(process.exit).toHaveBeenCalledWith(64);
+    expect(stderr).toContain('Mode must be one of: advisory, enforcement, dry-run.');
+    expect(loadPolicyFile).not.toHaveBeenCalled();
+    expect(getChangedFiles).not.toHaveBeenCalled();
+    expect(evaluatePolicy).not.toHaveBeenCalled();
+    expect(stdout).toBe('');
+  });
+
+  it.each([
+    ['advisory', 0],
+    ['enforcement', 1],
+    ['dry-run', 0],
+  ])('preserves blocked-decision exit behavior in %s mode', async (mode, expectedExit) => {
+    vi.mocked(evaluatePolicy).mockReturnValue(blocked);
+
+    await program().parseAsync(['node', 'agentowners', 'check', '--mode', mode]);
+
+    expect(evaluatePolicy).toHaveBeenCalledOnce();
+    expect(process.exit).toHaveBeenCalledWith(expectedExit);
   });
 });
