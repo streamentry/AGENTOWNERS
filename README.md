@@ -226,6 +226,9 @@ agentowners test \
 
 # Detect agent signals in current commit
 agentowners fingerprint --commit HEAD
+
+# Emit the same detection result as deterministic JSON
+agentowners fingerprint --commit HEAD --output json
 ```
 
 `self-check` always uses explicit policy, refs, and actor inputs. It returns
@@ -237,6 +240,9 @@ modifies the repository.
 classification, action-inference, and evaluation pipeline used in production.
 It rejects unsafe paths and unknown fields, reports every failed assertion,
 and returns nonzero when expectations drift.
+
+`fingerprint --output json` emits the deterministic detection object for agent
+and CI consumers. Unsupported output formats fail before Git evidence is read.
 
 `check --output sarif` emits no alert for an allowed decision, warnings for
 required approval, and errors for blocked changes. Rule identifiers, partial
