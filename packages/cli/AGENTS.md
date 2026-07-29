@@ -102,6 +102,8 @@ The `capabilities` command performs no dispatch; use `--fail-on-deny` when a
 caller needs a nonzero result for denied attempts.
 The `policy-diff` command reads only the two explicit policy paths, never emits
 policy values, and uses `--fail-on-change` for CI drift enforcement.
+Successful `self-check` output includes `policyDigest`, binding the decision
+contract to the canonical policy used for evaluation.
 Temporary Git fixtures must pass author and committer identity through the
 single commit subprocess environment. Never use `git config` in tests.
 Unknown output formats must fail before reading Git.

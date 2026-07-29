@@ -284,9 +284,9 @@ agentowners policy-diff \
 ```
 
 `self-check` always uses explicit policy, refs, and actor inputs. It returns
-stable JSON with the decision, risk, matched rules, blocked actions, reviewers,
-and a bounded next action. It makes no model or GitHub API calls and never
-modifies the repository.
+stable JSON with the policy digest, decision, risk, matched rules, blocked
+actions, reviewers, and a bounded next action. It makes no model or GitHub API
+calls and never modifies the repository.
 
 `test` executes a strict, versioned fixture suite through the same detection,
 classification, action-inference, and evaluation pipeline used in production.

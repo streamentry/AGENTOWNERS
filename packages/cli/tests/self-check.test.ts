@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
-import { evaluatePolicy, loadPolicyFile, type Decision } from '@agent-owners/core';
+import { evaluatePolicy, hashPolicy, loadPolicyFile, type Decision } from '@agent-owners/core';
 import { getChangedFiles, getCommitMessages } from '../src/git.js';
 import { registerSelfCheck } from '../src/commands/self-check.js';
 
@@ -112,6 +112,7 @@ describe('self-check command', () => {
     expect(output).toMatchObject({
       schemaVersion: 1,
       status: 'complete',
+      policyDigest: hashPolicy({ version: 1 }),
       decision: effect,
       detectedActions: ['modify_tests'],
       requiredReviewers: effect === 'require_approval' ? ['maintainers'] : [],

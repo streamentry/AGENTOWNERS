@@ -59,7 +59,8 @@ Git refs are passed directly to Git as arguments, never interpolated into a
 shell command. Invalid refs fail closed instead of producing an empty,
 potentially misleading decision.
 
-`self-check` emits a versioned JSON contract and distinct exit codes for allow
+`self-check` emits a versioned JSON contract, including the canonical digest of
+the policy used, and distinct exit codes for allow
 (`0`), approval (`10`), block (`20`), invalid input (`64`), invalid policy
 (`65`), invalid Git range (`66`), and internal failure (`70`). See the
 [self-check specification](https://github.com/streamentry/AGENTOWNERS/blob/main/docs/specs/f11-agent-self-check.md).

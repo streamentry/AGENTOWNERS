@@ -4,6 +4,7 @@ import {
   classifyFiles,
   detectAgent,
   evaluatePolicy,
+  hashPolicy,
   inferActions,
   loadPolicyFile,
   type AgentOwnersPolicy,
@@ -179,11 +180,12 @@ function evaluateSelfCheck(
   });
 }
 
-function writeSuccess(options: ResolvedOptions, decision: Decision): void {
+function writeSuccess(options: ResolvedOptions, decision: Decision, policyDigest: string): void {
   const output = {
     schemaVersion: 1,
     status: 'complete',
     inputs: options,
+    policyDigest,
     decision: decision.effect,
     risk: { score: decision.riskScore, level: decision.riskLevel },
     detectedActions: decision.detectedActions,
@@ -215,7 +217,7 @@ async function runSelfCheck(rawOptions: SelfCheckOptions): Promise<void> {
       gitRange.changedFiles,
       gitRange.commitMessages,
     );
-    writeSuccess(options, decision);
+    writeSuccess(options, decision, hashPolicy(policy));
   } catch {
     writeError('INTERNAL_ERROR');
   }

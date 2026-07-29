@@ -39,6 +39,8 @@ semantic versioning.
 - Deterministic `diffPolicies()` / `hashPolicy()` evidence and the
   `agentowners policy-diff` CLI command report policy fingerprints and changed
   paths without printing policy values.
+- `agentowners self-check` now includes the canonical policy digest in success
+  output so pre-PR evidence can be bound to the policy it evaluated.
 
 ### Changed
 

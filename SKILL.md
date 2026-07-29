@@ -31,7 +31,7 @@ description: Implement or review deterministic AI-agent governance changes in AG
 15. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
 16. Run `pnpm verify`.
 17. Run the explicit `agentowners self-check` contract before opening a pull
-   request.
+    request and record its `policyDigest` with the decision evidence.
 18. For release-facing changes, run `pnpm verify:packages`.
 19. For Marketplace changes, prove root and packaged Action metadata remain in
    parity outside explicit distribution identity and bundle paths, then
