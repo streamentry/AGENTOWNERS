@@ -778,7 +778,11 @@ Options:
 agentowners init --profile minimal
 agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
+agentowners init --profile strict-oss --dry-run
 ```
+
+`--dry-run` prints the selected profile and target path without checking for an
+existing file, creating directories, or writing to the filesystem.
 
 ### 17.2 `agentowners validate`
 

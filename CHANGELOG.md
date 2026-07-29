@@ -23,6 +23,53 @@ semantic versioning.
 - Mutation-sensitive adversarial corpus covering precedence, conservative
   fallthrough, path boundaries, malformed patterns, schema conflicts, and risk
   caps.
+- Experimental `AGENT_CAPABILITIES.md` specification with a deterministic,
+  fail-closed capability and hash-chained audit demonstration.
+- A tested Marketplace metadata gate covering YAML validity, listing identity,
+  bundle paths, and root/package metadata parity.
+- Idempotent release helper primitives with exact-version registry preflight,
+  isolated npm cache verification, and stable-tag safety tests.
+- A network-free `pnpm demo` that exercises the production CLI fixture pipeline
+  and capability-boundary proof in one first-run command.
+- Capability requests now present and verify the manifest-bound identity hash,
+  with an adversarial mismatch test.
+- Reusable capability validation/evaluation is now exported from `@agent-owners/core`
+  and exposed through `agentowners capabilities` with stable output and
+  `--fail-on-deny`.
+- Deterministic `diffPolicies()` / `hashPolicy()` evidence and the
+  `agentowners policy-diff` CLI command report policy fingerprints and changed
+  paths without printing policy values.
+- `agentowners self-check` now includes the canonical policy digest in success
+  output so pre-PR evidence can be bound to the policy it evaluated.
+- GitHub Action audit records now include the canonical policy digest and
+  trusted policy ref, with matching `policy-digest` and `policy-ref` outputs.
+- A canonical policy authoring reference and AGENTOWNERS-specific evidence-first
+  agent-team workflow replace broken and unrelated contributor guidance.
+- Strict-schema regression coverage for the repository policy and copyable
+  `.github/AGENTOWNERS.yml.example` template.
+- Reconciled the Claude contributor guide with the current dependency, spec
+  layout, verification gates, and policy-template review contract.
+- Clarified in the primary README that `monorepo` is a copyable example, not a
+  currently exposed `agentowners init --profile` option.
+- Kept policy-diff structural changes consistent with canonical digests when
+  public callers provide explicitly undefined optional fields.
+- Configured `agents[name].match.labels` entries now retain the candidate agent
+  name at `possible` confidence instead of falling through to generic label
+  heuristics; mutable labels cannot authorize an otherwise unknown action.
+- Schema-supported commit email/name matches now flow through the CLI Git range
+  adapter and GitHub Action PR metadata as forgeable `likely` evidence; they
+  cannot authorize an otherwise unknown action.
+- Configured body/title detection now remains `likely` and no longer outranks
+  confirmed built-in bot actors, preventing contributor-controlled text from
+  becoming an implicit authorization signal.
+- The Action's workflow-provided `known-agent-actors` input is now documented
+  and implemented as `likely` evidence only; it cannot confirm identity or
+  authorize an otherwise unknown action.
+- The CLI now reads its displayed version from `packages/cli/package.json`,
+  removing a second hard-coded release-version authority.
+- `agentowners init --dry-run` now previews a selected profile without checking
+  or modifying the filesystem, making first-run discovery safe in existing
+  repositories.
 
 ### Changed
 

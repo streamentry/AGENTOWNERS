@@ -86,7 +86,7 @@ describe('init command', () => {
     )
   })
 
-  it('prints the profile without touching the filesystem in dry-run mode', async () => {
+  it('prints the selected profile and target without touching the filesystem in dry-run mode', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
 
     const program = makeProgram()
@@ -96,10 +96,15 @@ describe('init command', () => {
       'init',
       '--profile',
       'strict-oss',
+      '--output',
+      'preview/policy.yml',
       '--dry-run',
     ])
 
-    expect(stdoutSpy).toHaveBeenCalledWith(getProfile('strict-oss'))
+    expect(stdoutSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Dry run: strict-oss -> preview/policy.yml'),
+    )
+    expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining(getProfile('strict-oss')))
     expect(vi.mocked(fs.existsSync)).not.toHaveBeenCalled()
     expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
     expect(vi.mocked(fs.writeFileSync)).not.toHaveBeenCalled()
@@ -153,12 +158,32 @@ describe('init command', () => {
     expect(writeCall[1]).toBe(expectedContent)
   })
 
+  it('prints the selected profile without touching the filesystem in dry-run mode', async () => {
+    const program = makeProgram()
+    await program.parseAsync([
+      'node',
+      'agentowners',
+      'init',
+      '--profile',
+      'strict-oss',
+      '--output',
+      'preview/policy.yml',
+      '--dry-run',
+    ])
+
+    expect(vi.mocked(fs.existsSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(fs.writeFileSync)).not.toHaveBeenCalled()
+    expect(stdoutSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Dry run: strict-oss -> preview/policy.yml'),
+    )
+    expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining(getProfile('strict-oss')))
+  })
+
   it('prints success message', async () => {
     const program = makeProgram()
     await program.parseAsync(['node', 'agentowners', 'init'])
 
-    expect(stdoutSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Created'),
-    )
+    expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('Created'))
   })
 })

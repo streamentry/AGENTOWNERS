@@ -9,8 +9,9 @@ from interpreting a ref that begins with `-` as an option.
 
 ## Key components
 
-- `src/git.ts`: bounded Git subprocess adapter
-- `src/commands/init.ts`: profile installation
+- `src/git.ts`: bounded Git subprocess adapter for paths, messages, and commit
+  author metadata
+- `src/commands/init.ts`: profile installation and side-effect-free preview
 - `src/commands/validate.ts`: schema diagnostics
 - `src/commands/check.ts`: local policy evaluation
 - `src/commands/explain.ts`: decision explanation
@@ -65,6 +66,17 @@ stateDiagram-v2
   PolicyError --> [*]: exit 65
   FixtureError --> [*]: exit 66
   InternalError --> [*]: exit 70
+```
+
+`init --dry-run` stops after profile resolution and prints the intended target;
+it never performs an existence check or write, which keeps first-run discovery
+safe in repositories that already contain an AGENTOWNERS policy.
+
+```mermaid
+flowchart LR
+  InitArgs --> Profile
+  Profile --> Preview[--dry-run: print profile and target]
+  Profile --> Filesystem[normal init: check, mkdir, write]
 ```
 
 `self-check` follows the same sequence but requires explicit policy, base,

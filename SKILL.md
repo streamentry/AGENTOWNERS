@@ -23,13 +23,23 @@ description: Implement or review deterministic AI-agent governance changes in AG
 11. If policy validation changed, run `pnpm generate:schema`.
 12. If decision behavior changed, update a portable fixture that proves the
    repository-facing contract.
-13. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
-14. Run `pnpm verify`.
-15. Run the explicit `agentowners self-check` contract before opening a pull
-   request.
-16. For release-facing changes, run `pnpm verify:packages`.
-17. In the pull request, disclose agent use, overlap, exact evidence, risks,
-    attribution, and rollback.
+14. If capability-boundary behavior changed, run `pnpm build`,
+   `pnpm test:capabilities`, and `node scripts/capability-demo.mjs`; verify the
+   demo remains simulation-only and does not print secret values.
+15. If onboarding or product-proof behavior changed, run `pnpm demo` and verify
+   both the production CLI fixture results and capability denials are present.
+   For CLI onboarding changes, also verify `agentowners init --dry-run` leaves
+   an existing policy untouched.
+16. If SARIF changed, prove stable IDs, ordering, and repository-relative paths.
+17. Run `pnpm verify`.
+18. Run the explicit `agentowners self-check` contract before opening a pull
+   request and record its `policyDigest` with the decision evidence.
+19. For release-facing changes, run `pnpm verify:packages`.
+20. For Marketplace changes, prove root and packaged Action metadata remain in
+   parity outside explicit distribution identity and bundle paths, then
+   disclose every owner-only publication gate that remains.
+21. In the pull request, disclose agent use, overlap, exact evidence, risks,
+   attribution, and rollback.
 
 Reject any change that weakens `block > require_approval > allow`, executes
 policy data, leaks secret matches, introduces hidden state, or lets untrusted

@@ -24,14 +24,23 @@ Options:
 - `--profile <name>` — `minimal` (default), `strict-oss`, `security-sensitive`
 - `--output <path>` — output path (default: `.github/AGENTOWNERS.yml`)
 - `--force` — overwrite if exists
-- `--dry-run` — print the profile without reading or writing the output path
+- `--dry-run` — print the selected profile and target without filesystem access
 
 Behavior:
 
-- In `--dry-run` mode, print the profile and perform no filesystem checks or writes.
+- Resolve and validate the selected profile before any filesystem operation.
+- In `--dry-run` mode, print the profile and requested output path, then exit
+  without checking whether the target exists, creating directories, or writing
+  a file. `--force` has no effect in this mode.
 - Create output directory if needed
 - Write profile content from `packages/core/src/profiles.ts`
 - Print success message with path
+
+Safe first-run preview:
+
+```text
+agentowners init --profile strict-oss --dry-run
+```
 
 ### `agentowners validate [path]`
 

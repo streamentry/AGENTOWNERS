@@ -70,7 +70,7 @@ packages/core/tests/
 packages/cli/src/
   index.ts           — commander entry point
   git.ts             — shell-free Git adapter (getChangedFiles, getCommitMessages)
-  commands/init.ts   — agentowners init
+  commands/init.ts   — agentowners init and side-effect-free dry-run preview
   commands/validate.ts — agentowners validate
   commands/check.ts  — agentowners check
   commands/explain.ts — agentowners explain

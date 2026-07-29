@@ -14,7 +14,7 @@ export function registerInit(program: Command): void {
     )
     .option('--output <path>', 'Output path', '.github/AGENTOWNERS.yml')
     .option('--force', 'Overwrite existing file', false)
-    .option('--dry-run', 'Print the profile without writing a file', false)
+    .option('--dry-run', 'Print the selected policy without writing files', false)
     .action((options: { profile: string; output: string; force: boolean; dryRun: boolean }) => {
       const { profile, output, force, dryRun } = options
 
@@ -27,16 +27,14 @@ export function registerInit(program: Command): void {
       }
 
       if (dryRun) {
-        process.stdout.write(content)
+        process.stdout.write(`Dry run: ${profile} -> ${output}\n\n${content}\n`)
         return
       }
 
       const outputPath = path.resolve(process.cwd(), output)
 
       if (fs.existsSync(outputPath) && !force) {
-        process.stderr.write(
-          `Error: ${outputPath} already exists. Use --force to overwrite.\n`,
-        )
+        process.stderr.write(`Error: ${outputPath} already exists. Use --force to overwrite.\n`)
         process.exit(1)
       }
 

@@ -204,6 +204,9 @@ npm install -g @agent-owners/cli
 # Create a policy file
 agentowners init --profile minimal
 
+# Preview a profile without touching an existing repository policy
+agentowners init --profile strict-oss --dry-run
+
 # Validate a policy file
 agentowners validate .github/AGENTOWNERS.yml
 
@@ -260,6 +263,11 @@ code scanning is available.
 agentowners init --profile strict-oss
 agentowners init --profile security-sensitive
 ```
+
+Use `--dry-run` to print the selected profile before creating or overwriting a
+policy. Preview mode performs no existence checks and makes no filesystem
+writes, so it is safe to run from this repository or any project with an
+existing policy.
 
 Using Dependabot or Renovate? Copy the
 [`dependency-bots` example](examples/dependency-bots/AGENTOWNERS.yml) to require
