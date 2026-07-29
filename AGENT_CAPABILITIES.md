@@ -35,10 +35,11 @@ requests, reads no real secrets, and does not change repository state. Run
 build automatically.
 
 The reusable implementation is exported by `@agent-owners/core` through
-`parseCapabilityManifest()`, `parseCapabilityAttempts()`, and
-`evaluateCapabilities()`. The packaged CLI exposes the same contract through
-`agentowners capabilities`; both surfaces remain pure evaluation and audit
-helpers, not dispatchers.
+`parseCapabilityManifest()`, `parseCapabilityAttempts()`,
+`evaluateCapabilities()`, and `verifyCapabilityAudit()`. The packaged CLI
+exposes the same contract through `agentowners capabilities` and
+`agentowners capabilities verify-audit`; both surfaces remain pure evaluation
+and audit helpers, not dispatchers.
 
 ## Decision and audit algorithm
 
@@ -56,8 +57,11 @@ helpers, not dispatchers.
 
 Every audit event contains a sequence number, request identity, normalized
 target, decision, dispatch flag, reason, previous hash, and event hash. The
-final digest is suitable for an append-only external log or signed release
-attestation. The manifest itself is policy data, never executable code.
+final digest binds the event-chain head and summary, making it suitable for an
+append-only external log or signed release attestation. `verifyCapabilityAudit()`
+recomputes every event hash, checks the chain, digest, and summary counts, and
+returns generic failure codes without echoing untrusted fields. The manifest
+itself is policy data, never executable code.
 
 ```mermaid
 flowchart LR

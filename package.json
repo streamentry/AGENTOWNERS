@@ -15,7 +15,7 @@
     "build": "pnpm -r run build",
     "demo": "pnpm build && node packages/cli/dist/index.js test --policy examples/strict-oss/AGENTOWNERS.yml --fixtures examples/strict-oss/AGENTOWNERS.fixtures.yml && node scripts/capability-demo.mjs --summary",
     "test": "pnpm -r run test",
-    "test:capabilities": "pnpm --filter @agent-owners/core test -- capabilities.test.ts && node --test scripts/capability-demo.test.mjs",
+    "test:capabilities": "pnpm --filter @agent-owners/core test -- capabilities.test.ts && pnpm --filter @agent-owners/cli test -- capabilities.test.ts && node --test scripts/capability-demo.test.mjs",
     "test:coverage": "pnpm -r run test:coverage",
     "lint": "eslint packages/*/src/**/*.ts",
     "typecheck": "tsc --noEmit",

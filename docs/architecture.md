@@ -21,6 +21,7 @@ flowchart LR
   F --> G[Deterministic decision]
   G --> H[Markdown verdict]
   G --> I[Audit JSON]
+  I --> K[Hash-chain verifier]
   G --> J[CI exit status]
 ```
 
@@ -44,6 +45,8 @@ flowchart TB
   CLI --> CORE
   ACTION --> CORE
   CORE -. no network, shell, or state .-> CORE
+  CORE --> AUDIT[Capability audit and verifier]
+  AUDIT --> ADAPTERS[Adapters and external log stores]
 ```
 
 ## Sequence diagram
@@ -62,6 +65,11 @@ sequenceDiagram
   Action->>API: upsert verdict and labels
   Action-->>Event: outputs and optional failing status
 ```
+
+Capability adapters may persist the pure audit result and call the verifier
+before accepting it as evidence. Verification does not dispatch tools or
+provide storage; it only proves the result's schema, chain, digest, and summary
+are internally consistent.
 
 ## Trust boundaries
 

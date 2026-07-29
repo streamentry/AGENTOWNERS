@@ -19,8 +19,9 @@ network calls, clocks, randomness, or persistent state.
 - `tests/custom-agents.test.ts`: repository custom-agent privilege contracts
 - `fixtures.ts`: strict portable suites and assertion comparison
 - `sarif.ts`: deterministic SARIF 2.1.0 output
-- `capabilities.ts`: strict pre-dispatch capability validation, evaluation, and
-  hash-chained audit output; no filesystem, network, or dispatch side effects
+- `capabilities.ts`: strict pre-dispatch capability validation, evaluation,
+  hash-chained audit output, and tamper verification; no filesystem, network,
+  or dispatch side effects
 
 ## Diagrams
 
@@ -87,8 +88,8 @@ sequenceDiagram
 ## Verification
 
 Run `pnpm --filter @agent-owners/core test` and `pnpm typecheck`.
-Capability contract changes must keep `capabilities.test.ts` and the checked-in
-identity-bound fixture behavior deterministic.
+Capability contract changes must keep `capabilities.test.ts`, audit-chain
+verification, and the checked-in identity-bound fixture behavior deterministic.
 Custom-agent changes must keep `tests/custom-agents.test.ts` green.
 After changing policy validation, run `pnpm generate:schema` and commit the
 generated `agentowners.schema.json`.

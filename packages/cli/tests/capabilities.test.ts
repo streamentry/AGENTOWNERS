@@ -3,7 +3,12 @@ import { Command } from 'commander';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { registerCapabilities, runCapabilities } from '../src/commands/capabilities.js';
+import {
+  registerCapabilities,
+  runCapabilities,
+  runVerifyCapabilityAudit,
+} from '../src/commands/capabilities.js';
+import { evaluateCapabilities } from '@agent-owners/core';
 
 const fixtureRoot = resolve(process.cwd(), '../../fixtures/capabilities');
 const temporaryDirectories: string[] = [];
@@ -29,7 +34,9 @@ describe('capabilities command', () => {
   afterEach(async () => {
     process.exitCode = undefined;
     vi.restoreAllMocks();
-    await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true })));
+    await Promise.all(
+      temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true })),
+    );
   });
 
   function argumentsFor(output = 'text'): { manifest: string; attempts: string; output: string } {
@@ -54,6 +61,7 @@ describe('capabilities command', () => {
         '--fail-on-deny',
       ]),
     );
+    expect(command?.commands.map((candidate) => candidate.name())).toContain('verify-audit');
   });
 
   it('prints a deterministic summary and allows expected denials by default', async () => {
@@ -64,6 +72,14 @@ describe('capabilities command', () => {
     );
     expect(stderr).toBe('');
     expect(process.exitCode).toBe(0);
+  });
+
+  it('rejects missing evaluation inputs before reading files', async () => {
+    await runCapabilities({ output: 'text' });
+
+    expect(process.exitCode).toBe(64);
+    expect(stderr).toContain('Missing required options: --manifest, --attempts');
+    expect(stdout).toBe('');
   });
 
   it('emits the audit contract and fails when requested on denial', async () => {
@@ -107,5 +123,40 @@ describe('capabilities command', () => {
       status: 'error',
       error: { code: 'INVALID_ATTEMPTS' },
     });
+  });
+
+  it('verifies a saved capability audit and fails closed on tampering', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'agentowners-capabilities-cli-'));
+    temporaryDirectories.push(directory);
+    const auditPath = join(directory, 'audit.json');
+    const manifest = JSON.parse(
+      await readFile(join(fixtureRoot, 'AGENT_CAPABILITIES.json'), 'utf8'),
+    ) as unknown;
+    const attempts = JSON.parse(
+      await readFile(join(fixtureRoot, 'attempts.json'), 'utf8'),
+    ) as unknown;
+    await writeFile(auditPath, JSON.stringify(evaluateCapabilities(manifest, attempts)));
+
+    stdout = '';
+    process.exitCode = undefined;
+    await runVerifyCapabilityAudit({ audit: auditPath, output: 'text' });
+    expect(stdout).toContain('Capability audit verified.');
+    expect(stdout).toContain('4 events checked.');
+    expect(process.exitCode).toBe(0);
+
+    const tampered = JSON.parse(await readFile(auditPath, 'utf8')) as {
+      audit: Array<Record<string, unknown>>;
+    };
+    tampered.audit[0] = { ...tampered.audit[0], reason: 'secret-value' };
+    await writeFile(auditPath, JSON.stringify(tampered));
+    stdout = '';
+    process.exitCode = undefined;
+    await runVerifyCapabilityAudit({ audit: auditPath, output: 'json' });
+    expect(JSON.parse(stdout)).toMatchObject({
+      status: 'complete',
+      verification: { valid: false, code: 'invalid_hash' },
+    });
+    expect(stdout).not.toContain('secret-value');
+    expect(process.exitCode).toBe(1);
   });
 });
