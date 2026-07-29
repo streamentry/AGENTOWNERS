@@ -40,13 +40,25 @@ export type AuditContext = {
 const MARKER_OPEN = '<!-- agentowners-verdict -->';
 const MARKER_CLOSE = '<!-- /agentowners-verdict -->';
 
+function inlineCode(value: string): string {
+  const normalized = value.replace(/[\u0000-\u001f\u007f]/g, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return `\\u${codePoint.toString(16).padStart(4, '0')}`;
+  });
+  const backtickRuns = normalized.match(/`+/g)?.map((run) => run.length) ?? [];
+  const fenceLength = Math.max(0, ...backtickRuns) + 1;
+  const fence = '`'.repeat(fenceLength);
+  const padding = normalized.startsWith('`') || normalized.endsWith('`') ? ' ' : '';
+  return `${fence}${padding}${normalized}${padding}${fence}`;
+}
+
 function wrapWithMarker(content: string): string {
   return `${MARKER_OPEN}\n${content}\n${MARKER_CLOSE}`;
 }
 
 export function renderAllowed(decision: Decision, options: RenderOptions): string {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(', ');
+    const ruleNames = decision.matchedRules.map((r) => inlineCode(r.name)).join(', ');
     return `AGENTOWNERS: allowed${ruleNames ? ` — ${ruleNames}` : ''}`;
   }
 
@@ -60,7 +72,7 @@ export function renderAllowed(decision: Decision, options: RenderOptions): strin
     lines.push('Matched rule:');
     lines.push('');
     for (const mr of decision.matchedRules) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- ${inlineCode(mr.name)}`);
     }
     lines.push('');
   }
@@ -80,7 +92,7 @@ export function renderRequiresApproval(decision: Decision, options: RenderOption
   lines.push('');
 
   if (options.actor) {
-    lines.push(`This PR appears to be created by \`${options.actor}\`.`);
+    lines.push(`This PR appears to be created by ${inlineCode(options.actor)}.`);
     lines.push('');
   }
 
@@ -92,11 +104,11 @@ export function renderRequiresApproval(decision: Decision, options: RenderOption
     lines.push('Matched rules:');
     lines.push('');
     decision.matchedRules.forEach((mr, idx) => {
-      lines.push(`${idx + 1}. \`${mr.name}\``);
+      lines.push(`${idx + 1}. ${inlineCode(mr.name)}`);
       const fileConditions = (mr.matchedConditions ?? []).filter((c) => c.startsWith('files:'));
       const matchedFiles = mr.matchedFiles ?? fileConditions.flatMap((c) => c.replace('files: ', '').split(', '));
       if (matchedFiles.length > 0) {
-        lines.push(`   - matched files: ${matchedFiles.map((f) => `\`${f}\``).join(', ')}`);
+        lines.push(`   - matched files: ${matchedFiles.map(inlineCode).join(', ')}`);
       }
       lines.push(`   - reason: ${mr.reason}`);
       lines.push('');
@@ -132,7 +144,7 @@ export function renderRequiresApproval(decision: Decision, options: RenderOption
 
 export function renderBlocked(decision: Decision, options: RenderOptions): string {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(', ');
+    const ruleNames = decision.matchedRules.map((r) => inlineCode(r.name)).join(', ');
     return `AGENTOWNERS: blocked${ruleNames ? ` — ${ruleNames}` : ''}`;
   }
 
@@ -149,7 +161,7 @@ export function renderBlocked(decision: Decision, options: RenderOptions): strin
     lines.push('Matched rule:');
     lines.push('');
     for (const mr of rulesToShow) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- ${inlineCode(mr.name)}`);
     }
     lines.push('');
   }

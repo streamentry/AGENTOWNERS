@@ -266,6 +266,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`
 - [ ] No shell execution with user-controlled strings
 - [ ] Git subprocesses use argv APIs such as `execFileSync`, never interpolated commands
 - [ ] GitHub Action permissions are `contents: read`, `pull-requests: write`, `issues: write` only
+- [ ] Dynamic verdict Markdown values cannot terminate inline code spans or inject structure
 
 ## Generated release artifacts
 

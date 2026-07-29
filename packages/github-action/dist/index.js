@@ -33634,6 +33634,17 @@ function scoreToLevel(score) {
 }
 var MARKER_OPEN = "<!-- agentowners-verdict -->";
 var MARKER_CLOSE = "<!-- /agentowners-verdict -->";
+function inlineCode(value) {
+  const normalized = value.replace(/[\u0000-\u001f\u007f]/g, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return `\\u${codePoint.toString(16).padStart(4, "0")}`;
+  });
+  const backtickRuns = normalized.match(/`+/g)?.map((run2) => run2.length) ?? [];
+  const fenceLength = Math.max(0, ...backtickRuns) + 1;
+  const fence = "`".repeat(fenceLength);
+  const padding = normalized.startsWith("`") || normalized.endsWith("`") ? " " : "";
+  return `${fence}${padding}${normalized}${padding}${fence}`;
+}
 function wrapWithMarker(content) {
   return `${MARKER_OPEN}
 ${content}
@@ -33641,7 +33652,7 @@ ${MARKER_CLOSE}`;
 }
 function renderAllowed(decision, options) {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(", ");
+    const ruleNames = decision.matchedRules.map((r) => inlineCode(r.name)).join(", ");
     return `AGENTOWNERS: allowed${ruleNames ? ` \u2014 ${ruleNames}` : ""}`;
   }
   const lines = [];
@@ -33653,7 +33664,7 @@ function renderAllowed(decision, options) {
     lines.push("Matched rule:");
     lines.push("");
     for (const mr of decision.matchedRules) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- ${inlineCode(mr.name)}`);
     }
     lines.push("");
   }
@@ -33668,7 +33679,7 @@ function renderRequiresApproval(decision, options) {
   lines.push("## AGENTOWNERS verdict: requires approval");
   lines.push("");
   if (options.actor) {
-    lines.push(`This PR appears to be created by \`${options.actor}\`.`);
+    lines.push(`This PR appears to be created by ${inlineCode(options.actor)}.`);
     lines.push("");
   }
   lines.push(`Risk level: ${decision.riskLevel}  `);
@@ -33678,11 +33689,11 @@ function renderRequiresApproval(decision, options) {
     lines.push("Matched rules:");
     lines.push("");
     decision.matchedRules.forEach((mr, idx) => {
-      lines.push(`${idx + 1}. \`${mr.name}\``);
+      lines.push(`${idx + 1}. ${inlineCode(mr.name)}`);
       const fileConditions = (mr.matchedConditions ?? []).filter((c) => c.startsWith("files:"));
       const matchedFiles = mr.matchedFiles ?? fileConditions.flatMap((c) => c.replace("files: ", "").split(", "));
       if (matchedFiles.length > 0) {
-        lines.push(`   - matched files: ${matchedFiles.map((f) => `\`${f}\``).join(", ")}`);
+        lines.push(`   - matched files: ${matchedFiles.map(inlineCode).join(", ")}`);
       }
       lines.push(`   - reason: ${mr.reason}`);
       lines.push("");
@@ -33713,7 +33724,7 @@ function renderRequiresApproval(decision, options) {
 }
 function renderBlocked(decision, options) {
   if (options.compact) {
-    const ruleNames = decision.matchedRules.map((r) => `\`${r.name}\``).join(", ");
+    const ruleNames = decision.matchedRules.map((r) => inlineCode(r.name)).join(", ");
     return `AGENTOWNERS: blocked${ruleNames ? ` \u2014 ${ruleNames}` : ""}`;
   }
   const lines = [];
@@ -33727,7 +33738,7 @@ function renderBlocked(decision, options) {
     lines.push("Matched rule:");
     lines.push("");
     for (const mr of rulesToShow) {
-      lines.push(`- \`${mr.name}\``);
+      lines.push(`- ${inlineCode(mr.name)}`);
     }
     lines.push("");
   }

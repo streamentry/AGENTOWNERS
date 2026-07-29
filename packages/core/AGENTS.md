@@ -92,3 +92,6 @@ For safety invariants, add a case to the adversarial corpus and prove it fails
 under a temporary relevant mutation before restoring production code.
 SARIF output must never contain timestamps, absolute paths, or unstable rule
 identifiers.
+Verdict Markdown must keep dynamic actor, rule-name, and changed-file values
+inside delimiter-safe inline code spans; test backticks and control characters
+when changing the renderer.
