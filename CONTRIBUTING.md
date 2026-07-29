@@ -175,6 +175,10 @@ See [SECURITY.md](SECURITY.md) for full policy.
 ### PR checklist
 
 - [ ] Full verification passes (`pnpm verify`)
+- [ ] The explicit `agentowners self-check` result, exit code, and actor are
+      recorded in the pull request
+- [ ] Action audit changes include structured explanation and digest evidence,
+      or explicitly state why they are not applicable
 - [ ] New functionality has tests
 - [ ] Decision priority invariant preserved (`block > require_approval > allow`)
 - [ ] No secrets or tokens committed

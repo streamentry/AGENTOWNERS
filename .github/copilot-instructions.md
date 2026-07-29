@@ -9,6 +9,8 @@ repository map and safety contract.
 - Keep `@agent-owners/core` deterministic and free of network or database calls.
 - Add or update a failing test before changing behavior.
 - Run `pnpm verify` before declaring work complete.
+- Run the built `agentowners self-check` with explicit policy, base, head, and
+  actor inputs; include its exact exit code and JSON result in the pull request.
 - Include the exact commands and results in the pull request.
 
 Good contributions are narrow, evidence-backed, and complete. Do not bundle

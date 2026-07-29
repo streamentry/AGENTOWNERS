@@ -52,4 +52,5 @@ sequenceDiagram
 ## Verification
 
 Discussion form filenames must match category slugs. Validate YAML structure,
-run `pnpm verify`, and never modify workflows when policy self-check blocks it.
+run `pnpm verify`, record the explicit self-check result in the pull request,
+and never modify workflows when policy self-check blocks it.
