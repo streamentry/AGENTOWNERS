@@ -229,4 +229,29 @@ describe('computeRiskScore', () => {
     });
     expect(critical.level).toBe('critical');
   });
+
+  // Focused scoring branches not duplicated by the versioned corpus.
+
+  it('invariant: blocked actions alone push score to cap', () => {
+    const result = computeRiskScore({
+      filesClassification: makeClassification(),
+      detectedActions: ['edit_workflows'],
+      agentConfidence: 'confirmed',
+      diffLinesCount: 0,
+    });
+
+    expect(result.score).toBe(100);
+    expect(result.level).toBe('critical');
+  });
+
+  it('invariant: unknown agent + no signals stays in low range', () => {
+    const result = computeRiskScore({
+      filesClassification: makeClassification(),
+      detectedActions: ['open_pr'],
+      agentConfidence: 'unknown',
+    });
+
+    expect(result.score).toBe(20);
+    expect(result.level).toBe('low');
+  });
 });

@@ -135,6 +135,63 @@
     }
   },
   {
+    "id": "fully-accounted-agent-actions",
+    "invariant": "A confirmed agent is allowed only when every inferred action is explicitly allowed.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "docs-agent": {
+          "match": {
+            "actors": ["docs-agent[bot]"]
+          },
+          "allowed": ["open_pr", "modify_docs"]
+        }
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "docs-agent[bot]",
+      "changedFiles": ["docs/guide.md"]
+    },
+    "expected": {
+      "effect": "allow",
+      "riskScore": 5,
+      "riskLevel": "low",
+      "detectedActions": ["open_pr", "modify_docs"],
+      "matchedRuleEffects": ["allow"]
+    }
+  },
+  {
+    "id": "allowed-plus-required-agent-actions",
+    "invariant": "An explicitly approval-gated action prevents an otherwise allowed action set from resolving to allow.",
+    "outcome": "decision",
+    "policy": {
+      "version": 1,
+      "agents": {
+        "dependency-agent": {
+          "match": {
+            "actors": ["dependency-agent[bot]"]
+          },
+          "allowed": ["open_pr"],
+          "requires_approval": ["modify_dependencies"]
+        }
+      }
+    },
+    "input": {
+      "eventType": "pull_request.opened",
+      "actor": "dependency-agent[bot]",
+      "changedFiles": ["package.json"]
+    },
+    "expected": {
+      "effect": "require_approval",
+      "riskScore": 30,
+      "riskLevel": "medium",
+      "detectedActions": ["open_pr", "modify_dependencies"],
+      "matchedRuleEffects": ["require_approval"]
+    }
+  },
+  {
     "id": "dotfile-secret",
     "invariant": "A nested environment dotfile is classified as secret and blocked.",
     "outcome": "decision",

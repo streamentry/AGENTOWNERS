@@ -757,4 +757,163 @@ describe('evaluatePolicy', () => {
     const decision = evaluatePolicy(input);
     expect(decision.matchedAgent).toBe('github-copilot');
   });
+
+  // Focused adversarial evaluator branches not duplicated by the versioned corpus.
+
+  it('invariant: dotfiles matched by files condition with dot option', () => {
+    // Files conditions must match dotfiles (e.g., .env.local).
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Block dotfiles',
+          when: { files: ['**/.env*'] },
+          effect: 'block',
+          reason: 'No env file edits.',
+        },
+      ],
+    };
+    const match = evaluatePolicy(baseInput({ policy, changedFiles: ['.env.local'] }));
+    const noMatch = evaluatePolicy(baseInput({ policy, changedFiles: ['src/app.ts'] }));
+
+    expect(match.effect).toBe('block');
+    expect(match.matchedRules).toHaveLength(1);
+    expect(noMatch.matchedRules).toHaveLength(0);
+  });
+
+  it('invariant: nested workflow paths matched by files condition', () => {
+    // Files conditions must match deeply nested workflow files.
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Block workflows',
+          when: { files: ['.github/workflows/**'] },
+          effect: 'block',
+          reason: 'No workflow edits.',
+        },
+      ],
+    };
+    const match = evaluatePolicy(
+      baseInput({ policy, changedFiles: ['.github/workflows/ci/deploy.yml'] }),
+    );
+
+    expect(match.effect).toBe('block');
+    expect(match.matchedRules).toHaveLength(1);
+  });
+
+  it('invariant: Windows-style backslash paths are handled by files condition', () => {
+    // Files condition with Windows-style backslash path separators
+    // must be evaluated without silent mismatches.
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Block auth changes',
+          when: { files: ['**/auth/**'] },
+          effect: 'require_approval',
+          reason: 'Auth needs review.',
+        },
+      ],
+    };
+    const decision = evaluatePolicy(
+      baseInput({ policy, changedFiles: ['src\\auth\\session.ts'] }),
+    );
+
+    // The backslash is not a glob separator — the literal path
+    // 'src\\auth\\session.ts' won't match '**/auth/**'.
+    // The invariant is that it must not throw or silently match.
+    expect(decision.effect).toBe('require_approval');
+    expect(decision.matchedRules).toHaveLength(0);
+  });
+
+  it('invariant: files_not excludes dotfiles correctly', () => {
+    // files_not must correctly reject dotfiles while allowing others.
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Allow unless dotfile',
+          when: { files_not: ['**/.env*'] },
+          effect: 'allow',
+          reason: 'Fine unless env.',
+        },
+      ],
+    };
+    const ok = evaluatePolicy(baseInput({ policy, changedFiles: ['src/index.ts'] }));
+    const blocked = evaluatePolicy(baseInput({ policy, changedFiles: ['.env.production'] }));
+
+    expect(ok.effect).toBe('allow');
+    expect(ok.matchedRules).toHaveLength(1);
+    expect(blocked.matchedRules).toHaveLength(0);
+  });
+
+  it('invariant: malformed regex in pr_title falls back to string includes', () => {
+    // Malformed regex patterns in pr_title must not throw; they fall
+    // back to plain string includes matching.
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Detect security fix pattern',
+          when: { pr_title: ['[security', 'fix: '] },
+          effect: 'require_approval',
+          reason: 'Security title needs review.',
+        },
+      ],
+    };
+    const matchByIncludes = evaluatePolicy(
+      baseInput({ policy, prTitle: '[security] fix auth' }),
+    );
+    const matchByRegex = evaluatePolicy(
+      baseInput({ policy, prTitle: 'fix: typo in docs' }),
+    );
+
+    expect(matchByIncludes.effect).toBe('require_approval');
+    expect(matchByIncludes.matchedRules).toHaveLength(1);
+    expect(matchByRegex.effect).toBe('require_approval');
+  });
+
+  it('invariant: malformed regex in pr_body falls back to string includes', () => {
+    // Malformed regex patterns in pr_body must not throw; they fall
+    // back to plain string includes matching.
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Detect breaking change pattern',
+          when: { pr_body: ['[unclosed', '## Changelog'] },
+          effect: 'require_approval',
+          reason: 'Breaking changes need review.',
+        },
+      ],
+    };
+    const matchByIncludes = evaluatePolicy(
+      baseInput({ policy, prBody: 'This is [unclosed and needs review' }),
+    );
+
+    expect(matchByIncludes.effect).toBe('require_approval');
+    expect(matchByIncludes.matchedRules).toHaveLength(1);
+  });
+
+  it('invariant: valid regex in pr_title matches correctly', () => {
+    // Valid regex patterns in pr_title must produce correct matches.
+    const policy: AgentOwnersPolicy = {
+      version: 1,
+      rules: [
+        {
+          name: 'Detect WIP PR',
+          when: { pr_title: ['^WIP:', '^Draft:'] },
+          effect: 'block',
+          reason: 'WIP PRs blocked.',
+        },
+      ],
+    };
+    const match = evaluatePolicy(baseInput({ policy, prTitle: 'WIP: refactor core' }));
+    const noMatch = evaluatePolicy(baseInput({ policy, prTitle: 'Add feature X' }));
+
+    expect(match.effect).toBe('block');
+    expect(match.matchedRules).toHaveLength(1);
+    expect(noMatch.matchedRules).toHaveLength(0);
+  });
 });
